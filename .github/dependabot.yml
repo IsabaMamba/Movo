@@ -9,6 +9,15 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    # typescript-eslint's peer range is `typescript >=4.8.4 <6.1.0`, so a
+    # major bump of typescript makes `npm ci` unresolvable and takes the whole
+    # dev-tooling group down with it. Adopting TypeScript 7 is its own
+    # migration, not a weekly dependency bump. Drop this once typescript-eslint
+    # ships support.
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+
     groups:
       # One PR per group keeps a part-time review load manageable.
       dev-tooling:
