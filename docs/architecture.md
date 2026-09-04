@@ -12,7 +12,7 @@ Expo app (iOS · Android · web)
         ▼
 Supabase
  ├─ Auth ............ email/password, JWT
- ├─ Postgres 16 ..... schema + RLS + SECURITY DEFINER RPCs
+ ├─ Postgres 17 ..... schema + RLS + SECURITY DEFINER RPCs
  │    └─ PostGIS .... geography(Point, 4326), GiST index
  └─ Storage ......... avatars, session covers
 ```

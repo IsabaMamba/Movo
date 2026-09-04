@@ -67,7 +67,7 @@ app is what brings their roster along. See
 | Layer      | Choice                                | Notes                                              |
 | ---------- | ------------------------------------- | -------------------------------------------------- |
 | Mobile     | React Native + Expo + TypeScript      | Expo also produces the web build from one codebase |
-| Backend    | Supabase (Postgres 16, Auth, Storage) | Modular monolith; no microservices                 |
+| Backend    | Supabase (Postgres 17, Auth, Storage) | Modular monolith; no microservices                 |
 | Geo        | PostGIS `geography(Point, 4326)`      | Metre-accurate radius queries on a GiST index      |
 | Maps       | Mapbox                                | Free tier                                          |
 | Deployment | Supabase + Expo (EAS)                 | Deliberately not AWS, not Kubernetes               |
@@ -162,7 +162,7 @@ Full reasoning lives in [`docs/architecture.md`](docs/architecture.md) and the A
 
 ## Testing
 
-CI runs the migration suite against a real Postgres 16 + PostGIS container on every pull
+CI runs the migration suite against a real Postgres 17 + PostGIS container on every pull
 request, including concurrency and RLS assertions. Locally, with a Postgres reachable:
 
 ```bash
