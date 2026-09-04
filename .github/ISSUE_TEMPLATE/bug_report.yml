@@ -1,0 +1,51 @@
+name: Bug report
+description: Something behaves differently than it should
+labels: ['type: bug', 'status: triage']
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - discover
+        - activity detail
+        - participation / join / waitlist
+        - organizer / check-in
+        - auth
+        - database / RLS
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Device and OS
+      placeholder: Pixel 7a, Android 14, Expo Go 52
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs or screenshots
+      description: Redact anything identifying a real user before pasting.
