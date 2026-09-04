@@ -21,6 +21,19 @@
 create schema if not exists extensions;
 create schema if not exists auth;
 
+-- The postgis/postgis image installs PostGIS into public during container
+-- init. 0001_schema.sql then runs `create extension if not exists postgis
+-- with schema extensions`, which finds the extension already present and
+-- skips with a notice -- silently ignoring the target schema. Every
+-- extensions.geography column and extensions.st_* call in the migrations
+-- then fails to resolve.
+--
+-- PostGIS is not relocatable, so ALTER EXTENSION ... SET SCHEMA is rejected;
+-- the extension has to be dropped and recreated in the right schema. Safe
+-- here: the shim runs against a throwaway database before any table exists.
+drop extension if exists postgis cascade;
+create extension postgis with schema extensions;
+
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then
