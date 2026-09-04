@@ -8,6 +8,14 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Build config files are CommonJS and run in Node, not in the bundle.
+    files: ['babel.config.js', 'metro.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { module: 'writable', require: 'readonly', __dirname: 'readonly' },
+    },
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
       // Unused args are fine when prefixed with _, which keeps signatures honest.

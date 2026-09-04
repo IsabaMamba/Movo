@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Movo",
+    "slug": "movo",
+    "scheme": "movo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "cr.movo.app"
+    },
+    "android": {
+      "package": "cr.movo.app",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": ["expo-router", "expo-status-bar"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
