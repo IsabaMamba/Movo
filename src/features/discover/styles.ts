@@ -1,0 +1,35 @@
+import { StyleSheet } from 'react-native';
+
+/** Bare on purpose — design tokens land once a visual direction is chosen. */
+export const discoverStyles = StyleSheet.create({
+  screen: { flex: 1, paddingTop: 56 },
+  header: { paddingHorizontal: 20 },
+  title: { fontSize: 32, fontWeight: '700' },
+  account: { flexDirection: 'row', gap: 12, marginTop: 2 },
+  accountText: { fontSize: 13, opacity: 0.6 },
+  linkText: { fontSize: 13, textDecorationLine: 'underline' },
+  filters: { flexGrow: 0, marginTop: 16 },
+  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20 },
+  chip: {
+    borderColor: '#c7c7c7',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  chipOn: { backgroundColor: '#111', borderColor: '#111' },
+  chipText: { fontSize: 13 },
+  chipTextOn: { color: '#fff' },
+  meta: { fontSize: 12, opacity: 0.5, paddingHorizontal: 20, paddingTop: 14 },
+  list: { paddingBottom: 40, paddingHorizontal: 20 },
+  card: { borderBottomColor: '#e6e6e6', borderBottomWidth: 1, gap: 4, paddingVertical: 16 },
+  cardTitle: { fontSize: 18, fontWeight: '600' },
+  cardWhen: { fontSize: 14 },
+  cardWhere: { fontSize: 13, opacity: 0.7 },
+  cardFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 2 },
+  fact: { fontSize: 12, opacity: 0.6 },
+  centred: { alignItems: 'center', gap: 8, padding: 40 },
+  emptyTitle: { fontSize: 16, fontWeight: '600' },
+  emptyBody: { fontSize: 14, lineHeight: 20, opacity: 0.7, textAlign: 'center' },
+  error: { color: '#b00020', fontSize: 14, paddingHorizontal: 20, paddingVertical: 12 },
+});
