@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # One PR per group keeps a part-time review load manageable.
+      dev-tooling:
+        patterns: ['eslint*', '@eslint/*', 'typescript*', 'prettier', '@types/*']
+      runtime:
+        patterns: ['@supabase/*', 'expo*', 'react*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

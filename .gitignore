@@ -1,0 +1,45 @@
+# dependencies
+node_modules/
+.pnp.*
+.yarn/*
+
+# expo
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# native
+ios/
+android/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# supabase local state
+supabase/.temp/
+supabase/.branches/
+
+# build output
+build/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose something the product should do
+labels: ['type: feature', 'status: triage']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Whose problem is this — a participant, or an organizer? Describe it without naming a solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How we will know it is done.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: customer
+    attributes:
+      label: Who is this for
+      description: The project treats organizers as the primary customer (see docs/adr/0001).
+      options:
+        - Organizer or venue
+        - Participant
+        - Both
+        - Internal / tooling
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What we would not build
+      description: What was considered and deliberately left out, and why.
