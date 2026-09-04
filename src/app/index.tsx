@@ -1,56 +1,75 @@
 /**
- * Connectivity check, not a product screen.
- *
- * It reads the seeded categories through PostgREST, which exercises the whole
- * chain in one go: env vars, the Supabase client, the anon role's grants, and
- * the row-level security policy on `categories`. Styling is deliberately bare
- * — design tokens land once a visual direction is chosen (see src/theme).
+ * Signed-in home. Still a scaffold rather than the real discover screen, but
+ * it now proves the parts that matter: the session survives a reload, the
+ * on_auth_user_created trigger produced a profile row, and RLS lets the owner
+ * read it back.
  */
 
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useAuth } from '../features/auth/AuthProvider';
 import { fetchCategories } from '../lib/activities';
 import { supabase } from '../lib/supabase';
 import type { Category } from '../types/database';
 
 type LoadState =
   | { status: 'loading' }
-  | { status: 'ready'; categories: Category[] }
+  | { status: 'ready'; categories: Category[]; displayName: string | null }
   | { status: 'error'; message: string };
 
 export default function Index() {
+  const { session, loading, signOut } = useAuth();
   const [state, setState] = useState<LoadState>({ status: 'loading' });
+  const userId = session?.user.id;
 
   useEffect(() => {
+    if (!userId) return;
     let cancelled = false;
 
-    fetchCategories(supabase)
-      .then((categories) => {
-        if (!cancelled) setState({ status: 'ready', categories });
+    const load = async () => {
+      const [categories, profile] = await Promise.all([
+        fetchCategories(supabase),
+        supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle(),
+      ]);
+      if (profile.error) throw profile.error;
+      return {
+        categories,
+        displayName: (profile.data?.display_name as string | undefined) ?? null,
+      };
+    };
+
+    load()
+      .then(({ categories, displayName }) => {
+        if (!cancelled) setState({ status: 'ready', categories, displayName });
       })
-      .catch((error: unknown) => {
+      .catch((cause: unknown) => {
         if (cancelled) return;
         setState({
           status: 'error',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: cause instanceof Error ? cause.message : 'Unknown error',
         });
       });
 
-    // The screen can unmount before the request settles; without this the
-    // state update lands on a dead component.
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
+
+  if (loading) return <ActivityIndicator style={styles.fill} />;
+  if (!session) return <Redirect href="/sign-in" />;
 
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Movo</Text>
-      <Text style={styles.subtitle}>Categorías desde Supabase</Text>
+      <Text style={styles.subtitle}>
+        {state.status === 'ready' && state.displayName
+          ? `Hola, ${state.displayName}`
+          : session.user.email}
+      </Text>
 
       {state.status === 'loading' && <ActivityIndicator />}
-
       {state.status === 'error' && <Text style={styles.error}>{state.message}</Text>}
 
       {state.status === 'ready' && (
@@ -66,12 +85,22 @@ export default function Index() {
           )}
         />
       )}
+
+      <Pressable
+        onPress={() => {
+          void signOut();
+        }}
+        style={styles.signOut}
+      >
+        <Text style={styles.signOutText}>Cerrar sesión</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, gap: 8, justifyContent: 'center', padding: 24 },
+  fill: { flex: 1 },
+  screen: { flex: 1, gap: 8, padding: 24, paddingTop: 64 },
   title: { fontSize: 32, fontWeight: '700' },
   subtitle: { fontSize: 14, marginBottom: 16, opacity: 0.6 },
   error: { color: '#b00020' },
@@ -79,4 +108,6 @@ const styles = StyleSheet.create({
   row: { borderBottomColor: '#e0e0e0', borderBottomWidth: 1, paddingVertical: 12 },
   rowName: { fontSize: 18 },
   rowId: { fontSize: 12, opacity: 0.5 },
+  signOut: { paddingVertical: 16 },
+  signOutText: { fontSize: 14, textDecorationLine: 'underline' },
 });
