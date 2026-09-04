@@ -177,6 +177,8 @@ leaves no data behind.
 
 - [`docs/architecture.md`](docs/architecture.md) — system shape and data model
 - [`docs/security.md`](docs/security.md) — threat model, RLS rules, Ley 8968 obligations
+- [`docs/design-brief.md`](docs/design-brief.md) — the field kit, screens to build, and what the
+  schema has already decided for design
 - [`docs/adr/`](docs/adr/) — decision records, newest last
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — branches, commits, review
 
