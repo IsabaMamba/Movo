@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="es-419">
+  <head>
+    <title>Descubrir</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; }
+      body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f1f; }
+      img { max-width: 100%; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --base:#0B0F1F; --surface:#151A2E; --raised:#1F2437; --sunken:#070A14;
+  --border:#2A344A; --strong:#3B445B;
+  --t1:#FFFFFF; --t2:#A9B2C3; --t3:#8892A8; /* disabled ONLY — 4.40:1, below AA. Never for text to be read. */
+  --dis:#6E7A91; --inv:#0B0F1F; --warm:#F6E9D7;
+  --sun:#FFC56B; --aqua:#60D1D4; --teal:#2F7A8A;
+  --danger:#E94E3D; --danger-r:#F26150; --success:#46D6A0;
+  --h1c:#1B334A; --h2c:#2A677A; --h3c:#A86D65; --h4c:#F36244; --h5c:#FF9155; --h6c:#FECA7D; --h7c:#F6E9D7;
+  --ui:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--base);color:var(--t1);font-family:var(--ui);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+code{font-family:var(--mono);font-size:.82em;color:var(--warm);background:var(--raised);
+  padding:1px 5px;border-radius:4px}
+.shell{max-width:1180px;margin:0 auto;padding:0 22px 96px}
+
+header{padding:52px 0 26px;border-bottom:1px solid var(--border)}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:15px}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;
+  text-transform:uppercase}
+h1 em{font-style:normal;color:var(--sun)}
+.dek{margin-top:15px;color:var(--t2);max-width:64ch;font-size:1.05rem}
+
+section{padding-top:48px}
+.sh{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:baseline;
+  border-top:1px solid var(--border);padding-top:15px;margin-bottom:18px}
+.sn{font-family:var(--mono);font-size:12px;color:var(--sun)}
+.sh h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;text-transform:uppercase}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:12px;color:var(--t2)}
+.prose strong{color:var(--t1);font-weight:600}
+
+.stage{display:grid;grid-template-columns:1fr;gap:26px;align-items:start}
+@media(min-width:880px){.stage{grid-template-columns:390px minmax(0,1fr);gap:38px}}
+.phone{width:100%;max-width:390px;background:var(--base);border:1px solid var(--border);
+  border-radius:22px;overflow:hidden;display:flex;flex-direction:column}
+
+.dhead{padding:18px 16px 13px;display:flex;justify-content:space-between;align-items:flex-start}
+.dhead .ttl{font-size:1.65rem;font-weight:700;letter-spacing:-.03em;line-height:1}
+.dhead .loc{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.82rem;color:var(--t2)}
+.bell{position:relative;width:34px;height:34px;border-radius:999px;background:var(--surface);
+  display:flex;align-items:center;justify-content:center}
+.bell .dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:999px;
+  background:var(--danger);border:1.5px solid var(--base)}
+
+/* heat band */
+.hmap{position:relative;height:132px;margin:0 16px;border-radius:14px;overflow:hidden;background:#0B1526}
+.hglow{position:absolute;inset:0}
+.hlat{position:absolute;inset:0;background-image:
+  repeating-linear-gradient(to right,rgba(242,238,246,.10) 0 1px,transparent 1px 22px),
+  repeating-linear-gradient(to bottom,rgba(242,238,246,.10) 0 1px,transparent 1px 22px)}
+.hyou{position:absolute;left:176px;top:52px;width:22px;height:22px;border:2px solid #0B0F1F;
+  outline:2px solid #fff}
+.hlegend{position:absolute;left:11px;bottom:10px;right:11px;display:flex;align-items:center;gap:8px}
+.hbar{flex:1 1 auto;display:flex;height:6px;border-radius:2px;overflow:hidden}
+.hbar div{flex:1 1 0}
+.hsc{font-family:var(--mono);font-size:10px;color:#F6E9D7;letter-spacing:.06em}
+.hcta{position:absolute;right:11px;top:10px;font-size:.63rem;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--inv);background:#F6E9D7;padding:4px 9px;border-radius:999px}
+
+/* filters */
+.filters{padding:14px 0 12px;display:flex;flex-direction:column;gap:9px}
+.frow{display:flex;gap:7px;padding:0 16px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--strong);color:var(--t2);border-radius:999px;padding:7px 13px;
+  font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip.on{border-color:var(--aqua);color:var(--aqua);background:#60D1D41A}
+.chip.rad{border-color:var(--sun);color:var(--sun);background:#FFC56B14}
+
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;padding:6px 16px 10px}
+.dayhead .d{font-size:.72rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t2)}
+.dayhead .c{font-size:.72rem;color:var(--t3);font-variant-numeric:tabular-nums}
+
+.list{display:flex;flex-direction:column;gap:9px;padding:0 16px 16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:13px;display:flex;gap:12px;align-items:stretch}
+.card .heat{width:4px;border-radius:2px;flex:0 0 4px}
+.card .when{flex:0 0 52px;text-align:center;padding-top:1px}
+.card .when .h{font-size:1.02rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.card .when .r{font-size:.63rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--t3);margin-top:4px}
+.card .mid{flex:1 1 auto;min-width:0}
+.card .t{font-size:1rem;font-weight:600;line-height:1.2}
+.card .m{font-size:.76rem;color:var(--t3);margin-top:3px}
+.card .tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.tg{font-size:.66rem;font-weight:600;letter-spacing:.05em;padding:3px 7px;border-radius:999px;
+  border:1px solid var(--strong);color:var(--t2)}
+.tg.good{border-color:var(--success);color:var(--success)}
+.tg.warn{border-color:var(--sun);color:var(--sun)}
+.tg.imp{border-color:var(--aqua);color:var(--aqua)}
+.card .go{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.card .go .n{font-size:1.05rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.card .go .l{font-size:.63rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
+
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);
+  border-top:1px solid var(--border);margin-top:auto}
+.tabs>div{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 2px 12px;
+  color:var(--t3);font-size:.63rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.tabs>div.on{color:var(--sun);box-shadow:inset 0 2px 0 var(--sun)}
+
+/* empty */
+.empty{padding:26px 20px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px}
+.emptyart{width:120px;height:70px;border-radius:12px;overflow:hidden;position:relative;
+  background:#0B1526;margin-bottom:14px}
+.empty h4{font-size:1.05rem;font-weight:700}
+.empty p{font-size:.85rem;color:var(--t3);max-width:30ch;line-height:1.45}
+.eopts{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:16px}
+.eopt{background:var(--surface);border:1.5px solid var(--strong);border-radius:12px;
+  padding:12px 14px;display:flex;align-items:center;gap:11px;text-align:left}
+.eopt.primary{border-color:var(--sun);background:#FFC56B12}
+.eopt .et{flex:1 1 auto;font-size:.89rem;font-weight:600}
+.eopt .es{font-size:.74rem;color:var(--t3);font-weight:400;display:block;margin-top:2px}
+.eopt .cnt{font-family:var(--mono);font-size:.95rem;font-weight:600;color:var(--sun);
+  font-variant-numeric:tabular-nums}
+
+/* skeleton */
+.sk{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:13px;
+  display:flex;gap:12px}
+.skb{background:var(--raised);border-radius:6px}
+
+.notes{display:flex;flex-direction:column;gap:13px}
+.note{border-left:3px solid var(--sun);background:#FFC56B10;padding:12px 15px;border-radius:0 8px 8px 0}
+.note.bad{border-left-color:var(--danger);background:#E94E3D12}
+.note.new{border-left-color:var(--aqua);background:#60D1D410}
+.note .l{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:5px}
+.note.bad .l{color:var(--danger-r)}
+.note.new .l{color:var(--aqua)}
+.note p{font-size:.9rem;color:var(--t2)}
+.note p strong{color:var(--t1)}
+
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start}
+.mini{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px}
+.mini h3{font-size:.95rem;font-weight:700;margin-bottom:2px}
+.mini .sub{font-family:var(--mono);font-size:.7rem;color:var(--t3);margin-bottom:14px}
+.mini .hint{font-size:.79rem;color:var(--t3);margin-top:13px;line-height:1.5}
+.mini .hint b{color:var(--warm)}
+.inner{background:var(--base);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--border);
+  color:var(--t3);font-size:.88rem;max-width:70ch}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="shell">
+
+<header>
+  <div class="kick">Pantalla 03 de 3 · Descubrir</div>
+  <h1>Descubrir</h1>
+  <p class="dek">Lo primero que ve un desconocido. Ya funciona — filtros de categoría, radio y distancia por tarjeta — así que aquí no se decide qué hace, sino qué comunica. Y lo que más importa no es la lista llena: es qué pasa cuando está vacía.</p>
+</header>
+
+<!-- 01 -->
+<section>
+  <div class="sh"><span class="sn">01</span><h2>La pantalla</h2></div>
+
+  <div class="stage">
+    <div class="phone">
+
+      <div class="dhead">
+        <div>
+          <div class="ttl">Cerca de ti</div>
+          <div class="loc">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="var(--aqua)" stroke-width="2"><path d="M10 18s6-5.2 6-9.4A6 6 0 0 0 4 8.6C4 12.8 10 18 10 18Z"/><circle cx="10" cy="8.5" r="2.1"/></svg>
+            San Pedro · 5 km a la redonda
+          </div>
+        </div>
+        <span class="bell">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#A9B2C3" stroke-width="1.8"><path d="M10 2.5a5 5 0 0 0-5 5v3l-1.5 3h13L15 10.5v-3a5 5 0 0 0-5-5Z"/><path d="M8.2 16.5a1.9 1.9 0 0 0 3.6 0"/></svg>
+          <span class="dot"></span>
+        </span>
+      </div>
+
+      <div class="hmap">
+        <div class="hglow" style="background:
+          radial-gradient(circle at 46% 42%,#2A677A 0%,rgba(42,103,122,0) 58%),
+          radial-gradient(circle at 48% 44%,#F36244 0%,rgba(243,98,68,0) 26%),
+          radial-gradient(circle at 48% 44%,#FECA7D 0%,rgba(254,202,125,0) 12%),
+          radial-gradient(circle at 76% 68%,#FF9155 0%,rgba(255,145,85,0) 20%),
+          radial-gradient(circle at 20% 72%,#2A677A 0%,rgba(42,103,122,0) 30%)"></div>
+        <div class="hlat"></div>
+        <div class="hyou"></div>
+        <span class="hcta">Ver mapa</span>
+        <div class="hlegend">
+          <span class="hsc">0</span>
+          <div class="hbar">
+            <div style="background:var(--h1c)"></div><div style="background:var(--h2c)"></div>
+            <div style="background:var(--h3c)"></div><div style="background:var(--h4c)"></div>
+            <div style="background:var(--h5c)"></div><div style="background:var(--h6c)"></div>
+            <div style="background:var(--h7c)"></div>
+          </div>
+          <span class="hsc">40+</span>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="frow">
+          <span class="chip on">Todo</span>
+          <span class="chip">Running</span>
+          <span class="chip">Senderismo</span>
+          <span class="chip">Fútbol</span>
+        </div>
+        <div class="frow">
+          <span class="chip rad">5 km
+            <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 7.5 10 13l5-5.5"/></svg></span>
+          <span class="chip">Hoy</span>
+          <span class="chip">Gratis</span>
+          <span class="chip">Cualquier nivel</span>
+        </div>
+      </div>
+
+      <div class="dayhead"><span class="d">Hoy</span><span class="c">4 sesiones</span></div>
+
+      <div class="list">
+
+        <div class="card">
+          <div class="heat" style="background:linear-gradient(to bottom,var(--h5c),var(--h4c))"></div>
+          <div class="when"><div class="h">18:00</div><div class="r">18 min</div></div>
+          <div class="mid">
+            <div class="t">Corrida martes 6K</div>
+            <div class="m">La Sabana · 1,2 km de ti</div>
+            <div class="tags"><span class="tg good">Nadie se queda atrás</span><span class="tg">6:30 /km</span></div>
+          </div>
+          <div class="go"><div class="n" style="color:var(--h6c)">14</div><div class="l">van</div></div>
+        </div>
+
+        <div class="card">
+          <div class="heat" style="background:linear-gradient(to bottom,var(--h6c),var(--h5c))"></div>
+          <div class="when"><div class="h">19:00</div><div class="r">1 h</div></div>
+          <div class="mid">
+            <div class="t">Partido 7v7</div>
+            <div class="m">Cancha Zapote · 2,8 km de ti</div>
+            <div class="tags"><span class="tg warn">Falta portero</span><span class="tg">₡2.500</span></div>
+          </div>
+          <div class="go"><div class="n" style="color:var(--h6c)">13</div><div class="l">de 14</div></div>
+        </div>
+
+        <div class="card">
+          <div class="heat" style="background:var(--h2c)"></div>
+          <div class="when"><div class="h">19:30</div><div class="r">1,5 h</div></div>
+          <div class="mid">
+            <div class="t">Trote suave</div>
+            <div class="m">Parque del Este · 3,4 km de ti</div>
+            <div class="tags"><span class="tg">Principiantes</span><span class="tg">Gratis</span></div>
+          </div>
+          <div class="go"><div class="n" style="color:var(--h2c)">3</div><div class="l">van</div></div>
+        </div>
+
+        <div class="card" style="border-style:dashed">
+          <div class="heat" style="background:var(--h1c)"></div>
+          <div class="when"><div class="h">05:15</div><div class="r">mañana</div></div>
+          <div class="mid">
+            <div class="t" style="color:var(--t2)">Cerro Escazú</div>
+            <div class="m">Publicada por Un Club Secreto</div>
+            <div class="tags"><span class="tg imp">Ver en Instagram</span></div>
+          </div>
+          <div class="go"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg></div>
+        </div>
+
+      </div>
+
+      <div class="tabs">
+        <div class="on"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2.5" y="2.5" width="6" height="6"/><rect x="11.5" y="2.5" width="6" height="6"/><rect x="2.5" y="11.5" width="6" height="6"/><rect x="11.5" y="11.5" width="6" height="6"/></svg>Cerca</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M2.5 5.2 7.3 3l5.4 2.2L17.5 3v11.8l-4.8 2.2-5.4-2.2-4.8 2.2z"/><path d="M7.3 3v11.8M12.7 5.2V17"/></svg>Mapa</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 3.5v13M3.5 10h13"/></svg>Crear</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="7.2" cy="7.4" r="2.9"/><path d="M2.4 17c0-2.9 2.1-4.8 4.8-4.8s4.8 1.9 4.8 4.8"/><path d="M13.2 5.2a2.9 2.9 0 0 1 0 5.6"/></svg>Grupos</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="10" cy="6.6" r="3.2"/><path d="M3.6 17.2c0-3.4 2.7-5.6 6.4-5.6s6.4 2.2 6.4 5.6"/></svg>Perfil</div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note">
+        <div class="l">La franja térmica va arriba de la lista</div>
+        <p>Con tres sesiones la lista se ve pobre; el mapa de calor se ve <strong>vivo</strong>. Es la única representación que mejora en vez de empeorar cuando hay pocos datos, y por eso encabeza la pantalla que decide si alguien vuelve.</p>
+      </div>
+      <div class="note">
+        <div class="l">La hora es lo primero de cada tarjeta</div>
+        <p>Nadie busca «una corrida». Busca <strong>algo a lo que llegue hoy</strong>. La hora en tabular a la izquierda, el «en 18 min» debajo, y el título después — ese es el orden real de la decisión.</p>
+      </div>
+      <div class="note">
+        <div class="l">La barra de calor de la tarjeta repite el dato del número</div>
+        <p>No es decoración: es la misma densidad que el número de la derecha, codificada dos veces para que se pueda barrer la lista sin leer cifras. Y cumple la regla — calor sólo donde hay densidad, con la escala visible arriba.</p>
+      </div>
+      <div class="note">
+        <div class="l">«14 van» y «13 de 14» conviven</div>
+        <p>La primera no tiene cupo, la segunda sí. Son frases distintas en la misma lista porque <code>max_participants</code> es nullable — y forzar un denominador falso sería inventar información.</p>
+      </div>
+      <div class="note">
+        <div class="l">La sesión importada se ve distinta a propósito</div>
+        <p>Borde punteado, sin conteo, con flecha de salida en lugar de acción. No la controlamos: <strong>parecer igual sería prometer algo que no podemos cumplir.</strong></p>
+      </div>
+      <div class="note new">
+        <div class="l">Cambio · «Clubes» pasa a «Grupos»</div>
+        <p>La gente le pone nombre a su grupo. «Club» suena institucional y en varios países se asocia a algo con membresía y cuota. <strong>Grupo</strong> funciona igual en toda la región y describe mejor lo que la base de datos ya modela.</p>
+      </div>
+      <div class="note bad">
+        <div class="l">Nunca</div>
+        <p><strong>Una lista sin agrupar por día.</strong> «Hoy» y «Mañana» son categorías distintas en la cabeza de alguien; mezclarlas obliga a leer cada fecha para descartar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section>
+  <div class="sh"><span class="sn">02</span><h2>El vacío importa más que el lleno</h2></div>
+  <div class="prose" style="margin-bottom:22px">
+    <p>La pantalla vacía es la razón número uno por la que alguien no vuelve. La regla es simple y absoluta: <strong>nunca mostrar una pantalla vacía sin una salida con número.</strong> «No hay nada cerca» es un callejón; «hay 6 a 10 km» es una acción.</p>
+  </div>
+
+  <div class="states">
+
+    <div class="mini">
+      <h3>Nada en el radio</h3>
+      <div class="sub">el caso frecuente</div>
+      <div class="inner">
+        <div class="empty">
+          <div class="emptyart">
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 130%,#2A677A 0%,rgba(42,103,122,0) 65%)"></div>
+            <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(to right,rgba(242,238,246,.10) 0 1px,transparent 1px 18px),repeating-linear-gradient(to bottom,rgba(242,238,246,.10) 0 1px,transparent 1px 18px)"></div>
+          </div>
+          <h4>Nada en 5 km hoy</h4>
+          <p>Tranquilo, casi siempre hay algo un poco más lejos.</p>
+          <div class="eopts">
+            <div class="eopt primary">
+              <div class="et">Ampliar a 10 km <span class="es">Miércoles y jueves también</span></div>
+              <span class="cnt">6</span>
+            </div>
+            <div class="eopt">
+              <div class="et">Quitar el filtro «Gratis» <span class="es">Hay sesiones con costo cerca</span></div>
+              <span class="cnt">2</span>
+            </div>
+            <div class="eopt">
+              <div class="et">Crear una <span class="es">Elige día, hora y lugar</span></div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--t3)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Los números <b>ya están calculados</b> antes de mostrar el vacío. Ofrecer «ampliar el radio» sin decir cuánto hay es pedir fe.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Día uno, mercado nuevo</h3>
+      <div class="sub">nadie se ha registrado todavía</div>
+      <div class="inner">
+        <div class="empty" style="padding-bottom:14px">
+          <h4>Apenas estamos llegando aquí</h4>
+          <p>Estas las publican grupos reales de la zona. Confirma con ellos directamente.</p>
+        </div>
+        <div class="list" style="padding-top:0">
+          <div class="card" style="border-style:dashed">
+            <div class="heat" style="background:var(--h1c)"></div>
+            <div class="when"><div class="h">06:00</div><div class="r">sáb</div></div>
+            <div class="mid">
+              <div class="t" style="color:var(--t2)">Rodada Ciclovía</div>
+              <div class="m">Publicada por Bici Urbana</div>
+            </div>
+            <div class="go"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg></div>
+          </div>
+          <div class="card" style="border-style:dashed">
+            <div class="heat" style="background:var(--h1c)"></div>
+            <div class="when"><div class="h">17:30</div><div class="r">mar</div></div>
+            <div class="mid">
+              <div class="t" style="color:var(--t2)">Trote del parque</div>
+              <div class="m">Publicada por Corredores del Este</div>
+            </div>
+            <div class="go"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Esto es <code>source = imported</code> haciendo su trabajo. La pantalla nunca está vacía porque <b>se siembra antes de abrir</b>, con atribución y enlace.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Sin permiso de ubicación</h3>
+      <div class="sub">no es un error, es una elección</div>
+      <div class="inner">
+        <div class="empty">
+          <h4>¿Dónde buscamos?</h4>
+          <p>Puedes activar la ubicación o elegir una zona a mano. Las dos funcionan igual.</p>
+          <div class="eopts">
+            <div class="eopt primary">
+              <div class="et">Usar mi ubicación <span class="es">Sólo mientras usas la app</span></div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--sun)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+            </div>
+            <div class="eopt">
+              <div class="et">Elegir una zona <span class="es">San Pedro, Escazú, Heredia…</span></div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--t3)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Negar la ubicación no puede dejar la app inservible. La zona manual da el mismo resultado y <b>quita la presión de la decisión</b>.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Cargando</h3>
+      <div class="sub">esqueleto, no ruedita</div>
+      <div class="inner" style="padding:13px;display:flex;flex-direction:column;gap:9px">
+        <div class="sk">
+          <div class="skb" style="width:4px"></div>
+          <div class="skb" style="width:44px;height:34px"></div>
+          <div style="flex:1 1 auto;display:flex;flex-direction:column;gap:7px">
+            <div class="skb" style="height:14px;width:75%"></div>
+            <div class="skb" style="height:10px;width:52%"></div>
+          </div>
+        </div>
+        <div class="sk" style="opacity:.6">
+          <div class="skb" style="width:4px"></div>
+          <div class="skb" style="width:44px;height:34px"></div>
+          <div style="flex:1 1 auto;display:flex;flex-direction:column;gap:7px">
+            <div class="skb" style="height:14px;width:60%"></div>
+            <div class="skb" style="height:10px;width:44%"></div>
+          </div>
+        </div>
+      </div>
+      <p class="hint">El esqueleto tiene la forma de la tarjeta real, así que la lista no salta al llegar. Sin animación de brillo: <b>respeta prefers-reduced-motion</b> y no gasta batería.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 03 -->
+<section>
+  <div class="sh"><span class="sn">03</span><h2>Anatomía de la tarjeta</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Cuatro zonas fijas. Ninguna se mueve entre variantes — sólo cambia lo que llevan dentro, para que la lista se pueda barrer sin releer la estructura.</p>
+  </div>
+  <div class="tw" style="overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)">
+    <table style="border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px">
+      <thead><tr>
+        <th style="text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--t3);background:var(--raised)">Zona</th>
+        <th style="text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--t3);background:var(--raised)">Lleva</th>
+        <th style="text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--t3);background:var(--raised)">Por qué ahí</th>
+      </tr></thead>
+      <tbody style="color:var(--t2)">
+        <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border)"><b style="color:var(--t1)">Barra</b></td>
+          <td style="padding:10px 14px;border-bottom:1px solid var(--border)">Densidad como color</td>
+          <td style="padding:10px 14px;border-bottom:1px solid var(--border)">Se lee de reojo al hacer scroll, antes que cualquier texto</td></tr>
+        <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border)"><b style="color:var(--t1)">Cuándo</b></td>
+          <td style="padding:10px 14px;border-bottom:1px solid var(--border)">Hora en tabular + cuánto falta</td>
+          <td style="padding:10px 14px;border-bottom:1px solid var(--border)">Es el primer filtro mental: ¿llego o no llego?</td></tr>
+        <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border)"><b style="color:var(--t1)">Qué</b></td>
+          <td style="padding:10px 14px;border-bottom:1px solid var(--border)">Título, lugar, distancia, dos etiquetas</td>
+          <td style="padding:10px 14px;border-bottom:1px solid var(--border)">Máximo dos etiquetas — la tercera ya nadie la lee</td></tr>
+        <tr><td style="padding:10px 14px"><b style="color:var(--t1)">Quiénes</b></td>
+          <td style="padding:10px 14px">Conteo, o flecha si es importada</td>
+          <td style="padding:10px 14px">El número decide tanto como la hora: nadie quiere ser el único</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  Tercera y última de la serie. Con esto quedan cubiertas crear, decidir y encontrar — el ciclo completo de un participante. Lo que sigue sin pantalla es <strong>Grupos</strong> y la <strong>lista del organizador</strong>, que es la que produce el dato que sostiene todo lo demás.
+</footer>
+
+</div>
+  </body>
+</html>

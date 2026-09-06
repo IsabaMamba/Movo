@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="es-419">
+  <head>
+    <title>Roles e IA</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; }
+      body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f1f; }
+      img { max-width: 100%; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --base:#0B0F1F; --surface:#151A2E; --raised:#1F2437; --sunken:#070A14;
+  --border:#2A344A; --strong:#3B445B;
+  --t1:#FFFFFF; --t2:#A9B2C3; --t3:#8892A8; /* disabled ONLY — 4.40:1, below AA. Never for text to be read. */
+  --dis:#6E7A91; --inv:#0B0F1F; --warm:#F6E9D7;
+  --sun:#FFC56B; --aqua:#60D1D4; --teal:#2F7A8A;
+  --danger:#E94E3D; --danger-r:#F26150; --success:#46D6A0;
+  --h1c:#1B334A; --h2c:#2A677A; --h3c:#A86D65; --h4c:#F36244; --h5c:#FF9155; --h6c:#FECA7D; --h7c:#F6E9D7;
+  --ui:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--base);color:var(--t1);font-family:var(--ui);font-size:16px;
+  line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;text-wrap:balance} p{margin:0}
+code{font-family:var(--mono);font-size:.82em;color:var(--warm);background:var(--raised);
+  padding:1px 5px;border-radius:4px}
+.shell{max-width:1180px;margin:0 auto;padding:0 22px 96px}
+
+header{padding:52px 0 26px;border-bottom:1px solid var(--border)}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:15px}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;
+  text-transform:uppercase}
+h1 em{font-style:normal;color:var(--sun)}
+.dek{margin-top:15px;color:var(--t2);max-width:64ch;font-size:1.05rem}
+
+section{padding-top:48px}
+.sh{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:baseline;
+  border-top:1px solid var(--border);padding-top:15px;margin-bottom:18px}
+.sn{font-family:var(--mono);font-size:12px;color:var(--sun)}
+.sh h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;text-transform:uppercase}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:12px;color:var(--t2)}
+.prose strong{color:var(--t1);font-weight:600}
+
+.grid2{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
+@media(min-width:900px){.grid2{grid-template-columns:390px minmax(0,1fr);gap:34px}}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+
+.phone{width:100%;max-width:390px;background:var(--base);border:1px solid var(--border);
+  border-radius:20px;overflow:hidden}
+.pb{padding:15px 15px 16px}
+.ptop{display:flex;align-items:center;justify-content:space-between;padding:15px 15px 12px;
+  border-bottom:1px solid var(--border)}
+.ptop .tt{font-size:1.08rem;font-weight:700;letter-spacing:-.01em}
+
+/* badges — shape differs, not just colour */
+.rb{display:inline-flex;align-items:center;gap:5px;font-size:.63rem;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;padding:4px 8px}
+.rb.admin{background:var(--aqua);color:var(--inv);border-radius:3px}
+.rb.org{background:var(--sun);color:var(--inv);border-radius:999px}
+.rb.member{border:1.5px solid var(--strong);color:var(--t3);border-radius:999px;padding:3px 8px}
+
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
+.stat .k{font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.stat .v{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;margin-top:6px}
+.stat.alert{border-color:var(--danger);background:#E94E3D14}
+.stat.alert .k{color:var(--danger-r)}
+.stat.alert .v{color:var(--danger-r)}
+.statrow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+
+.tool{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:13px 14px;display:flex;align-items:center;gap:12px}
+.tool .ic{width:34px;height:34px;border-radius:9px;background:var(--raised);display:flex;
+  align-items:center;justify-content:center;flex:0 0 34px}
+.tool .tx{flex:1 1 auto}
+.tool .n{font-size:.93rem;font-weight:600}
+.tool .d{font-size:.74rem;color:var(--t3);margin-top:2px}
+
+.urow{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--border)}
+.urow:last-child{border-bottom:0}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;
+  color:var(--inv);flex:0 0 auto;font-size:.72rem}
+.urow .nm{font-size:.93rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.urow .mt{font-size:.73rem;color:var(--t3);margin-top:2px}
+.btn{border:0;border-radius:10px;font-family:var(--ui);font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.sm{height:34px;padding:0 13px;font-size:.79rem}
+.btn.full{height:46px;width:100%;font-size:.93rem}
+.btn.sun{background:var(--sun);color:var(--inv)}
+.btn.aqua{background:var(--aqua);color:var(--inv)}
+.btn.ghost{background:transparent;border:1.5px solid var(--strong);color:var(--t2)}
+.btn.dis{background:var(--raised);color:var(--dis);cursor:not-allowed}
+.btn.danger{background:transparent;border:1.5px solid var(--danger);color:var(--danger-r)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.lbl{font-size:.63rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);
+  margin-bottom:7px}
+.fld{background:var(--sunken);border:1.5px solid var(--strong);border-radius:10px;
+  min-height:42px;display:flex;align-items:center;padding:0 12px;font-size:.92rem;gap:8px}
+.fld .u{margin-left:auto;color:var(--t3);font-size:.8rem}
+.hint{font-size:.74rem;color:var(--t3);margin-top:6px;line-height:1.45}
+.hint b{color:var(--warm)}
+
+.why{background:#2F7A8A1F;border-left:3px solid var(--teal);border-radius:0 10px 10px 0;
+  padding:11px 13px}
+.why .h{font-size:.63rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--aqua);margin-bottom:6px}
+.why ul{margin:0;padding-left:1rem;display:flex;flex-direction:column;gap:5px;
+  font-size:.81rem;color:var(--t2)}
+.why li::marker{color:var(--aqua)}
+
+.tog{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--sunken);
+  border:1.5px solid var(--strong);border-radius:11px}
+.tog .txt{flex:1 1 auto;font-size:.87rem}
+.tog .txt small{display:block;color:var(--t3);font-size:.73rem;margin-top:2px}
+.tog .sw{width:42px;height:25px;border-radius:999px;background:var(--strong);position:relative;flex:0 0 42px}
+.tog .sw i{position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:999px;background:var(--t3)}
+.tog.on .sw{background:var(--success)}
+.tog.on .sw i{left:20px;background:var(--inv)}
+
+.hmap{position:relative;border-radius:12px;overflow:hidden;background:#0B1526}
+.hlat{position:absolute;inset:0;background-image:
+  repeating-linear-gradient(to right,rgba(242,238,246,.09) 0 1px,transparent 1px 20px),
+  repeating-linear-gradient(to bottom,rgba(242,238,246,.09) 0 1px,transparent 1px 20px)}
+
+.notes{display:flex;flex-direction:column;gap:12px}
+.note{border-left:3px solid var(--sun);background:#FFC56B10;padding:12px 15px;border-radius:0 8px 8px 0}
+.note.bad{border-left-color:var(--danger);background:#E94E3D12}
+.note.new{border-left-color:var(--aqua);background:#60D1D410}
+.note .l{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:5px}
+.note.bad .l{color:var(--danger-r)} .note.new .l{color:var(--aqua)}
+.note p{font-size:.89rem;color:var(--t2)} .note p strong{color:var(--t1)}
+
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--t2)}
+thead th{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--t3);font-weight:500;background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+
+.cap{display:flex;align-items:baseline;gap:9px;margin-bottom:9px}
+.cap .n{font-family:var(--mono);font-size:11px;color:var(--sun)}
+.cap .t{font-size:1rem;font-weight:700}
+.sub{font-size:.8rem;color:var(--t3);margin-bottom:13px;line-height:1.45}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--border);color:var(--t3);
+  font-size:.88rem;max-width:72ch}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="shell">
+
+<header>
+  <div class="kick">Roles · IA · Modo solo</div>
+  <h1>Quién puede<br><em>qué</em></h1>
+  <p class="dek">Admin, organizador y la IA que propone sesiones. Tres cambios respecto al brief, todos por la misma razón: cada sesión necesita un nombre humano encima, o deja de generar el dato del que vive el producto.</p>
+</header>
+
+<!-- 00 -->
+<section>
+  <div class="sh"><span class="sn">00</span><h2>Qué cambié y por qué</h2></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>En el brief</th><th>Aquí</th><th>Razón</th></tr></thead>
+      <tbody>
+        <tr><td><b style="color:var(--t1)">Eventos libres sin organizador</b></td>
+          <td><b style="color:var(--t1)">Sesión abierta</b> — la IA la propone, la primera persona que la reclama queda como responsable</td>
+          <td>Sin responsable no hay check-in, y sin check-in no hay dato de asistencia — que es lo que el producto vende. Además Movo dejaría de ser plataforma para ser organizador.</td></tr>
+        <tr><td><b style="color:var(--t1)">Sesiones libres sin nadie</b></td>
+          <td><b style="color:var(--t1)">Modo solo</b> — ruta, mapa offline y tips para una persona</td>
+          <td>Cubre el caso «no vino nadie» sin fingir que hubo un evento. Es lo único de todo esto que funciona con cero usuarios.</td></tr>
+        <tr><td><b style="color:var(--t1)">Predicción de asistencia</b></td>
+          <td><b style="color:var(--t1)">Rango con calidad de dato</b> — y «sin datos suficientes» cuando no los hay</td>
+          <td>Hoy hay cero check-ins. Un número inventado sólo enseña que el número no sirve, y eso se aprende una sola vez.</td></tr>
+        <tr><td><b style="color:var(--t1)">Historial de ubicación</b></td>
+          <td>Opt-in, apagado por defecto, <b style="color:var(--t1)">distrito y franja horaria</b>, 90 días</td>
+          <td>Conserva casi todo el valor para la IA con una fracción de la exposición. Si hay una filtración, la diferencia es entre «con quién iba a correr» y «dónde está cada martes a las 6».</td></tr>
+        <tr><td><b style="color:var(--t1)">Tono masculino</b></td>
+          <td><b style="color:var(--t1)">Enérgico, sin género</b></td>
+          <td>El calor y la intensidad se quedan. La barrera de confianza más alta está en el público que el tono masculino excluye.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 01 -->
+<section>
+  <div class="sh"><span class="sn">01</span><h2>Los tres roles</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Las insignias se distinguen por <strong>forma antes que por color</strong>: admin cuadrada, organizador redonda, miembro sin relleno. Quien no distingue aqua de sun sigue viendo la diferencia.</p>
+  </div>
+  <div class="grid3">
+    <div class="card">
+      <div style="margin-bottom:11px"><span class="rb member">Miembro</span></div>
+      <div class="sub">El rol por defecto. Todo el mundo empieza aquí.</div>
+      <ul style="margin:0;padding-left:1.05rem;font-size:.85rem;color:var(--t2);display:flex;flex-direction:column;gap:6px">
+        <li>Buscar y unirse a sesiones</li>
+        <li>Crear sesiones normales</li>
+        <li>Unirse a grupos</li>
+        <li>Reportar y bloquear</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:#FFC56B55">
+      <div style="margin-bottom:11px"><span class="rb org">Organizador</span></div>
+      <div class="sub">Asignado por un admin. Requiere identidad verificada.</div>
+      <ul style="margin:0;padding-left:1.05rem;font-size:.85rem;color:var(--t2);display:flex;flex-direction:column;gap:6px">
+        <li>Todo lo de miembro</li>
+        <li><b style="color:var(--t1)">Pasar lista y cerrar sesiones</b></li>
+        <li>Series recurrentes</li>
+        <li>Aprobar o quitar participantes</li>
+        <li>Creador de sesiones con IA</li>
+        <li>Fijar sesiones en el mapa</li>
+        <li>Reporte de asistencia semanal</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:#60D1D455">
+      <div style="margin-bottom:11px"><span class="rb admin">Admin</span></div>
+      <div class="sub">Equipo Movo. No es un rol que se gane dentro de la app.</div>
+      <ul style="margin:0;padding-left:1.05rem;font-size:.85rem;color:var(--t2);display:flex;flex-direction:column;gap:6px">
+        <li>Asignar y retirar el rol de organizador</li>
+        <li><b style="color:var(--t1)">Cola de reportes</b></li>
+        <li>Controles de la IA</li>
+        <li>Analítica del mapa de calor</li>
+        <li>Suspender cuentas y sesiones</li>
+      </ul>
+    </div>
+  </div>
+  <div class="notes" style="margin-top:18px;max-width:72ch">
+    <div class="note">
+      <div class="l">Lo que separa a un organizador de un miembro</div>
+      <p>No es «crear actividades avanzadas» — cualquiera crea sesiones. Es <strong>pasar lista</strong>. Ese permiso es el que genera dato nuevo, y por eso es el que exige verificación de identidad y una decisión humana para otorgarlo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section>
+  <div class="sh"><span class="sn">02</span><h2>Panel de admin</h2></div>
+  <div class="grid2">
+    <div class="phone">
+      <div class="ptop">
+        <span class="tt">Panel</span>
+        <span class="rb admin">Admin</span>
+      </div>
+      <div class="pb" style="display:flex;flex-direction:column;gap:13px">
+
+        <div class="stat alert">
+          <div class="k">Reportes sin revisar</div>
+          <div class="v">7</div>
+          <div style="font-size:.76rem;color:var(--danger-r);margin-top:7px">El más antiguo lleva 2 días</div>
+        </div>
+
+        <div class="statrow">
+          <div class="stat"><div class="k">Sesiones esta semana</div><div class="v">42</div></div>
+          <div class="stat"><div class="k">Asistencia media</div><div class="v">78%</div></div>
+          <div class="stat"><div class="k">Organizadores</div><div class="v">11</div></div>
+          <div class="stat"><div class="k">Propuestas IA</div><div class="v" style="color:var(--aqua)">5</div></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="tool">
+            <span class="ic"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="var(--sun)" stroke-width="1.9"><circle cx="7.2" cy="7.4" r="2.9"/><path d="M2.4 17c0-2.9 2.1-4.8 4.8-4.8s4.8 1.9 4.8 4.8"/><path d="M14 7h4M16 5v4"/></svg></span>
+            <div class="tx"><div class="n">Organizadores</div><div class="d">Asignar, retirar, revisar</div></div>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+          </div>
+          <div class="tool">
+            <span class="ic"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="var(--aqua)" stroke-width="1.9"><rect x="3.5" y="3.5" width="13" height="13" rx="2"/><path d="M7 10h6M10 7v6"/></svg></span>
+            <div class="tx"><div class="n">Controles de IA</div><div class="d">Umbrales, zonas, frecuencia</div></div>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+          </div>
+          <div class="tool">
+            <span class="ic"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="var(--h5c)" stroke-width="1.9"><path d="M3 16.5v-5M8 16.5v-9M13 16.5v-3M18 16.5v-12"/></svg></span>
+            <div class="tx"><div class="n">Analítica del calor</div><div class="d">Densidad por distrito y hora</div></div>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+          </div>
+          <div class="tool">
+            <span class="ic"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="var(--success)" stroke-width="1.9"><path d="M10 2.5 3.5 5.5v5c0 4 2.8 6.4 6.5 7.5 3.7-1.1 6.5-3.5 6.5-7.5v-5z"/><path d="M7.5 10.2 9.4 12l3.4-4"/></svg></span>
+            <div class="tx"><div class="n">Comunidad</div><div class="d">Grupos, retención, primeras veces</div></div>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--dis)" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note bad">
+        <div class="l">Los reportes van arriba, no las métricas</div>
+        <p>El brief pedía «estadísticas avanzadas» primero. Pero una cola de reportes sin leer <strong>equivale a no tener moderación</strong>, y esta app junta desconocidos en un parque. El número va en rojo, con la antigüedad del más viejo, porque «7 reportes» y «7 reportes, el más viejo de hace 2 días» son situaciones distintas.</p>
+      </div>
+      <div class="note">
+        <div class="l">Cuatro herramientas, no ocho</div>
+        <p>Las del brief, con una fusión: «Community Insights» y las estadísticas generales son la misma pregunta. Un panel con ocho entradas se convierte en un panel que nadie recorre.</p>
+      </div>
+      <div class="note">
+        <div class="l">Admin no es un rol que se gane</div>
+        <p>Organizador se asigna dentro de la app; admin no. Es equipo Movo y se otorga fuera del producto — si la app puede crear admins, un admin comprometido puede crear más.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section>
+  <div class="sh"><span class="sn">03</span><h2>Asignar organizador</h2></div>
+  <div class="grid2">
+    <div class="phone">
+      <div class="ptop"><span class="tt">Organizadores</span><span style="font-size:.75rem;color:var(--t3)">11 activos</span></div>
+      <div class="pb">
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+          <span style="border:1.5px solid var(--aqua);color:var(--aqua);background:#60D1D41A;border-radius:999px;padding:6px 12px;font-size:.76rem;font-weight:600">Candidatos</span>
+          <span style="border:1.5px solid var(--strong);color:var(--t2);border-radius:999px;padding:6px 12px;font-size:.76rem;font-weight:600">Activos</span>
+          <span style="border:1.5px solid var(--strong);color:var(--t2);border-radius:999px;padding:6px 12px;font-size:.76rem;font-weight:600">Retirados</span>
+        </div>
+
+        <div class="urow">
+          <span class="av" style="width:38px;height:38px;background:var(--h5c)">SF</span>
+          <div style="flex:1 1 auto">
+            <div class="nm">Sofía F.
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="var(--success)" stroke-width="2.6"><path d="M3.5 10.4 8 15l8.5-10"/></svg></div>
+            <div class="mt">32 sesiones · identidad verificada</div>
+          </div>
+          <button class="btn sm sun">Asignar</button>
+        </div>
+
+        <div class="urow">
+          <span class="av" style="width:38px;height:38px;background:var(--aqua)">MA</span>
+          <div style="flex:1 1 auto">
+            <div class="nm">Manuel A.</div>
+            <div class="mt" style="color:var(--sun)">18 sesiones · falta verificar identidad</div>
+          </div>
+          <button class="btn sm dis">Asignar</button>
+        </div>
+
+        <div class="urow">
+          <span class="av" style="width:38px;height:38px;background:var(--h6c)">JR</span>
+          <div style="flex:1 1 auto">
+            <div class="nm">Jimena R.
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="var(--success)" stroke-width="2.6"><path d="M3.5 10.4 8 15l8.5-10"/></svg></div>
+            <div class="mt">24 sesiones · 1 reporte resuelto</div>
+          </div>
+          <button class="btn sm ghost">Revisar</button>
+        </div>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div class="lbl">Al asignar el rol</div>
+          <ul style="margin:0;padding-left:1.05rem;font-size:.84rem;color:var(--t2);display:flex;flex-direction:column;gap:6px">
+            <li>Queda registrado quién lo asignó y cuándo</li>
+            <li>La persona recibe aviso y acepta las normas de organizador</li>
+            <li>Se desbloquea pasar lista y el creador con IA</li>
+            <li>Se puede retirar en cualquier momento, sin borrar su historial</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note bad">
+        <div class="l">Verificación antes que el rol</div>
+        <p>Manuel tiene el botón apagado y la razón escrita. <strong>Un organizador reúne desconocidos y pasa lista sobre nombres reales</strong> — es el rol con más contacto físico del producto. Sin identidad verificada, no se otorga.</p>
+      </div>
+      <div class="note">
+        <div class="l">Quién asignó a quién queda escrito</div>
+        <p>No es burocracia: si un organizador causa un problema, la primera pregunta va a ser quién lo aprobó y con qué información. Un registro que no existe no se puede consultar después.</p>
+      </div>
+      <div class="note">
+        <div class="l">Retirar no borra</div>
+        <p>Quitar el rol conserva las sesiones y la asistencia que esa persona generó. Borrarlas alteraría el historial de todos los que asistieron.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section>
+  <div class="sh"><span class="sn">04</span><h2>Creador de sesiones con IA</h2></div>
+  <div class="grid2">
+    <div class="phone">
+      <div class="ptop">
+        <span class="tt">Propuesta</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:.63rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--aqua);border:1.5px solid var(--aqua);border-radius:999px;padding:3px 9px">
+          <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2.5 12 8l5.5 2-5.5 2-2 5.5-2-5.5L2.5 10 8 8z"/></svg>IA</span>
+      </div>
+      <div class="pb" style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="why">
+          <div class="h">Por qué esta propuesta</div>
+          <ul>
+            <li>Los martes 18:00 en La Sabana llenan el <b style="color:var(--warm)">92%</b> de sus cupos</li>
+            <li>14 personas de tu grupo corren esa franja</li>
+            <li>No hay ninguna sesión de running ahí ese día</li>
+            <li>Pronóstico: sin lluvia hasta las 20:00</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="lbl">Título propuesto</div>
+          <div class="fld"><span>Corrida de los martes · 6K</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+          <div><div class="lbl">Día</div><div class="fld"><span>mar 15 sep</span></div></div>
+          <div><div class="lbl">Hora</div><div class="fld"><span>18:00</span></div></div>
+        </div>
+        <div>
+          <div class="lbl">Lugar</div>
+          <div class="fld"><span>Parque La Sabana</span><span class="u">público</span></div>
+        </div>
+        <div>
+          <div class="lbl">Etiquetas</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="border:1.5px solid var(--aqua);color:var(--aqua);background:#60D1D41A;border-radius:999px;padding:5px 11px;font-size:.75rem;font-weight:600">6:30 /km</span>
+            <span style="border:1.5px solid var(--aqua);color:var(--aqua);background:#60D1D41A;border-radius:999px;padding:5px 11px;font-size:.75rem;font-weight:600">Nadie se queda atrás</span>
+            <span style="border:1.5px dashed var(--strong);color:var(--t3);border-radius:999px;padding:5px 11px;font-size:.75rem;font-weight:600">+ agregar</span>
+          </div>
+        </div>
+
+        <div class="card" style="background:var(--sunken);border-color:var(--border)">
+          <div class="lbl" style="margin-bottom:5px">Asistencia estimada</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums">9–16</span>
+            <span style="font-size:.78rem;color:var(--t3)">personas</span>
+          </div>
+          <div class="hint">Basado en <b>6 sesiones</b> comparables. Con menos de 20 el rango es amplio a propósito.</div>
+        </div>
+
+        <div class="fld" style="min-height:46px;background:transparent;border-style:dashed">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--sun)" stroke-width="2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>
+          <span style="font-size:.83rem;color:var(--t2)">Se publica a tu nombre</span>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <button class="btn full ghost" style="flex:1 1 0">Editar</button>
+          <button class="btn full sun" style="flex:1.4 1 0">Publicar</button>
+        </div>
+        <button class="btn full ghost" style="border:0;color:var(--t3);height:38px">Descartar</button>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note new">
+        <div class="l">La justificación no es opcional</div>
+        <p>«Por qué esta propuesta» va <strong>arriba de la propuesta</strong>, no escondida. Un organizador que no entiende de dónde salió la sugerencia no puede juzgarla — y aprobar sin juzgar es exactamente lo que convierte a la IA en un riesgo.</p>
+      </div>
+      <div class="note new">
+        <div class="l">Rango, no número</div>
+        <p>«9–16 personas, basado en 6 sesiones comparables» es honesto. <strong>«12 personas» sería inventado.</strong> Cuando no haya ni una sesión comparable, el bloque dice «sin datos suficientes» y no muestra cifra — que es el estado real hoy.</p>
+      </div>
+      <div class="note bad">
+        <div class="l">Nunca «publicado por Movo IA»</div>
+        <p>Toda sesión lleva un nombre humano. Quien aprueba, responde: pasa lista, contesta preguntas y está ahí. <strong>Una marca no puede recibir a nadie en un portón a las 6 de la mañana.</strong></p>
+      </div>
+      <div class="note">
+        <div class="l">Editar antes que aprobar</div>
+        <p>«Editar» está a la izquierda y «Publicar» pesa más visualmente pero llega después. El orden empuja a revisar; poner aprobar primero enseña a aprobar sin leer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section>
+  <div class="sh"><span class="sn">05</span><h2>Sesión abierta y modo solo</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Lo que en el brief era «evento libre sin organizador» aquí son dos cosas distintas: una sesión que <strong>alguien puede abrir</strong>, y un modo que funciona <strong>aunque no vaya nadie</strong>.</p>
+  </div>
+  <div class="grid3">
+
+    <div>
+      <div class="cap"><span class="n">A</span><span class="t">Sin responsable todavía</span></div>
+      <div class="sub">La IA la propuso. Nadie la ha abierto.</div>
+      <div class="phone" style="max-width:none">
+        <div class="pb">
+          <div style="display:flex;gap:6px;margin-bottom:11px">
+            <span style="background:#2F7A8A2E;color:var(--aqua);border:1.5px solid var(--aqua);border-radius:999px;padding:3px 9px;font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Abierta</span>
+            <span style="border:1.5px solid var(--strong);color:var(--t3);border-radius:999px;padding:3px 9px;font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Sin reglas</span>
+          </div>
+          <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.02em;line-height:1.1">Trote suelto · Parque del Este</div>
+          <div style="font-size:.83rem;color:var(--t3);margin-top:6px">jue 10 sep · 17:30 · sin ritmo fijo</div>
+          <div style="margin-top:13px;padding:11px 13px;background:var(--sunken);border-radius:11px;border:1.5px dashed var(--strong)">
+            <div style="font-size:.85rem;color:var(--t2);line-height:1.45">Nadie la ha abierto todavía. Quien la abra recibe a los demás y pasa lista.</div>
+          </div>
+          <button class="btn full sun" style="margin-top:12px">La abro yo</button>
+          <div style="font-size:.75rem;color:var(--t3);text-align:center;margin-top:9px">4 personas dijeron que irían</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap"><span class="n">B</span><span class="t">Alguien la abrió</span></div>
+      <div class="sub">Se convierte en una sesión normal, con nombre.</div>
+      <div class="phone" style="max-width:none">
+        <div class="pb">
+          <div style="display:flex;gap:6px;margin-bottom:11px">
+            <span style="background:#2F7A8A2E;color:var(--aqua);border:1.5px solid var(--aqua);border-radius:999px;padding:3px 9px;font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Abierta</span>
+          </div>
+          <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.02em;line-height:1.1">Trote suelto · Parque del Este</div>
+          <div style="font-size:.83rem;color:var(--t3);margin-top:6px">jue 10 sep · 17:30</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding:11px 13px;background:var(--sunken);border-radius:11px">
+            <span class="av" style="width:34px;height:34px;background:var(--h6c)">DV</span>
+            <div style="flex:1 1 auto">
+              <div style="font-size:.9rem;font-weight:600">Daniela la abrió</div>
+              <div style="font-size:.74rem;color:var(--t3)">Recibe en la entrada principal</div>
+            </div>
+          </div>
+          <button class="btn full sun" style="margin-top:12px">Voy</button>
+          <div style="font-size:.75rem;color:var(--t3);text-align:center;margin-top:9px">7 van · 2 primera vez</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap"><span class="n">C</span><span class="t">Nadie la abrió</span></div>
+      <div class="sub">No desaparece — se convierte en modo solo.</div>
+      <div class="phone" style="max-width:none">
+        <div class="pb">
+          <div style="display:flex;gap:6px;margin-bottom:11px">
+            <span style="border:1.5px solid var(--aqua);color:var(--aqua);border-radius:999px;padding:3px 9px;font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Modo solo</span>
+          </div>
+          <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.02em;line-height:1.1">Igual puedes ir</div>
+          <div style="font-size:.85rem;color:var(--t2);margin-top:8px;line-height:1.45">Nadie abrió esta sesión, pero la ruta, el mapa sin conexión y los consejos siguen ahí.</div>
+          <div style="margin-top:13px;display:flex;flex-direction:column;gap:8px">
+            <div class="tool" style="padding:11px 12px">
+              <span class="ic" style="width:30px;height:30px;flex:0 0 30px"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--aqua)" stroke-width="1.9"><path d="M2.5 5.2 7.3 3l5.4 2.2L17.5 3v11.8l-4.8 2.2-5.4-2.2-4.8 2.2z"/></svg></span>
+              <div class="tx"><div class="n" style="font-size:.86rem">Descargar el mapa</div><div class="d">4,2 MB · funciona sin señal</div></div>
+            </div>
+            <div class="tool" style="padding:11px 12px">
+              <span class="ic" style="width:30px;height:30px;flex:0 0 30px"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--success)" stroke-width="1.9"><path d="M10 2.5 3.5 5.5v5c0 4 2.8 6.4 6.5 7.5 3.7-1.1 6.5-3.5 6.5-7.5v-5z"/></svg></span>
+              <div class="tx"><div class="n" style="font-size:.86rem">Avisar a alguien</div><div class="d">Comparte ruta y hora de regreso</div></div>
+            </div>
+          </div>
+          <button class="btn full ghost" style="margin-top:12px">Ver la ruta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes" style="margin-top:20px;max-width:72ch">
+    <div class="note">
+      <div class="l">El estado C es el que hace que la app sirva hoy</div>
+      <p>Con cero usuarios, todas las sesiones terminan en C. <strong>Ese es el estado normal al arrancar, no la excepción</strong> — y es el único que no depende de que aparezca nadie. Por eso no se ve como un fracaso.</p>
+    </div>
+    <div class="note">
+      <div class="l">«Avisar a alguien» no es una función secundaria</div>
+      <p>Salir a correr solo de madrugada es la situación con más riesgo de todo el producto. Compartir ruta y hora de regreso con un contacto es <strong>lo mínimo que debe ofrecer una app que sugiere hacerlo</strong>.</p>
+    </div>
+    <div class="note bad">
+      <div class="l">«Sin muchas reglas» tiene un piso</div>
+      <p>Sin ritmo fijo, sin nivel, sin cupo — todo eso se puede quitar. Lo que no se quita: <strong>lugar público, punto de encuentro y alguien que responda.</strong> Sin esas tres, no es una sesión, es una cita a ciegas en un parque.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section>
+  <div class="sh"><span class="sn">06</span><h2>Mapa sin conexión</h2></div>
+  <div class="grid2">
+    <div class="phone">
+      <div class="ptop">
+        <span class="tt">La Sabana</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sun);border:1.5px solid var(--sun);border-radius:999px;padding:3px 9px">
+          <svg width="9" height="9" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 3l14 14"/><path d="M10 15.5v.5"/><path d="M6 12a5.6 5.6 0 0 1 3-1.7M14 12a5.6 5.6 0 0 0-1.6-1.2"/></svg>
+          Sin conexión</span>
+      </div>
+      <div style="padding:15px">
+        <div class="hmap" style="height:190px">
+          <div style="position:absolute;inset:0;background:
+            radial-gradient(circle at 50% 55%,#2A677A 0%,rgba(42,103,122,0) 62%)"></div>
+          <div class="hlat"></div>
+          <svg viewBox="0 0 340 190" style="position:absolute;inset:0;width:100%;height:100%">
+            <path d="M40,150 C90,130 80,80 130,70 C180,60 210,95 250,80 C285,67 295,45 300,35"
+              fill="none" stroke="#FFC56B" stroke-width="3" stroke-linecap="round" stroke-dasharray="0"/>
+            <circle cx="40" cy="150" r="6" fill="#46D6A0" stroke="#0B0F1F" stroke-width="2"/>
+            <circle cx="300" cy="35" r="6" fill="#E94E3D" stroke="#0B0F1F" stroke-width="2"/>
+          </svg>
+          <div style="position:absolute;left:11px;bottom:10px;font-size:.68rem;font-weight:600;
+            color:var(--warm);background:#0B0F1FCC;padding:4px 9px;border-radius:999px">6,0 km · descargado</div>
+        </div>
+
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+          <div class="lbl">Antes de salir</div>
+          <div class="tool" style="padding:11px 12px">
+            <span class="ic" style="width:30px;height:30px;flex:0 0 30px;background:#46D6A01F"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--success)" stroke-width="2"><path d="M10 2.5 3.5 5.5v5c0 4 2.8 6.4 6.5 7.5 3.7-1.1 6.5-3.5 6.5-7.5v-5z"/></svg></span>
+            <div class="tx"><div class="n" style="font-size:.87rem">Avisar a alguien</div><div class="d">Ruta + hora estimada de regreso</div></div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 13px">
+            <div style="font-size:.8rem;font-weight:600;color:var(--sun);margin-bottom:7px">Consejos para esta ruta</div>
+            <ul style="margin:0;padding-left:1rem;font-size:.82rem;color:var(--t2);display:flex;flex-direction:column;gap:6px">
+              <li>El tramo del kilómetro 3 no tiene alumbrado</li>
+              <li>Bebedero a los 2,1 km, junto a las canchas</li>
+              <li>Antes de las 6 a.m. hay poca gente en el sector norte</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note new">
+        <div class="l">Esto es lo mejor del brief</div>
+        <p>Es lo único aquí que <strong>funciona con cero usuarios y sin señal</strong>. Todo lo demás — IA, sesiones abiertas, predicciones — necesita gente que todavía no existe. Yo lo construiría antes que la IA.</p>
+      </div>
+      <div class="note">
+        <div class="l">Los consejos son del organizador, no generados</div>
+        <p>«El kilómetro 3 no tiene alumbrado» lo sabe quien corre ahí. Una IA que lo invente se equivoca en el dato que más importa. Los consejos se escriben al crear la ruta y se acumulan con el uso.</p>
+      </div>
+      <div class="note bad">
+        <div class="l">Lo que cuesta de verdad</div>
+        <p>El mapa offline no es una casilla: son <strong>teselas descargadas, almacenamiento en el teléfono y los términos de la licencia de Mapbox</strong>, que cobra distinto por uso sin conexión. Vale la pena revisarlo antes de prometerlo en la tienda.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section>
+  <div class="sh"><span class="sn">07</span><h2>Notificaciones y qué sabe la IA</h2></div>
+  <div class="grid3">
+
+    <div>
+      <div class="cap"><span class="n">A</span><span class="t">Una notificación</span></div>
+      <div class="sub">Siempre dice por qué llegó.</div>
+      <div class="card">
+        <div style="display:flex;gap:11px">
+          <span class="ic" style="width:34px;height:34px;border-radius:9px;background:#60D1D41F;display:flex;align-items:center;justify-content:center;flex:0 0 34px">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--aqua)" stroke-width="2"><path d="M10 2.5 12 8l5.5 2-5.5 2-2 5.5-2-5.5L2.5 10 8 8z"/></svg></span>
+          <div>
+            <div style="font-size:.92rem;font-weight:600;line-height:1.3">Hay una corrida el martes a la hora que sueles salir</div>
+            <div style="font-size:.79rem;color:var(--t3);margin-top:5px">18:00 · La Sabana · 1,2 km de ti</div>
+          </div>
+        </div>
+        <div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--border);
+          font-size:.75rem;color:var(--t3);display:flex;align-items:center;gap:7px">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>
+          Porque fuiste a 3 sesiones de running los martes
+        </div>
+      </div>
+      <p class="sub" style="margin-top:12px">Una notificación personalizada sin razón visible se siente vigilancia. Con la razón, se siente útil — y da el control para apagar exactamente esa señal.</p>
+    </div>
+
+    <div>
+      <div class="cap"><span class="n">B</span><span class="t">Qué puede enviar</span></div>
+      <div class="sub">Granular, y con tope de frecuencia.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="tog on"><span class="txt">Recordatorios<small>12 h y 1 h antes de tus sesiones</small></span><span class="sw"><i></i></span></div>
+        <div class="tog on"><span class="txt">Tu lista de espera<small>Cuando subes de puesto</small></span><span class="sw"><i></i></span></div>
+        <div class="tog"><span class="txt">Sugerencias de la IA<small>Máximo 2 por semana</small></span><span class="sw"><i></i></span></div>
+        <div class="tog"><span class="txt">Sesiones abiertas cerca<small>Cuando alguien abre una a menos de 3 km</small></span><span class="sw"><i></i></span></div>
+      </div>
+      <p class="sub" style="margin-top:12px">Las dos primeras vienen encendidas: son cosas que el usuario pidió al unirse. Las de la IA vienen <b style="color:var(--warm)">apagadas</b> — nadie se registró para recibir marketing.</p>
+    </div>
+
+    <div>
+      <div class="cap"><span class="n">C</span><span class="t">Tu historial</span></div>
+      <div class="sub">Lo que la IA usa, y cómo borrarlo.</div>
+      <div class="card">
+        <div class="tog" style="margin-bottom:12px"><span class="txt">Guardar dónde entreno<small>Distrito y franja horaria · 90 días</small></span><span class="sw"><i></i></span></div>
+        <div class="lbl">Últimos 90 días</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:.83rem;color:var(--t2)">
+          <div style="display:flex;justify-content:space-between"><span>Mata Redonda · tardes</span><span style="font-family:var(--mono);color:var(--t3)">11</span></div>
+          <div style="display:flex;justify-content:space-between"><span>San Pedro · mañanas</span><span style="font-family:var(--mono);color:var(--t3)">4</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Escazú · fines de semana</span><span style="font-family:var(--mono);color:var(--t3)">2</span></div>
+        </div>
+        <button class="btn full danger" style="margin-top:13px;height:40px;font-size:.85rem">Borrar mi historial</button>
+      </div>
+      <p class="sub" style="margin-top:12px">Distrito y franja, no coordenadas. Si algún día hay una filtración, la diferencia es entre <b style="color:var(--warm)">«entrena por las tardes en Mata Redonda»</b> y un mapa de dónde está esa persona cada martes.</p>
+    </div>
+  </div>
+
+  <div class="notes" style="margin-top:20px;max-width:72ch">
+    <div class="note bad">
+      <div class="l">Esto necesita consentimiento expreso</div>
+      <p>Guardar historial de ubicación bajo la Ley 8968 exige <strong>consentimiento informado y separado</strong> — no una casilla de «acepto los términos». La pantalla C es esa casilla, y por eso viene apagada, dice exactamente qué guarda y durante cuánto, y permite borrarlo sin preguntar por qué.</p>
+    </div>
+    <div class="note">
+      <div class="l">90 días no es arbitrario</div>
+      <p>Cubre un ciclo estacional completo, que es todo lo que la IA necesita para reconocer un patrón semanal. Guardar dos años no mejora la sugerencia y multiplica lo que se pierde en una filtración.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Ocho pantallas construidas sobre <code>src/theme/</code> y el kit. Ninguna sesión aquí se publica sin un nombre humano encima — es la única regla que atraviesa las ocho. Sigue sin existir la pantalla de <strong>pasar lista</strong>, que es de donde saldrían los datos que la IA de estas pantallas necesita para no inventar.
+</footer>
+
+</div>
+  </body>
+</html>

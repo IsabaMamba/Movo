@@ -5,3 +5,7 @@ build/
 package-lock.json
 supabase/migrations/
 supabase/tests/
+
+# Design artifacts are exported deliverables, not source. Reformatting them would produce a
+# large meaningless diff on every export and can disturb whitespace-sensitive markup.
+docs/design/*.html
