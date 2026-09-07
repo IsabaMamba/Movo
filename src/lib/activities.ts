@@ -14,6 +14,8 @@ import type {
   ActivityParticipant,
   ActivityVisibility,
   Category,
+  Community,
+  CommunityRole,
   CategoryId,
   CurrencyCode,
   JsonSchemaObject,
@@ -580,4 +582,136 @@ export async function fetchOrganizerRoster(
 
   if (error) throw toApiError(error);
   return (data ?? []) as RosterEntry[];
+}
+
+// ------------------------------------------------------------------ grupos
+
+export interface CommunityWithCount extends Community {
+  member_count: number;
+}
+
+export type CommunityMemberEntry = {
+  user_id: string;
+  role: CommunityRole;
+  joined_at: string;
+  profile: { display_name: string; avatar_url: string | null };
+};
+
+/**
+ * Public groups, plus any private one the caller belongs to — the read policy
+ * decides which, so this asks for everything and lets RLS filter.
+ */
+export async function fetchCommunities(db: SupabaseClient): Promise<CommunityWithCount[]> {
+  const { data, error } = await db
+    .from('communities')
+    .select('*, community_members(count)')
+    .order('name');
+
+  if (error) throw toApiError(error);
+
+  return ((data ?? []) as (Community & { community_members: { count: number }[] })[]).map((row) => {
+    const { community_members, ...rest } = row;
+    return { ...rest, member_count: community_members[0]?.count ?? 0 };
+  });
+}
+
+export async function fetchCommunity(db: SupabaseClient, slug: string): Promise<Community | null> {
+  const { data, error } = await db.from('communities').select('*').eq('slug', slug).maybeSingle();
+  if (error) throw toApiError(error);
+  return (data as Community | null) ?? null;
+}
+
+/** Visible only to members — the read policy on community_members says so. */
+export async function fetchCommunityMembers(
+  db: SupabaseClient,
+  communityId: string,
+): Promise<CommunityMemberEntry[]> {
+  const { data, error } = await db
+    .from('community_members')
+    .select(
+      'user_id, role, joined_at, profile:profiles!community_members_user_id_fkey(display_name, avatar_url)',
+    )
+    .eq('community_id', communityId)
+    .order('role')
+    .order('joined_at');
+
+  if (error) throw toApiError(error);
+  return (data ?? []) as never;
+}
+
+/**
+ * Slug from a name: lowercase, unreserved characters only, matching the check
+ * constraint on communities.slug. "Real Madrid Ticos" becomes
+ * "real-madrid-ticos".
+ */
+export function slugify(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+
+export interface NewCommunityInput {
+  name: string;
+  slug: string;
+  description?: string | null;
+  rules?: string | null;
+  categoryId?: CategoryId | null;
+  isPublic: boolean;
+}
+
+/**
+ * Create a group. The creator becomes its owner through the trigger added in
+ * 0007 — there is no client path that could write that row, because promotion
+ * to organizer is organizer-only.
+ */
+export async function createCommunity(
+  db: SupabaseClient,
+  creatorId: string,
+  input: NewCommunityInput,
+): Promise<Community> {
+  const { data, error } = await db
+    .from('communities')
+    .insert({
+      slug: input.slug,
+      name: input.name.trim(),
+      description: input.description?.trim() || null,
+      rules: input.rules?.trim() || null,
+      category_id: input.categoryId ?? null,
+      is_public: input.isPublic,
+      created_by: creatorId,
+    })
+    .select('*')
+    .single();
+
+  if (error) throw toApiError(error);
+  return data as Community;
+}
+
+/** Join as a plain member; the policy refuses any other role. */
+export async function joinCommunity(
+  db: SupabaseClient,
+  communityId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await db
+    .from('community_members')
+    .insert({ community_id: communityId, user_id: userId, role: 'member' });
+  if (error) throw toApiError(error);
+}
+
+export async function leaveCommunity(
+  db: SupabaseClient,
+  communityId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await db
+    .from('community_members')
+    .delete()
+    .eq('community_id', communityId)
+    .eq('user_id', userId);
+  if (error) throw toApiError(error);
 }
