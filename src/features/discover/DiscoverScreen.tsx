@@ -114,6 +114,9 @@ export function DiscoverScreen() {
               <Link href="/crear">
                 <Text style={s.linkText}>Crear sesión</Text>
               </Link>
+              <Link href="/organizar">
+                <Text style={s.linkText}>Organizar</Text>
+              </Link>
               <Pressable
                 onPress={() => {
                   void signOut();
