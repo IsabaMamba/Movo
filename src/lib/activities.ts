@@ -528,3 +528,56 @@ export async function fetchMyParticipation(
   if (error) throw toApiError(error);
   return (data as ActivityParticipant | null) ?? null;
 }
+
+// -------------------------------------------------------------- organizer
+
+/** A session the caller organizes, with the venue needed to identify it. */
+export interface OrganizedActivity extends Activity {
+  location: Pick<Location, 'id' | 'name' | 'district'>;
+}
+
+/**
+ * Sessions the caller organizes, soonest first.
+ *
+ * No status filter: a draft still needs editing and a finished session still
+ * needs closing out, so the console shows everything and lets the screen sort
+ * out what each state means.
+ */
+export async function fetchOrganizedActivities(
+  db: SupabaseClient,
+  organizerId: string,
+): Promise<OrganizedActivity[]> {
+  const { data, error } = await db
+    .from('activities')
+    .select('*, location:locations!activities_location_id_fkey(id, name, district)')
+    .eq('organizer_id', organizerId)
+    .order('starts_at', { ascending: false });
+
+  if (error) throw toApiError(error);
+  return (data ?? []) as OrganizedActivity[];
+}
+
+export type RosterEntry = ActivityParticipant & {
+  profile: { display_name: string; avatar_url: string | null };
+};
+
+/**
+ * The roster as the organizer needs it, which is wider than the participant
+ * view: `no_show` has to stay visible after close-out, otherwise the person
+ * who was marked absent silently disappears and the number cannot be checked.
+ */
+export async function fetchOrganizerRoster(
+  db: SupabaseClient,
+  activityId: string,
+): Promise<RosterEntry[]> {
+  const { data, error } = await db
+    .from('activity_participants')
+    .select('*, profile:profiles!activity_participants_user_id_fkey(display_name, avatar_url)')
+    .eq('activity_id', activityId)
+    .in('status', ['joined', 'waitlisted', 'attended', 'no_show'])
+    .order('status')
+    .order('waitlist_pos', { ascending: true, nullsFirst: true });
+
+  if (error) throw toApiError(error);
+  return (data ?? []) as RosterEntry[];
+}
