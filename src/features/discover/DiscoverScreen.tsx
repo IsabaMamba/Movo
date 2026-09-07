@@ -207,7 +207,7 @@ export function DiscoverScreen() {
               </Text>
               <View style={s.cardFacts}>
                 <Text style={s.fact}>{formatSpots(item.joined_count, item.max_participants)}</Text>
-                <Text style={s.fact}>{formatPrice(item.price_crc)}</Text>
+                <Text style={s.fact}>{formatPrice(item.price_minor, item.currency)}</Text>
                 {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
               </View>
             </View>

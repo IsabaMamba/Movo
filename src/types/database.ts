@@ -33,6 +33,13 @@ export type ReportStatus = 'open' | 'reviewing' | 'actioned' | 'dismissed';
 /** MVP categories. Adding one is a row in `categories`, not a type change. */
 export type CategoryId = 'running' | 'hiking' | 'football' | (string & {});
 
+/**
+ * ISO 4217 alphabetic code, matching the `currency_code` domain in
+ * 0005_currency.sql. Prices are stored in MINOR units of this currency —
+ * céntimos for CRC, cents for USD — never in whole units.
+ */
+export type CurrencyCode = 'CRC' | 'USD' | (string & {});
+
 // ---------------------------------------------------------------- rows
 
 export interface Profile {
@@ -71,6 +78,7 @@ export interface Location {
   name: string;
   address: string | null;
   district: string | null;
+  currency: CurrencyCode;
   is_public_venue: boolean;
   is_verified: boolean;
   created_by: string | null;
@@ -94,7 +102,8 @@ export interface ActivitySeries {
   skill: SkillLevel;
   difficulty: number | null;
   max_participants: number | null;
-  price_crc: number;
+  price_minor: number;
+  currency: CurrencyCode;
   attributes: ActivityAttributes;
   is_active: boolean;
 }
@@ -117,7 +126,8 @@ export interface Activity {
   waitlist_count: number;
   skill: SkillLevel;
   difficulty: number | null;
-  price_crc: number;
+  price_minor: number;
+  currency: CurrencyCode;
   equipment: string[];
   rules: string | null;
   attributes: ActivityAttributes;
@@ -225,7 +235,8 @@ export interface NearbyActivity {
   max_participants: number | null;
   skill: SkillLevel;
   difficulty: number | null;
-  price_crc: number;
+  price_minor: number;
+  currency: CurrencyCode;
   cover_url: string | null;
   organizer_id: string;
   status: ActivityStatus;

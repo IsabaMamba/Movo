@@ -3,8 +3,13 @@
 The database already decides most of what a session **is**. What it can't decide is what any of
 it looks like. This document is the handover for that part.
 
-Status at time of writing: schema merged, auth working, Discover functional but unstyled. Create
-and detail screens do not exist. The visual direction is undecided.
+Status: schema merged, auth working, Discover functional but unstyled. Create and detail screens
+do not exist in the app. The visual direction **is decided** — thermal, see
+[ADR 0004](adr/0004-thermal-visual-direction.md) — and the tokens are real files in `src/theme/`.
+
+The screens themselves have since been designed and are committed as HTML in
+[`docs/design/`](design/). This document remains the bridge between them and the schema: what the
+data model requires of any design, and what is still open.
 
 ## The one idea to understand first
 
@@ -27,15 +32,15 @@ writing them.
 Six input types cover all three categories today. Each needs a resting, filled, focused, error and
 disabled state.
 
-| Type              | Real examples from the schema                                                                                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Number with unit  | `Distancia (km)` 1–100 · `Desnivel positivo (m)` 0–4000 · `Agua recomendada (L)`. Min and max come from the schema, so the control can show its own range.                      |
-| Decimal with unit | `Ritmo objetivo (min/km)` 3–12 · `Duración estimada (h)`. Fractional — 6.5 is a normal answer.                                                                                  |
-| Single select     | `Formato` 5v5 / 7v7 / 9v9 / 11v11 · `Superficie` sintética / natural / cemento · `Tipo de ruta` calle / trail / pista. Short closed lists — chips or segmented, not a dropdown. |
-| Multi select      | `Posiciones que faltan` portero / defensa / medio / delantero. Zero to four selected. Also how `equipment` works.                                                               |
-| Toggle            | `Nadie se queda atrás` · `Traer camisa clara y oscura` · `Hay árbitro` · `Incluye transporte`. Several default to on, so the off state has to read as a deliberate choice.      |
-| Currency (₡)      | `Costo de cancha (₡ total)` · `Entrada al parque (₡)`. Whole colones, no decimals. Zero means _Gratis_ and should say so rather than showing ₡0.                                |
-| Short text        | `Sendero` → "Pico Blanco" · `Enlace a la ruta` · `Punto de encuentro` → "portón norte, junto a la fuente". Max 200 characters.                                                  |
+| Type              | Real examples from the schema                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Number with unit  | `Distancia (km)` 1–100 · `Desnivel positivo (m)` 0–4000 · `Agua recomendada (L)`. Min and max come from the schema, so the control can show its own range.                                       |
+| Decimal with unit | `Ritmo objetivo (min/km)` 3–12 · `Duración estimada (h)`. Fractional — 6.5 is a normal answer.                                                                                                   |
+| Single select     | `Formato` 5v5 / 7v7 / 9v9 / 11v11 · `Superficie` sintética / natural / cemento · `Tipo de ruta` calle / trail / pista. Short closed lists — chips or segmented, not a dropdown.                  |
+| Multi select      | `Posiciones que faltan` portero / defensa / medio / delantero. Zero to four selected. Also how `equipment` works.                                                                                |
+| Toggle            | `Nadie se queda atrás` · `Traer camisa clara y oscura` · `Hay árbitro` · `Incluye transporte`. Several default to on, so the off state has to read as a deliberate choice.                       |
+| Currency          | `Costo de cancha (₡ total)` · `Entrada al parque (₡)`. Stored in **minor units** with the currency alongside — see below. Zero means _Gratis_ and must say so rather than showing a zero amount. |
+| Short text        | `Sendero` → "Pico Blanco" · `Enlace a la ruta` · `Punto de encuentro` → "portón norte, junto a la fuente". Max 200 characters.                                                                   |
 
 Two fields per category are **required** and the rest are optional — hiking needs distance and
 elevation, football needs format and surface. The required ones need to read differently, and the
@@ -70,16 +75,16 @@ Each one unblocks the next.
 
 These are not preferences. Design that ignores them is not buildable without changing the database.
 
-| Constraint                  | What design has to do about it                                                                                                                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Capacity can be unlimited   | `max_participants` is nullable. An uncapped session cannot show "8 de 12 libres" — it shows how many are going. Both need a treatment.                                                                   |
-| Waitlists are ordered       | Full does not mean closed. Someone joining a full session gets a numbered place in the queue and moves up automatically when others cancel.                                                              |
-| Some sessions are not ours  | Real club sessions get listed before their organisers ever sign up, so Discover is not empty on day one. These need visible attribution, a link out, and a way for the real organiser to claim it later. |
-| Sessions repeat             | A run club is "every Tuesday at 6", not forty unrelated rows. A session can belong to an `activity_series`, and the design should say so rather than looking like a one-off.                             |
-| Two names, two visibilities | Display name and avatar are public. Phone number, birthdate and emergency contact live in `profile_private` and must never appear on another person's screen.                                            |
-| People can block and report | Both exist in the database and need somewhere to live in the interface. This app puts strangers in a park together — it is not a settings-screen afterthought.                                           |
-| Prices are colones          | Whole numbers, no cents. Free is the common case and should look free, not like ₡0.                                                                                                                      |
-| Times are absolute          | Stored as instants, displayed in `America/Costa_Rica`. Nothing breaks the day Panamá is added.                                                                                                           |
+| Constraint                  | What design has to do about it                                                                                                                                                                                                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capacity can be unlimited   | `max_participants` is nullable. An uncapped session cannot show "8 de 12 libres" — it shows how many are going. Both need a treatment.                                                                                                                                                                     |
+| Waitlists are ordered       | Full does not mean closed. Someone joining a full session gets a numbered place in the queue and moves up automatically when others cancel.                                                                                                                                                                |
+| Some sessions are not ours  | Real club sessions get listed before their organisers ever sign up, so Discover is not empty on day one. These need visible attribution, a link out, and a way for the real organiser to claim it later.                                                                                                   |
+| Sessions repeat             | A run club is "every Tuesday at 6", not forty unrelated rows. A session can belong to an `activity_series`, and the design should say so rather than looking like a one-off.                                                                                                                               |
+| Two names, two visibilities | Display name and avatar are public. Phone number, birthdate and emergency contact live in `profile_private` and must never appear on another person's screen.                                                                                                                                              |
+| People can block and report | Both exist in the database and need somewhere to live in the interface. This app puts strangers in a park together — it is not a settings-screen afterthought.                                                                                                                                             |
+| Money is not colones-only   | `0005_currency.sql` replaced `price_crc` with `price_minor` plus a `currency` column. Amounts are in minor units — céntimos, cents — and a venue carries its own currency, so the create form never asks. Render ₡5.000 without decimals and $12.50 with them. Free is the common case and must look free. |
+| Times are absolute          | Stored as instants, displayed in `America/Costa_Rica`. Nothing breaks the day Panamá is added.                                                                                                                                                                                                             |
 
 ## Voice
 
@@ -90,20 +95,28 @@ fastest way to make it feel imported.
 Category names come from the database in both languages, so _Senderismo_ and _Fútbol_ are already
 correct — do not relabel them in the design.
 
-## Decisions waiting on design
+## Decisions
 
-| Decision                    | Why it matters                                                                                                                                                                                                                                      |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **The visual direction**    | Three candidates are on the canvas — thermal, avant, colour fields. Nothing else can be built properly until one wins, because tokens written against an undecided direction just get rewritten. Pick one and it becomes an ADR. Blocks everything. |
-| **How difficulty reads**    | Stored 1–5. People say "medium" and "hard". Decide the words once — and whether it is five levels or three — because it appears on cards, filters, and the create form.                                                                             |
-| **Routes drawn on the map** | Today a route is a _link_ (`route_url`). Drawing the actual shape needs a geometry column and real work. Worth it for running and hiking, but it does not have to be in the first version.                                                          |
-| **Nearby food**             | "Which restaurants are close" can be a Places integration or one line the organiser types. The typed version costs nothing and answers the same question for a hike that ends at a soda. The integration costs an API key and ongoing money.        |
+**Settled since this brief was written:**
+
+- **The visual direction is thermal** — [ADR 0004](adr/0004-thermal-visual-direction.md) — with the
+  rule that warm colour encodes occupancy density and nothing else: any surface using heat must also
+  show the scale that decodes it. Tokens live in `src/theme/`.
+- **Difficulty reads as three bands** — _suave_, _moderada_, _exigente_ — mapped from the stored 1–5
+  by `difficultyBand()` in `src/theme/index.ts`. Use the helper rather than re-deriving the words.
+
+**Still open:**
+
+| Decision                    | Why it matters                                                                                                                                                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Routes drawn on the map** | Today a route is a _link_ (`route_url`). Drawing the actual shape needs a geometry column and real work. Worth it for running and hiking, but it does not have to be in the first version.                                                   |
+| **Nearby food**             | "Which restaurants are close" can be a Places integration or one line the organiser types. The typed version costs nothing and answers the same question for a hike that ends at a soda. The integration costs an API key and ongoing money. |
 
 ## What to hand back
 
-Tokens first — colour, type scale, spacing, corner radius — because those become real files in
-`src/theme/` and everything else depends on them. Then the field kit with its states. Then the
-three screens in order: create, detail, discover.
+Tokens and the screens are now delivered — `src/theme/` and [`docs/design/`](design/). What
+remains is turning them into the app: the create-session screen first, then detail, then
+restyling Discover against the tokens rather than the placeholder styles it ships with today.
 
 Design for the browser first. The app ships as a web build before it reaches either app store, so a
 phone-width layout that also holds up on a laptop is the target — see
