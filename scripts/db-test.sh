@@ -12,19 +12,24 @@ export PGHOST PGPORT PGUSER PGDATABASE
 
 psql_run() { psql -v ON_ERROR_STOP=1 -q "$@"; }
 
+# Globbed, not listed. A hardcoded list silently stops testing every migration
+# added after somebody forgets to append to it — which is exactly what happened
+# to 0006 and 0007, so CI was green against a schema nobody was running.
+# Numeric prefixes make the glob order the apply order.
 echo "==> applying migrations to ${PGDATABASE}"
-psql_run \
-  -f supabase/tests/00_local_shim.sql \
-  -f supabase/migrations/0001_schema.sql \
-  -f supabase/migrations/0002_functions.sql \
-  -f supabase/migrations/0003_rls.sql \
-  -f supabase/migrations/0004_seed_categories.sql \
-  -f supabase/migrations/0005_currency.sql
+psql_run -f supabase/tests/00_local_shim.sql
+for migration in supabase/migrations/*.sql; do
+  echo "    ${migration}"
+  psql_run -f "${migration}"
+done
 
 echo "==> running behavioural + RLS suite"
-psql_run -f supabase/tests/01_participation_test.sql
-psql_run -f supabase/tests/02_currency_test.sql
-psql_run -f supabase/tests/03_anon_visibility_test.sql
-psql_run -f supabase/tests/04_community_test.sql
+for suite in supabase/tests/*.sql; do
+  case "${suite}" in
+    */00_local_shim.sql) continue ;;
+  esac
+  echo "    ${suite}"
+  psql_run -f "${suite}"
+done
 
 echo "==> ok"
