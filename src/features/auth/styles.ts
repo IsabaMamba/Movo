@@ -1,26 +1,46 @@
 import { StyleSheet } from 'react-native';
 
+import { color, radius, size, space, stroke, type } from '../../theme';
+
 /**
- * Shared by the two auth screens. Bare on purpose — design tokens land once a
- * visual direction is chosen (see src/theme).
+ * Shared by the two auth screens. Sun is the primary action here and nowhere
+ * else on these screens — heat is reserved for occupancy density everywhere it
+ * carries meaning (ADR 0004), and a sign-in button carries none.
  */
 export const authStyles = StyleSheet.create({
-  screen: { flex: 1, gap: 12, justifyContent: 'center', maxWidth: 420, padding: 24, width: '100%' },
-  title: { fontSize: 28, fontWeight: '700' },
-  subtitle: { fontSize: 14, marginBottom: 8, opacity: 0.6 },
-  label: { fontSize: 13, opacity: 0.7 },
-  input: {
-    borderColor: '#c7c7c7',
-    borderRadius: 6,
-    borderWidth: 1,
-    fontSize: 16,
-    padding: 12,
+  screen: {
+    backgroundColor: color.bg.base,
+    flex: 1,
+    gap: space.md,
+    justifyContent: 'center',
+    maxWidth: 420,
+    padding: space.xxl,
+    width: '100%',
   },
-  button: { alignItems: 'center', backgroundColor: '#111', borderRadius: 6, padding: 14 },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { paddingVertical: 8 },
-  linkText: { fontSize: 14, textDecorationLine: 'underline' },
-  error: { color: '#b00020', fontSize: 14 },
-  notice: { fontSize: 14, lineHeight: 20 },
+  title: { ...type.display, color: color.text.primary },
+  subtitle: { ...type.bodySmall, color: color.text.secondary, marginBottom: space.sm },
+  label: { ...type.label, color: color.text.secondary },
+  input: {
+    ...type.body,
+    backgroundColor: color.bg.raised,
+    borderColor: color.border.default,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    color: color.text.primary,
+    minHeight: size.control,
+    paddingHorizontal: space.md,
+  },
+  button: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  buttonDisabled: { opacity: 0.4 },
+  buttonText: { ...type.action, color: color.text.inverse },
+  link: { minHeight: size.minTarget, justifyContent: 'center' },
+  linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
+  error: { ...type.bodySmall, color: color.semantic.dangerOnRaised },
+  notice: { ...type.body, color: color.text.primary },
 });

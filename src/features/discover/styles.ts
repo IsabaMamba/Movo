@@ -1,35 +1,67 @@
 import { StyleSheet } from 'react-native';
 
-/** Bare on purpose — design tokens land once a visual direction is chosen. */
+import { color, radius, size, space, stroke, type } from '../../theme';
+
 export const discoverStyles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 56 },
-  header: { paddingHorizontal: 20 },
-  title: { fontSize: 32, fontWeight: '700' },
-  account: { flexDirection: 'row', gap: 12, marginTop: 2 },
-  accountText: { fontSize: 13, opacity: 0.6 },
-  linkText: { fontSize: 13, textDecorationLine: 'underline' },
-  filters: { flexGrow: 0, marginTop: 16 },
-  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20 },
+  screen: { backgroundColor: color.bg.base, flex: 1, paddingTop: space.huge },
+
+  header: { gap: space.xs, paddingHorizontal: space.xl },
+  title: { ...type.display, color: color.text.primary },
+  account: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
+  accountText: { ...type.caption, color: color.text.tertiary },
+  linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
+
+  filters: { flexGrow: 0, marginTop: space.lg },
+  filterRow: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl },
   chip: {
-    borderColor: '#c7c7c7',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    alignItems: 'center',
+    borderColor: color.border.default,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+    paddingHorizontal: space.lg,
   },
-  chipOn: { backgroundColor: '#111', borderColor: '#111' },
-  chipText: { fontSize: 13 },
-  chipTextOn: { color: '#fff' },
-  meta: { fontSize: 12, opacity: 0.5, paddingHorizontal: 20, paddingTop: 14 },
-  list: { paddingBottom: 40, paddingHorizontal: 20 },
-  card: { borderBottomColor: '#e6e6e6', borderBottomWidth: 1, gap: 4, paddingVertical: 16 },
-  cardTitle: { fontSize: 18, fontWeight: '600' },
-  cardWhen: { fontSize: 14 },
-  cardWhere: { fontSize: 13, opacity: 0.7 },
-  cardFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 2 },
-  fact: { fontSize: 12, opacity: 0.6 },
-  centred: { alignItems: 'center', gap: 8, padding: 40 },
-  emptyTitle: { fontSize: 16, fontWeight: '600' },
-  emptyBody: { fontSize: 14, lineHeight: 20, opacity: 0.7, textAlign: 'center' },
-  error: { color: '#b00020', fontSize: 14, paddingHorizontal: 20, paddingVertical: 12 },
+  chipOn: { backgroundColor: color.accent.deep, borderColor: color.accent.cool },
+  chipText: { ...type.action, color: color.text.secondary },
+  chipTextOn: { color: color.text.primary },
+
+  meta: { ...type.caption, color: color.text.tertiary, paddingBottom: space.sm },
+
+  /**
+   * The heat scale. ADR 0004: any surface that uses heat has to show the scale
+   * that decodes it, otherwise the colour is decoration pretending to be data.
+   */
+  legend: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.sm,
+    paddingHorizontal: space.xl,
+    paddingTop: space.md,
+  },
+  legendLabel: { ...type.caption, color: color.text.tertiary },
+  legendRamp: { borderRadius: radius.sm, flexDirection: 'row', overflow: 'hidden' },
+  legendStop: { height: 6, width: 14 },
+
+  list: { paddingBottom: space.huge, paddingHorizontal: space.xl, paddingTop: space.lg },
+  card: {
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.lg,
+    gap: space.xs,
+    marginBottom: space.md,
+    padding: space.lg,
+  },
+  cardTop: { alignItems: 'center', flexDirection: 'row', gap: space.md },
+  cardTitle: { ...type.title, color: color.text.primary, flex: 1 },
+  /** Warm fill encodes occupancy density and nothing else. */
+  heatDot: { borderRadius: radius.full, height: 10, width: 10 },
+  cardWhen: { ...type.body, color: color.text.warm },
+  cardWhere: { ...type.bodySmall, color: color.text.secondary },
+  cardFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, paddingTop: space.xs },
+  fact: { ...type.caption, color: color.text.tertiary },
+
+  centred: { alignItems: 'center', gap: space.sm, padding: space.huge },
+  emptyTitle: { ...type.heading, color: color.text.primary },
+  emptyBody: { ...type.bodySmall, color: color.text.secondary, textAlign: 'center' },
+  error: { ...type.bodySmall, color: color.semantic.dangerOnRaised, paddingHorizontal: space.xl },
 });

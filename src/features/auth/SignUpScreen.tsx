@@ -2,6 +2,8 @@ import { Link, Redirect } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
+import { color } from '../../theme';
+
 import { useAuth } from './AuthProvider';
 import { authStyles as s } from './styles';
 
@@ -18,7 +20,7 @@ export function SignUpScreen() {
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
+  if (loading) return <ActivityIndicator style={s.screen} />;
   if (session) return <Redirect href="/" />;
 
   if (confirmationSent) {
@@ -69,6 +71,7 @@ export function SignUpScreen() {
         maxLength={NAME_MAX}
         onChangeText={setDisplayName}
         placeholder="Cómo te van a ver"
+        placeholderTextColor={color.text.tertiary}
         style={s.input}
         value={displayName}
       />
@@ -80,6 +83,7 @@ export function SignUpScreen() {
         inputMode="email"
         onChangeText={setEmail}
         placeholder="vos@ejemplo.cr"
+        placeholderTextColor={color.text.tertiary}
         style={s.input}
         value={email}
       />
@@ -91,6 +95,7 @@ export function SignUpScreen() {
         onChangeText={setPassword}
         onSubmitEditing={submit}
         placeholder="Mínimo 6 caracteres"
+        placeholderTextColor={color.text.tertiary}
         secureTextEntry
         style={s.input}
         value={password}
