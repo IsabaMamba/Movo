@@ -23,8 +23,8 @@ import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../..
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
-import { priceLabel } from '../../theme';
-import { formatDistance, formatSpots } from './format';
+import { densityOf, heatColor, heatStops, occupancyLabel, priceLabel } from '../../theme';
+import { formatDistance } from './format';
 import { discoverStyles as s } from './styles';
 
 /**
@@ -175,6 +175,16 @@ export function DiscoverScreen() {
         </View>
       </ScrollView>
 
+      <View style={s.legend}>
+        <Text style={s.legendLabel}>vacío</Text>
+        <View style={s.legendRamp}>
+          {heatStops().map((stop) => (
+            <View key={stop} style={[s.legendStop, { backgroundColor: stop }]} />
+          ))}
+        </View>
+        <Text style={s.legendLabel}>lleno</Text>
+      </View>
+
       {error ? <Text style={s.error}>{error}</Text> : null}
 
       {activities === null ? (
@@ -203,14 +213,28 @@ export function DiscoverScreen() {
           }
           renderItem={({ item }) => (
             <View style={s.card}>
-              <Text style={s.cardTitle}>{item.title}</Text>
+              <View style={s.cardTop}>
+                <Text style={s.cardTitle}>{item.title}</Text>
+                <View
+                  style={[
+                    s.heatDot,
+                    {
+                      backgroundColor: heatColor(
+                        densityOf(item.joined_count, item.max_participants),
+                      ),
+                    },
+                  ]}
+                />
+              </View>
               <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
               <Text style={s.cardWhere}>
                 {item.location_name}
                 {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
               </Text>
               <View style={s.cardFacts}>
-                <Text style={s.fact}>{formatSpots(item.joined_count, item.max_participants)}</Text>
+                <Text style={s.fact}>
+                  {occupancyLabel(item.joined_count, item.max_participants)}
+                </Text>
                 <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
                 {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
               </View>
