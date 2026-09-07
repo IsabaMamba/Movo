@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="es-419">
+  <head>
+    <title>Movo Field Kit</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; }
+      body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f1f; }
+      img { max-width: 100%; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --base:#0B0F1F; --surface:#151A2E; --raised:#1F2437; --sunken:#070A14;
+  --border:#2A344A; --strong:#3B445B;
+  --t1:#FFFFFF; --t2:#A9B2C3; --t3:#8892A8; /* disabled ONLY — 4.40:1, below AA. Never for text to be read. */
+  --dis:#6E7A91; --inv:#0B0F1F; --warm:#F6E9D7;
+  --sun:#FFC56B; --aqua:#60D1D4; --teal:#2F7A8A;
+  --danger:#E94E3D; --danger-raised:#F26150; --success:#46D6A0;
+  --ui:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--base);color:var(--t1);font-family:var(--ui);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+code{font-family:var(--mono);font-size:.82em;color:var(--warm);background:var(--raised);
+  padding:1px 5px;border-radius:4px}
+a{color:var(--aqua)}
+.shell{max-width:1180px;margin:0 auto;padding:0 22px 96px}
+
+header{padding:52px 0 28px;border-bottom:1px solid var(--border)}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:16px}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;
+  text-transform:uppercase}
+h1 em{font-style:normal;color:var(--sun)}
+.dek{margin-top:16px;color:var(--t2);max-width:64ch;font-size:1.05rem}
+
+section{padding-top:50px}
+.sh{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:baseline;
+  border-top:1px solid var(--border);padding-top:15px;margin-bottom:18px}
+.sn{font-family:var(--mono);font-size:12px;color:var(--sun)}
+.sh h2{font-size:1.45rem;font-weight:700;letter-spacing:-.02em;text-transform:uppercase}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:12px;color:var(--t2)}
+.prose strong{color:var(--t1);font-weight:600}
+
+/* ---------- field primitives ---------- */
+.lab{font-size:.69rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t3);display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.req{width:5px;height:5px;border-radius:999px;background:var(--sun);flex:0 0 5px}
+.opt{font-size:.63rem;letter-spacing:.1em;color:var(--t3);font-weight:500}
+.hint{font-size:.72rem;color:var(--t3);margin-top:6px}
+.errmsg{font-size:.74rem;color:var(--danger-raised);margin-top:6px;display:flex;gap:6px;align-items:center}
+
+.inp{background:var(--sunken);border:1.5px solid var(--strong);border-radius:12px;
+  height:48px;display:flex;align-items:center;padding:0 14px;gap:8px;font-size:1rem}
+.inp .ph{color:var(--t3)}
+.inp .val{color:var(--t1);font-variant-numeric:tabular-nums;font-weight:600}
+.inp .unit{color:var(--t3);font-size:.85rem;margin-left:auto;font-weight:500}
+.inp .pre{color:var(--t3);font-weight:600}
+.inp.focus{border-color:var(--aqua);box-shadow:0 0 0 3px #60D1D426}
+.inp.err{border-color:var(--danger)}
+.inp.dis{background:#0D1220;border-color:var(--border);color:var(--dis)}
+.inp.dis .val,.inp.dis .unit,.inp.dis .pre{color:var(--dis)}
+.caret{width:1.5px;height:20px;background:var(--aqua);display:inline-block}
+
+.seg{display:flex;background:var(--sunken);border:1.5px solid var(--strong);
+  border-radius:12px;padding:3px;gap:3px}
+.seg div{flex:1 1 0;text-align:center;padding:9px 4px;border-radius:9px;font-size:.85rem;
+  font-weight:600;color:var(--t3)}
+.seg div.on{background:var(--aqua);color:var(--inv)}
+.seg.focus{border-color:var(--aqua);box-shadow:0 0 0 3px #60D1D426}
+.seg.dis{opacity:.45}
+.seg.dis div.on{background:var(--strong);color:var(--dis)}
+
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--strong);border-radius:999px;padding:8px 14px;font-size:.82rem;
+  font-weight:600;color:var(--t2);display:inline-flex;align-items:center;gap:7px}
+.chip.on{border-color:var(--aqua);color:var(--aqua);background:#60D1D41A}
+.chip.focus{border-color:var(--aqua);box-shadow:0 0 0 3px #60D1D426}
+.chip.err{border-color:var(--danger);color:var(--danger-raised)}
+.chip.dis{opacity:.4}
+.chip.add{border-style:dashed;color:var(--t3)}
+
+.tog{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--sunken);
+  border:1.5px solid var(--strong);border-radius:12px}
+.tog .txt{flex:1 1 auto;font-size:.93rem;color:var(--t1)}
+.tog .sw{width:46px;height:27px;border-radius:999px;background:var(--strong);
+  position:relative;flex:0 0 46px}
+.tog .sw i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:999px;
+  background:var(--t3);transition:none}
+.tog.on .sw{background:var(--success)}
+.tog.on .sw i{left:22px;background:var(--inv)}
+/* A default that was switched OFF must not look like one never touched.
+   The row carries a Sun edge — Sun means "you decided this" everywhere else. */
+.tog.off-deliberate{border-color:#FFC56B66;box-shadow:inset 3px 0 0 var(--sun)}
+.tog.off-deliberate .sw{background:var(--raised);border:1.5px solid #FFC56B66}
+.tog.off-deliberate .sw i{background:var(--sun);left:2px}
+.tog.off-deliberate .txt{color:var(--t2)}
+.tog .tag{font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--sun);flex:0 0 auto}
+.tog.focus{border-color:var(--aqua);box-shadow:0 0 0 3px #60D1D426}
+.tog.dis{opacity:.45}
+
+/* ---------- state grid ---------- */
+.kit{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;
+  align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
+.card>h3{font-size:1.02rem;font-weight:700;margin-bottom:3px}
+.card>.sub{font-size:.76rem;color:var(--t3);margin-bottom:16px;font-family:var(--mono);
+  letter-spacing:.02em}
+.states{display:flex;flex-direction:column;gap:15px}
+.st{display:flex;flex-direction:column}
+.stn{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:7px}
+.note{font-size:.78rem;color:var(--t3);margin-top:15px;padding-top:13px;
+  border-top:1px solid var(--border);line-height:1.5}
+
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  vertical-align:top;color:var(--t2)}
+thead th{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--t3);font-weight:500;background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+td.mono{font-family:var(--mono);font-size:.76rem;color:var(--warm);white-space:nowrap}
+
+.rule{border-left:3px solid var(--sun);background:#FFC56B12;padding:13px 16px;
+  border-radius:0 8px 8px 0;max-width:70ch}
+.rule.bad{border-left-color:var(--danger);background:#E94E3D14}
+.rule .l{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:5px}
+.rule.bad .l{color:var(--danger-raised)}
+.rule p{font-size:.92rem;color:var(--t2)}
+.rule p strong{color:var(--t1)}
+.rules{display:flex;flex-direction:column;gap:11px}
+
+/* form demo */
+.phone{max-width:390px;background:var(--base);border:1px solid var(--border);
+  border-radius:20px;padding:20px 18px;display:flex;flex-direction:column;gap:18px}
+.fbar{display:flex;align-items:center;gap:10px;padding-top:4px}
+.fbar .ok{width:20px;height:20px;border-radius:999px;background:var(--success);
+  display:flex;align-items:center;justify-content:center;flex:0 0 20px}
+.btn{background:var(--sun);color:var(--inv);border:0;border-radius:12px;height:48px;
+  font-family:var(--ui);font-weight:600;font-size:.98rem;width:100%;cursor:pointer}
+.btn:disabled{background:var(--strong);color:var(--t3);cursor:not-allowed}
+.divider{display:flex;align-items:center;gap:12px;color:var(--t3);
+  font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.divider::before,.divider::after{content:"";flex:1 1 0;height:1px;background:var(--border)}
+
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);
+  color:var(--t3);font-size:.88rem;max-width:70ch}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="shell">
+
+<header>
+  <div class="kick">Kit de campos · v0.1</div>
+  <h1>Un kit,<br><em>toda categoría</em></h1>
+  <p class="dek">Seis tipos de control cubren senderismo, fútbol y running hoy — y cubrirán pádel el día que alguien inserte una fila en <code>categories</code>. Ningún control sabe a qué deporte pertenece. Todos leen su etiqueta, su rango y sus opciones del <code>attribute_schema</code>.</p>
+</header>
+
+<!-- 01 -->
+<section>
+  <div class="sh"><span class="sn">01</span><h2>Del esquema al control</h2></div>
+  <div class="prose" style="margin-bottom:18px">
+    <p>El renderizador no consulta la categoría. Mira la forma del campo en el JSON Schema y elige. Esa es toda la lógica — por eso pádel no necesita pantalla nueva.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Forma en el esquema</th><th>Control</th><th>Campos reales hoy</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">integer + min/max</td><td>Número con unidad</td>
+          <td>Desnivel positivo (m) · Agua recomendada (L)</td></tr>
+        <tr><td class="mono">number + min/max</td><td>Decimal con unidad</td>
+          <td>Distancia (km) · Ritmo objetivo (min/km) · Duración estimada (h)</td></tr>
+        <tr><td class="mono">string + enum</td><td>Segmentado (≤4) o chips</td>
+          <td>Formato · Superficie · Tipo de ruta</td></tr>
+        <tr><td class="mono">array + items.enum</td><td>Multi-selección cerrada</td>
+          <td>Posiciones que faltan</td></tr>
+        <tr><td class="mono">array, sin enum</td><td>Lista abierta</td>
+          <td>Equipo por llevar</td></tr>
+        <tr><td class="mono">boolean</td><td>Interruptor</td>
+          <td>Nadie se queda atrás · Hay árbitro · Incluye transporte</td></tr>
+        <tr><td class="mono">integer + título con ₡</td><td>Moneda</td>
+          <td>Costo de cancha (₡ total) · Entrada al parque (₡)</td></tr>
+        <tr><td class="mono">string, sin enum</td><td>Texto corto · 200</td>
+          <td>Sendero · Enlace a la ruta</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="rule" style="margin-top:16px">
+    <div class="l">Consecuencia</div>
+    <p>Un campo nuevo en una categoría existente <strong>no toca el diseño</strong>. Si el esquema dice <code>{"type":"integer","minimum":0,"maximum":50}</code>, el control ya existe y ya sabe su rango.</p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section>
+  <div class="sh"><span class="sn">02</span><h2>Los seis controles</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Cinco estados cada uno: reposo, con valor, enfocado, error y deshabilitado. Etiquetas tomadas literalmente del esquema.</p>
+  </div>
+
+  <div class="kit">
+
+    <!-- NUMBER -->
+    <div class="card">
+      <h3>Número con unidad</h3>
+      <div class="sub">integer · min/max del esquema</div>
+      <div class="states">
+        <div class="st"><span class="stn">Reposo</span>
+          <div class="lab"><span class="req"></span>Desnivel positivo (m)</div>
+          <div class="inp"><span class="ph">0</span><span class="unit">m</span></div>
+          <div class="hint">Entre 0 y 4000</div></div>
+        <div class="st"><span class="stn">Con valor</span>
+          <div class="lab"><span class="req"></span>Desnivel positivo (m)</div>
+          <div class="inp"><span class="val">820</span><span class="unit">m</span></div></div>
+        <div class="st"><span class="stn">Enfocado</span>
+          <div class="lab"><span class="req"></span>Desnivel positivo (m)</div>
+          <div class="inp focus"><span class="val">820</span><span class="caret"></span><span class="unit">m</span></div>
+          <div class="hint">Entre 0 y 4000</div></div>
+        <div class="st"><span class="stn">Error</span>
+          <div class="lab"><span class="req"></span>Desnivel positivo (m)</div>
+          <div class="inp err"><span class="val">5200</span><span class="unit">m</span></div>
+          <div class="errmsg"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>El máximo es 4000 m</div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="lab" style="color:var(--t3)">Desnivel positivo (m)</div>
+          <div class="inp dis"><span class="val">—</span><span class="unit">m</span></div></div>
+      </div>
+      <p class="note">El rango se muestra en reposo y al enfocar, no como mensaje de error después. El error llega sólo si el valor lo rompe.</p>
+    </div>
+
+    <!-- DECIMAL -->
+    <div class="card">
+      <h3>Decimal con unidad</h3>
+      <div class="sub">number · fracciones válidas</div>
+      <div class="states">
+        <div class="st"><span class="stn">Reposo</span>
+          <div class="lab">Ritmo objetivo (min/km) <span class="opt">opcional</span></div>
+          <div class="inp"><span class="ph">6.5</span><span class="unit">min/km</span></div>
+          <div class="hint">Entre 3 y 12</div></div>
+        <div class="st"><span class="stn">Con valor — y cómo se lee después</span>
+          <div class="lab">Ritmo objetivo (min/km) <span class="opt">opcional</span></div>
+          <div class="inp"><span class="val">6.5</span><span class="unit">min/km</span></div>
+          <div class="hint">En la tarjeta se muestra como <strong style="color:var(--warm)">6:30 /km</strong></div></div>
+        <div class="st"><span class="stn">Enfocado</span>
+          <div class="lab">Duración estimada (h) <span class="opt">opcional</span></div>
+          <div class="inp focus"><span class="val">3.5</span><span class="caret"></span><span class="unit">h</span></div></div>
+        <div class="st"><span class="stn">Error</span>
+          <div class="lab">Ritmo objetivo (min/km) <span class="opt">opcional</span></div>
+          <div class="inp err"><span class="val">1.2</span><span class="unit">min/km</span></div>
+          <div class="errmsg"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>El mínimo es 3 min/km</div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="lab" style="color:var(--t3)">Duración estimada (h)</div>
+          <div class="inp dis"><span class="val">—</span><span class="unit">h</span></div></div>
+      </div>
+      <p class="note">Se guarda 6.5 y se muestra 6:30. Un corredor no piensa en decimales — la conversión vive en la vista, no en la base.</p>
+    </div>
+
+    <!-- SINGLE SELECT -->
+    <div class="card">
+      <h3>Selección única</h3>
+      <div class="sub">string + enum · segmentado si ≤4</div>
+      <div class="states">
+        <div class="st"><span class="stn">Reposo</span>
+          <div class="lab"><span class="req"></span>Formato</div>
+          <div class="seg"><div>5v5</div><div>7v7</div><div>9v9</div><div>11v11</div></div></div>
+        <div class="st"><span class="stn">Con valor</span>
+          <div class="lab"><span class="req"></span>Formato</div>
+          <div class="seg"><div>5v5</div><div class="on">7v7</div><div>9v9</div><div>11v11</div></div></div>
+        <div class="st"><span class="stn">Enfocado</span>
+          <div class="lab"><span class="req"></span>Superficie</div>
+          <div class="seg focus"><div class="on">sintética</div><div>natural</div><div>cemento</div></div></div>
+        <div class="st"><span class="stn">Error — requerido sin elegir</span>
+          <div class="lab"><span class="req"></span>Superficie</div>
+          <div class="seg" style="border-color:var(--danger)"><div>sintética</div><div>natural</div><div>cemento</div></div>
+          <div class="errmsg"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>Elige una superficie</div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="lab" style="color:var(--t3)">Tipo de ruta</div>
+          <div class="seg dis"><div class="on">calle</div><div>trail</div><div>pista</div></div></div>
+      </div>
+      <p class="note">Nunca un desplegable. Las listas son cortas y cerradas: esconderlas detrás de un tap cuesta más de lo que ahorra.</p>
+    </div>
+
+    <!-- MULTI SELECT -->
+    <div class="card">
+      <h3>Selección múltiple</h3>
+      <div class="sub">array · cerrada y abierta</div>
+      <div class="states">
+        <div class="st"><span class="stn">Cerrada · reposo</span>
+          <div class="lab">Posiciones que faltan <span class="opt">opcional</span></div>
+          <div class="chips"><span class="chip">portero</span><span class="chip">defensa</span><span class="chip">medio</span><span class="chip">delantero</span></div></div>
+        <div class="st"><span class="stn">Cerrada · con valor</span>
+          <div class="lab">Posiciones que faltan <span class="opt">opcional</span></div>
+          <div class="chips">
+            <span class="chip on"><svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M3.5 10.4 8 15l8.5-10"/></svg>portero</span>
+            <span class="chip">defensa</span><span class="chip on"><svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M3.5 10.4 8 15l8.5-10"/></svg>medio</span><span class="chip">delantero</span></div>
+          <div class="hint">2 de 4 seleccionadas</div></div>
+        <div class="st"><span class="stn">Abierta · lista libre</span>
+          <div class="lab">Equipo por llevar <span class="opt">opcional</span></div>
+          <div class="chips"><span class="chip on">Agua</span><span class="chip on">Bloqueador</span>
+            <span class="chip add">+ agregar</span></div></div>
+        <div class="st"><span class="stn">Enfocado</span>
+          <div class="lab">Equipo por llevar <span class="opt">opcional</span></div>
+          <div class="chips"><span class="chip on">Agua</span><span class="chip add focus">Linterna<span class="caret"></span></span></div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="lab" style="color:var(--t3)">Posiciones que faltan</div>
+          <div class="chips"><span class="chip dis on">portero</span><span class="chip dis">defensa</span></div></div>
+      </div>
+      <p class="note">Cerrada dibuja las opciones del enum. Abierta acepta cualquier texto. El check dentro del chip evita depender del color para saber qué está puesto.</p>
+    </div>
+
+    <!-- TOGGLE -->
+    <div class="card">
+      <h3>Interruptor</h3>
+      <div class="sub">boolean · varios vienen en sí</div>
+      <div class="states">
+        <div class="st"><span class="stn">Encendido — valor por defecto</span>
+          <div class="tog on"><span class="txt">Nadie se queda atrás</span><span class="sw"><i></i></span></div></div>
+        <div class="st"><span class="stn">Apagado a propósito</span>
+          <div class="tog off-deliberate"><span class="txt">Nadie se queda atrás</span><span class="tag">cambiado</span><span class="sw"><i></i></span></div>
+          <div class="hint">Se dice en la sesión: <strong style="color:var(--warm)">ritmo libre</strong></div></div>
+        <div class="st"><span class="stn">Apagado — nunca tuvo default</span>
+          <div class="tog"><span class="txt">Hay árbitro</span><span class="sw"><i></i></span></div></div>
+        <div class="st"><span class="stn">Enfocado</span>
+          <div class="tog on focus"><span class="txt">Traer camisa clara y oscura</span><span class="sw"><i></i></span></div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="tog on dis"><span class="txt">Incluye transporte</span><span class="sw"><i></i></span></div></div>
+      </div>
+      <p class="note">Apagar algo que venía encendido no puede verse igual que no haberlo tocado nunca. El texto se atenúa y la sesión lo dice explícitamente — si no, el asistente asume que sí aplica.</p>
+    </div>
+
+    <!-- CURRENCY -->
+    <div class="card">
+      <h3>Moneda (₡)</h3>
+      <div class="sub">integer · colones enteros</div>
+      <div class="states">
+        <div class="st"><span class="stn">Vacío — y esto es lo normal</span>
+          <div class="lab">Costo de cancha (₡ total) <span class="opt">opcional</span></div>
+          <div class="inp"><span class="val" style="color:var(--success)">Gratis</span></div>
+          <div class="hint">Déjalo vacío si no se cobra — el símbolo ₡ aparece sólo cuando hay monto</div></div>
+        <div class="st"><span class="stn">Con valor</span>
+          <div class="lab">Costo de cancha (₡ total) <span class="opt">opcional</span></div>
+          <div class="inp"><span class="pre">₡</span><span class="val">18 000</span></div>
+          <div class="hint">Se divide entre los que van — <strong style="color:var(--warm)">₡2 570 c/u</strong></div></div>
+        <div class="st"><span class="stn">Enfocado</span>
+          <div class="lab">Entrada al parque (₡) <span class="opt">opcional</span></div>
+          <div class="inp focus"><span class="pre">₡</span><span class="val">1 800</span><span class="caret"></span></div></div>
+        <div class="st"><span class="stn">Error</span>
+          <div class="lab">Entrada al parque (₡) <span class="opt">opcional</span></div>
+          <div class="inp err"><span class="pre">₡</span><span class="val">1 800,50</span></div>
+          <div class="errmsg"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>Colones enteros, sin céntimos</div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="lab" style="color:var(--t3)">Costo de cancha (₡ total)</div>
+          <div class="inp dis"><span class="pre">₡</span><span class="val">—</span></div></div>
+      </div>
+      <p class="note">Cero no se escribe como ₡0. El campo vacío ya dice <strong style="color:var(--success)">Gratis</strong>, en verde, porque gratis es una buena noticia y es el caso más común.</p>
+    </div>
+
+    <!-- SHORT TEXT -->
+    <div class="card">
+      <h3>Texto corto</h3>
+      <div class="sub">string · máximo 200</div>
+      <div class="states">
+        <div class="st"><span class="stn">Reposo</span>
+          <div class="lab">Sendero <span class="opt">opcional</span></div>
+          <div class="inp"><span class="ph">Pico Blanco</span></div></div>
+        <div class="st"><span class="stn">Con valor</span>
+          <div class="lab"><span class="req"></span>Punto de encuentro</div>
+          <div class="inp" style="height:auto;padding:12px 14px;align-items:flex-start">
+            <span style="color:var(--t1);line-height:1.4">portón norte, junto a la fuente</span></div></div>
+        <div class="st"><span class="stn">Enfocado — cerca del límite</span>
+          <div class="lab"><span class="req"></span>Punto de encuentro</div>
+          <div class="inp focus" style="height:auto;padding:12px 14px;align-items:flex-start">
+            <span style="color:var(--t1);line-height:1.4">portón norte del parque, junto a la fuente grande, al lado del kiosco de frutas que abre temprano y</span><span class="caret"></span></div>
+          <div class="hint" style="color:var(--sun)">18 caracteres restantes</div></div>
+        <div class="st"><span class="stn">Error</span>
+          <div class="lab">Enlace a la ruta <span class="opt">opcional</span></div>
+          <div class="inp err"><span style="color:var(--t1)">strava punto com</span></div>
+          <div class="errmsg"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>Pega un enlace completo</div></div>
+        <div class="st"><span class="stn">Deshabilitado</span>
+          <div class="lab" style="color:var(--t3)">Sendero</div>
+          <div class="inp dis"><span>—</span></div></div>
+      </div>
+      <p class="note">El contador aparece a los últimos 20 caracteres, no desde el principio. Contar desde 200 le dice a alguien que escriba menos antes de haber escrito nada.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 03 -->
+<section>
+  <div class="sh"><span class="sn">03</span><h2>Requerido y opcional</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Cada categoría tiene <strong>dos campos requeridos</strong> — senderismo pide distancia y desnivel, fútbol pide formato y superficie. Todo lo demás es opcional, y el formulario tiene que poder publicarse con esos dos llenos y nada más.</p>
+    <p>Por eso lo requerido no se marca con un asterisco rojo: un rojo entre siete campos hace parecer que hay siete errores. Se marca con un punto en Sun — el color de la acción — y lo opcional se dice con la palabra, en el gris más tenue.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start">
+    <div class="phone">
+      <div>
+        <div style="font-size:.69rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--sun);margin-bottom:14px">Senderismo · lo mínimo</div>
+        <div class="st" style="margin-bottom:16px">
+          <div class="lab"><span class="req"></span>Distancia (km)</div>
+          <div class="inp"><span class="val">12</span><span class="unit">km</span></div></div>
+        <div class="st">
+          <div class="lab"><span class="req"></span>Desnivel positivo (m)</div>
+          <div class="inp"><span class="val">820</span><span class="unit">m</span></div></div>
+      </div>
+      <div class="divider">Opcional</div>
+      <div>
+        <div class="st" style="margin-bottom:14px">
+          <div class="lab">Sendero <span class="opt">opcional</span></div>
+          <div class="inp"><span class="ph">Pico Blanco</span></div></div>
+        <div class="st" style="margin-bottom:14px">
+          <div class="lab">Duración estimada (h) <span class="opt">opcional</span></div>
+          <div class="inp"><span class="ph">3.5</span><span class="unit">h</span></div></div>
+        <div class="tog"><span class="txt" style="font-size:.88rem">Incluye transporte</span><span class="sw"><i></i></span></div>
+      </div>
+      <div class="fbar">
+        <span class="ok"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="#0B0F1F" stroke-width="3"><path d="M3.5 10.4 8 15l8.5-10"/></svg></span>
+        <span style="font-size:.84rem;color:var(--t2)">Listo para publicar</span>
+      </div>
+      <button class="btn">Publicar sesión</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="rule">
+        <div class="l">La regla</div>
+        <p><strong>Lo requerido va primero y siempre visible.</strong> Lo opcional va bajo un divisor que dice qué es. Nadie tiene que decidir si un campo importa: la posición ya lo dijo.</p>
+      </div>
+      <div class="rule">
+        <div class="l">Publicar</div>
+        <p>El botón se habilita <strong>en cuanto los dos requeridos están llenos</strong>, no cuando el formulario está completo. Una sesión con dos campos ya sirve; una que nunca se publicó no sirve para nada.</p>
+      </div>
+      <div class="rule bad">
+        <div class="l">Nunca</div>
+        <p><strong>Asterisco rojo en lo requerido.</strong> El rojo es de error. Si aparece antes de que exista un error, deja de significar error.</p>
+      </div>
+      <div class="rule bad">
+        <div class="l">Nunca</div>
+        <p><strong>Validar mientras se escribe.</strong> El error llega al salir del campo o al intentar publicar. Marcar «5» como inválido mientras alguien está tecleando «520» es hostil.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section>
+  <div class="sh"><span class="sn">04</span><h2>Reglas del kit</h2></div>
+  <div class="rules">
+    <div class="rule"><div class="l">Siempre</div>
+      <p><strong>El rango se muestra antes del error, no después.</strong> El esquema ya trae mínimo y máximo — el control los enseña en reposo. Corregir es peor que orientar.</p></div>
+    <div class="rule"><div class="l">Siempre</div>
+      <p><strong>El estado también en la forma.</strong> Chips seleccionados llevan check; el interruptor mueve el pulgar. El color es refuerzo, nunca la única señal.</p></div>
+    <div class="rule"><div class="l">Siempre</div>
+      <p><strong>Voz en tú, neutra.</strong> «Elige una superficie», «Pega un enlace», «Déjalo vacío». Nunca «seleccione» ni «ingrese» — ni nada que sólo se entienda en un país.</p></div>
+    <div class="rule"><div class="l">Siempre</div>
+      <p><strong>44 px de área táctil</strong>, aunque el chip mida 34 de alto.</p></div>
+    <div class="rule bad"><div class="l">Nunca</div>
+      <p><strong>Un desplegable para menos de seis opciones.</strong> Esconde el conjunto y cuesta dos taps en vez de uno.</p></div>
+    <div class="rule bad"><div class="l">Nunca</div>
+      <p><strong>Etiquetas escritas en el diseño.</strong> Vienen de <code>categories.attribute_schema</code> en español y en inglés. Si una etiqueta se ve mal, se arregla en la base — no en la pantalla.</p></div>
+    <div class="rule bad"><div class="l">Nunca</div>
+      <p><strong>Un control que sepa a qué deporte pertenece.</strong> En el momento en que un campo tenga una rama <code>if (categoria === 'football')</code>, pádel vuelve a costar una versión nueva de la app.</p></div>
+  </div>
+</section>
+
+<footer>
+  Los tokens que usa este kit ya viven en <code>src/theme/</code> — colores, escala tipográfica, espaciado, radios y la rampa de calor con sus dos modos. El kit se construye contra esos archivos, no contra valores copiados. Siguiente en orden: crear sesión, detalle, descubrir.
+</footer>
+
+</div>
+  </body>
+</html>

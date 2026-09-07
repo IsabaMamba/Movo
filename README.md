@@ -6,14 +6,19 @@ Movo helps people find sports and outdoor sessions happening near them, and give
 people who _run_ those sessions the tooling they have never had — rosters, attendance,
 recurring schedules, and reports they can show a sponsor.
 
-> **Status: pre-alpha.** The database foundation is built and tested. The mobile app is
-> not scaffolded yet and the visual direction is still being chosen. Nothing here is
-> deployed.
+> **Status: pre-alpha.** The database foundation and the design system are built and
+> tested. The visual direction is decided ([ADR 0004](docs/adr/0004-thermal-visual-direction.md))
+> and five screens are designed. The Expo app is **not scaffolded yet** — nothing consumes
+> the tokens or the RPCs. Nothing here is deployed.
+>
+> [`docs/status.md`](docs/status.md) is the honest read: what exists, what does not, and
+> what is blocking.
 
 ---
 
 ## Table of contents
 
+- [Start here](#start-here)
 - [Why this exists](#why-this-exists)
 - [Features](#features)
 - [Tech stack](#tech-stack)
@@ -28,6 +33,22 @@ recurring schedules, and reports they can show a sponsor.
 - [License](#license)
 
 ---
+
+## Start here
+
+Four documents, in this order. Together they are about twenty minutes and they cover
+everything decided so far.
+
+| Read                                           | For                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [`docs/product.md`](docs/product.md)           | What Movo is, who it's for, and every product decision with its reasoning                |
+| [`docs/status.md`](docs/status.md)             | What's built, what isn't, what's blocking, and what to do next                           |
+| [`docs/design/`](docs/design/)                 | The screens and the design system — open the HTML files in a browser, nothing to install |
+| [`docs/architecture.md`](docs/architecture.md) | How the pieces fit and why there are no microservices                                    |
+
+Then [`docs/security.md`](docs/security.md) before touching anything that stores where a
+person went, and the [ADRs](docs/adr/) when you want to know why a decision was made rather
+than what it was.
 
 ## Why this exists
 
@@ -56,9 +77,17 @@ app is what brings their roster along. See
 - Imported sessions, so the map is never empty before supply exists
 - Deny-by-default row-level security, blocking, and a report queue with resolution states
 
+**Designed, not built** — see [`docs/design/`](docs/design/)
+
+- Discover, session detail, and create-session screens, phone-first at 390 × 844
+- The field kit: six input types × five states, which every category assembles its form from
+- Roles, AI-proposed sessions, open sessions, and solo mode
+
 **Planned**
 
-- Expo mobile app: discover, session detail, organizer roster
+- Organizer console (web): roster and check-in — the next thing to build, and the only
+  screen that produces new data
+- Expo app shell: auth, navigation, Discover wired to `nearby_activities()`
 - Push reminders (12 h and 1 h before a session)
 - Weekly attendance summary for organizers and sponsors
 
@@ -81,8 +110,11 @@ app is what brings their roster along. See
 │   └── workflows/            CI: quality gate + real database suite
 ├── docs/
 │   ├── adr/                  Architecture decision records
+│   ├── design/               Screens + design system, as openable HTML
 │   ├── architecture.md       How the pieces fit together
-│   └── security.md           Threat model and Ley 8968 obligations
+│   ├── product.md            What Movo is and every product decision
+│   ├── security.md           Threat model and Ley 8968 obligations
+│   └── status.md             What's built, what isn't, what's blocking
 ├── scripts/
 │   └── db-test.sh            Applies migrations, runs the SQL suite
 ├── src/
@@ -90,7 +122,7 @@ app is what brings their roster along. See
 │   ├── components/           Shared presentational components
 │   ├── features/             Feature-first modules, mirroring the backend
 │   ├── lib/                  Supabase client and typed RPC wrappers
-│   ├── theme/                Design tokens (pending direction)
+│   ├── theme/                Design tokens — palette, type, heat ramp, a11y floors
 │   └── types/                Database row and RPC types
 └── supabase/
     ├── migrations/           Numbered, append-only
@@ -175,11 +207,15 @@ leaves no data behind.
 
 ## Documentation
 
+- [`docs/product.md`](docs/product.md) — what Movo is, and every product decision
+- [`docs/status.md`](docs/status.md) — built, not built, blocking, next
 - [`docs/architecture.md`](docs/architecture.md) — system shape and data model
+- [`docs/design/`](docs/design/) — screens and design system, openable in a browser
 - [`docs/security.md`](docs/security.md) — threat model, RLS rules, Ley 8968 obligations
 - [`docs/design-brief.md`](docs/design-brief.md) — the field kit, screens to build, and what the
   schema has already decided for design
 - [`docs/adr/`](docs/adr/) — decision records, newest last
+- [`src/theme/README.md`](src/theme/README.md) — the token rules, stated as rules
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — branches, commits, review
 
 ## Contributing

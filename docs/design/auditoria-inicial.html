@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="es-419">
+  <head>
+    <title>Movo — Auditoría inicial</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; }
+      body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f1f; }
+      img { max-width: 100%; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#F1F3F1; --surface:#FFFFFF; --surface-2:#E7ECE9; --sunk:#E2E8E4;
+  --ink:#141A18; --ink-2:#3D4744; --muted:#6B7772; --line:#D2D9D5; --line-2:#BFC8C3;
+  --accent:#0B6B5E; --accent-ink:#08544A; --accent-soft:#DCEAE6;
+  --crit:#A32218; --high:#B4611A; --med:#7C6E1E; --low:#48646E;
+  --crit-bg:#F6E3E0; --high-bg:#F7E8DA; --med-bg:#F2EFDA; --low-bg:#E2EAEC;
+  --shadow:0 1px 2px rgba(20,26,24,.05), 0 8px 24px -16px rgba(20,26,24,.25);
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1211; --surface:#161C1A; --surface-2:#1D2523; --sunk:#121816;
+    --ink:#E8EDEA; --ink-2:#B7C2BE; --muted:#8A9591; --line:#293230; --line-2:#3A4542;
+    --accent:#4FBFAE; --accent-ink:#7FD4C6; --accent-soft:#153029;
+    --crit:#E4776A; --high:#DE9E56; --med:#C6B655; --low:#8FA9B1;
+    --crit-bg:#2E1A17; --high-bg:#2C2116; --med-bg:#282515; --low-bg:#1A2427;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1211; --surface:#161C1A; --surface-2:#1D2523; --sunk:#121816;
+  --ink:#E8EDEA; --ink-2:#B7C2BE; --muted:#8A9591; --line:#293230; --line-2:#3A4542;
+  --accent:#4FBFAE; --accent-ink:#7FD4C6; --accent-soft:#153029;
+  --crit:#E4776A; --high:#DE9E56; --med:#C6B655; --low:#8FA9B1;
+  --crit-bg:#2E1A17; --high-bg:#2C2116; --med-bg:#282515; --low-bg:#1A2427;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:16.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent-ink); text-decoration-thickness:1px; text-underline-offset:2px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+h1,h2,h3,h4{font-family:var(--display); text-wrap:balance; margin:0}
+p{margin:0}
+strong{font-weight:600}
+
+/* ---------- shell ---------- */
+.shell{max-width:1220px; margin:0 auto; padding:0 24px 96px}
+.cols{display:grid; grid-template-columns:1fr; gap:0}
+@media (min-width:1080px){
+  .cols{grid-template-columns:198px minmax(0,1fr); gap:56px; align-items:start}
+}
+
+/* ---------- masthead ---------- */
+.mast{padding:56px 0 30px; border-bottom:2px solid var(--ink)}
+.kicker{
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent-ink); display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:20px;
+}
+.kicker span{white-space:nowrap}
+h1{font-size:clamp(2.3rem,6vw,3.9rem); font-weight:800; line-height:1.02; letter-spacing:-.028em}
+.dek{
+  font-size:1.14rem; color:var(--ink-2); margin-top:18px; max-width:60ch;
+}
+.dek b{color:var(--ink); font-weight:600}
+
+/* brief strip */
+.brief{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  border:1px solid var(--line); border-radius:3px; background:var(--surface);
+  margin:30px 0 0; overflow:hidden;
+}
+.brief div{padding:14px 16px; border-right:1px solid var(--line)}
+.brief div:last-child{border-right:0}
+.brief dt{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:5px;
+}
+.brief dd{margin:0; font-family:var(--display); font-weight:600; font-size:.95rem; line-height:1.3}
+@media (max-width:640px){ .brief div{border-right:0; border-bottom:1px solid var(--line)} }
+
+/* verdict banner */
+.verdict{
+  margin-top:34px; padding:22px 24px; border-radius:3px;
+  background:var(--accent-soft); border-left:4px solid var(--accent);
+}
+.verdict .lbl{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent-ink); margin-bottom:8px;
+}
+.verdict p{font-size:1.06rem; max-width:70ch}
+.verdict p + p{margin-top:10px}
+
+/* ---------- nav ---------- */
+nav.toc{display:none}
+@media (min-width:1080px){
+  nav.toc{
+    display:block; position:sticky; top:24px; padding-top:44px;
+    font-family:var(--mono); font-size:11.5px; line-height:1.45;
+  }
+  nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+  nav.toc a{
+    display:grid; grid-template-columns:22px 1fr; gap:6px;
+    color:var(--muted); text-decoration:none; padding:2px 0;
+  }
+  nav.toc a:hover{color:var(--accent-ink)}
+  nav.toc a b{color:var(--line-2); font-weight:500}
+  nav.toc a:hover b{color:var(--accent)}
+}
+
+/* ---------- sections ---------- */
+section{padding-top:52px}
+.sechead{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:baseline;
+  border-top:1px solid var(--line-2); padding-top:14px; margin-bottom:22px}
+.secnum{font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:600; letter-spacing:.05em}
+.sechead h2{font-size:clamp(1.35rem,2.6vw,1.75rem); font-weight:700; letter-spacing:-.018em}
+.prose{max-width:68ch; display:flex; flex-direction:column; gap:14px}
+.prose h3{font-size:1.02rem; font-weight:700; margin-top:10px; letter-spacing:-.008em}
+.prose ul,.prose ol{margin:0; padding-left:1.15rem; display:flex; flex-direction:column; gap:7px}
+.prose li::marker{color:var(--muted)}
+.note{font-size:.92rem; color:var(--muted); font-style:italic}
+
+/* ---------- assumption list ---------- */
+.assume{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0;
+  border:1px solid var(--line); border-radius:3px; background:var(--surface); max-width:68ch}
+.assume li{padding:11px 16px; border-bottom:1px solid var(--line); display:grid;
+  grid-template-columns:auto 1fr; gap:12px; font-size:.95rem}
+.assume li:last-child{border-bottom:0}
+.assume code{font-family:var(--mono); font-size:11px; color:var(--muted)}
+
+/* ---------- risk register ---------- */
+.risks{display:flex; flex-direction:column; gap:12px}
+.risk{
+  background:var(--surface); border:1px solid var(--line); border-left-width:4px;
+  border-radius:3px; padding:16px 18px; box-shadow:var(--shadow);
+}
+.risk.c-crit{border-left-color:var(--crit)}
+.risk.c-high{border-left-color:var(--high)}
+.risk.c-med{border-left-color:var(--med)}
+.risk.c-low{border-left-color:var(--low)}
+.risk-top{display:flex; flex-wrap:wrap; gap:10px; align-items:baseline; margin-bottom:9px}
+.risk-id{font-family:var(--mono); font-size:11px; color:var(--muted); font-weight:600}
+.risk h3{font-family:var(--display); font-size:1.04rem; font-weight:700; flex:1 1 240px; letter-spacing:-.01em}
+.pill{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  padding:3px 7px; border-radius:2px; font-weight:600; white-space:nowrap;
+}
+.p-crit{background:var(--crit-bg); color:var(--crit)}
+.p-high{background:var(--high-bg); color:var(--high)}
+.p-med{background:var(--med-bg); color:var(--med)}
+.p-low{background:var(--low-bg); color:var(--low)}
+.risk dl{margin:0; display:flex; flex-direction:column; gap:6px}
+.risk dl div{display:grid; grid-template-columns:76px 1fr; gap:12px; align-items:baseline}
+.risk dt{
+  font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted); padding-top:3px;
+}
+.risk dd{margin:0; font-size:.95rem; line-height:1.55}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:3px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:.9rem; min-width:520px}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+thead th{
+  font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; background:var(--surface-2); border-bottom:1px solid var(--line-2);
+  position:sticky; top:0;
+}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+td.mono{font-family:var(--mono); font-size:.82rem}
+.rank{font-family:var(--mono); color:var(--muted); font-size:.8rem}
+tbody tr.hl td{background:var(--accent-soft)}
+
+/* ---------- opportunity cards ---------- */
+.opps{display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:14px}
+.opp{background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:16px 18px;
+  display:flex; flex-direction:column; gap:9px}
+.opp h3{font-size:1rem; font-weight:700; letter-spacing:-.01em}
+.opp .tag{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+.opp dl{margin:0; display:flex; flex-direction:column; gap:5px; font-size:.9rem}
+.opp dl div{display:grid; grid-template-columns:68px 1fr; gap:10px}
+.opp dt{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding-top:3px}
+.opp dd{margin:0; line-height:1.5}
+
+/* ---------- do / don't ---------- */
+.quad{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px}
+.qbox{border:1px solid var(--line); border-radius:3px; background:var(--surface); padding:15px 18px}
+.qbox h3{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line)}
+.qbox.must h3{color:var(--crit)} .qbox.should h3{color:var(--high)}
+.qbox.could h3{color:var(--med)} .qbox.dont h3{color:var(--low)}
+.qbox ul{margin:0; padding-left:1.05rem; display:flex; flex-direction:column; gap:6px; font-size:.9rem}
+
+/* ---------- scorecard ---------- */
+.scores{display:flex; flex-direction:column; gap:2px; background:var(--surface);
+  border:1px solid var(--line); border-radius:3px; padding:16px 18px}
+.score{display:grid; grid-template-columns:minmax(120px,1.1fr) minmax(90px,3fr) 34px;
+  gap:14px; align-items:center; padding:6px 0}
+.score .nm{font-size:.92rem}
+.score .track{height:9px; background:var(--sunk); border-radius:1px; position:relative; overflow:hidden}
+.score .fill{position:absolute; inset:0 auto 0 0; border-radius:1px}
+.score .v{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:.85rem;
+  text-align:right; font-weight:600}
+.f-crit{background:var(--crit)} .f-high{background:var(--high)}
+.f-med{background:var(--med)} .f-ok{background:var(--accent)}
+.score.total{border-top:1px solid var(--line-2); margin-top:8px; padding-top:12px}
+.score.total .nm{font-family:var(--display); font-weight:700}
+.score.total .v{font-size:1rem}
+
+/* ---------- answers grid ---------- */
+.answers{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:0;
+  border:1px solid var(--line); border-radius:3px; overflow:hidden; background:var(--surface)}
+.answers > div{padding:15px 18px; border-right:1px solid var(--line); border-bottom:1px solid var(--line)}
+.answers dt{font-family:var(--mono); font-size:10px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:6px}
+.answers dd{margin:0; font-size:.97rem; line-height:1.5}
+
+/* ---------- math block ---------- */
+.math{background:var(--sunk); border:1px solid var(--line); border-radius:3px;
+  padding:16px 18px; font-family:var(--mono); font-size:.83rem; line-height:1.85;
+  font-variant-numeric:tabular-nums; overflow-x:auto; color:var(--ink-2)}
+.math b{color:var(--ink); font-weight:600}
+.math .cmt{color:var(--muted)}
+
+/* ---------- callout ---------- */
+.callout{border-left:3px solid var(--accent); padding:4px 0 4px 18px; max-width:66ch}
+.callout p{font-size:1.03rem; font-weight:600; font-family:var(--display); letter-spacing:-.01em; line-height:1.45}
+
+footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--line-2); max-width:72ch}
+footer h3{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:12px}
+footer ul{margin:0; padding-left:1.1rem; display:flex; flex-direction:column; gap:6px; font-size:.85rem}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+<header class="mast">
+  <div class="kicker">
+    <span>Startup teardown</span><span>·</span>
+    <span>Gran Área Metropolitana, Costa Rica</span><span>·</span>
+    <span>3 Sept 2026</span>
+  </div>
+  <h1>Exercise &amp; Connection: a teardown</h1>
+  <p class="dek">You asked for the truth rather than encouragement. The truth is that the design work is not your problem — <b>the answer “all of them” to the question “what is the core mechanic” is</b>. Everything below follows from that.</p>
+
+  <dl class="brief">
+    <div><dt>Stage</dt><dd>Designs / prototype</dd></div>
+    <div><dt>Core mechanic</dt><dd>All four</dd></div>
+    <div><dt>First user</dt><dd>CR / LatAm urban 18–40</dd></div>
+    <div><dt>Ambition</dt><dd>Regional business</dd></div>
+  </dl>
+
+  <div class="verdict">
+    <div class="lbl">Verdict up front</div>
+    <p>As described — matching + social feed + group challenges + coach marketplace, built part-time, pre-launch, for a country of 5.2 million — this fails. Not because the idea is bad, but because it is four businesses with four different cold-start problems and one part-time founder.</p>
+    <p>There is a real, fundable, regional-scale business inside it. It is not the one you designed. It sells to <b>organizers and venues</b>, not to individuals, and it exists because Costa Rica's run-club scene went from ten people to two hundred and fifty in eighteen months with no tooling whatsoever.</p>
+  </div>
+</header>
+
+<div class="cols">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#s1"><b>01</b> The product</a></li>
+    <li><a href="#s2"><b>02</b> Vulnerabilities</a></li>
+    <li><a href="#s3"><b>03</b> Opportunities</a></li>
+    <li><a href="#s4"><b>04</b> If I were CEO</a></li>
+    <li><a href="#s5"><b>05</b> Competitors</a></li>
+    <li><a href="#s6"><b>06</b> The moat</a></li>
+    <li><a href="#s7"><b>07</b> Growth</a></li>
+    <li><a href="#s8"><b>08</b> Monetization</a></li>
+    <li><a href="#s9"><b>09</b> UX &amp; psychology</a></li>
+    <li><a href="#s10"><b>10</b> Security</a></li>
+    <li><a href="#s11"><b>11</b> Blind spots</a></li>
+    <li><a href="#s12"><b>12</b> Kill test</a></li>
+    <li><a href="#s13"><b>13</b> Action plan</a></li>
+    <li><a href="#s14"><b>14</b> Scorecard</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="s1">
+  <div class="sechead"><span class="secnum">01</span><h2>What I believe you are building</h2></div>
+  <div class="prose">
+    <p>A Spanish-language mobile app for urban Costa Rican adults roughly 18–40 that treats exercise as the pretext and belonging as the payoff. It does four things: matches people to train together, wraps a social feed around logged workouts, runs group challenges for accountability, and connects users to coaches and classes.</p>
+    <p>The problem it claims to solve is real and measurable. Roughly <b>half of Costa Rican adults</b> fall below the WHO minimum of 150 weekly minutes, and the Plideco study of the GAM puts sedentarism at 51%. Meanwhile gyms have overtaken football as the country's top physical activity — 33.6% of active people in the GAM go to a gym versus 21.4% who play football — and the same study notes the migration from public plazas into gyms is driven by insecurity, weather, and decayed public infrastructure, producing a fitness culture of <em>individual consumption rather than community recreation</em>. So: more people exercising, more of them alone, in a country where half of everyone does nothing. The gap you're pointing at exists.</p>
+    <h3>Assumptions I am making</h3>
+  </div>
+  <ul class="assume" style="margin-top:14px">
+    <li><code>A1</code><span>You are solo or near-solo, unfunded, and working on this part-time alongside a degree and a job.</span></li>
+    <li><code>A2</code><span>The stack is React / React Native on Firebase — your existing toolkit.</span></li>
+    <li><code>A3</code><span>Zero users, zero waitlist, no signed gym or club partners, no letters of intent.</span></li>
+    <li><code>A4</code><span>Spanish-first, GAM-first, iOS + Android eventually.</span></li>
+    <li><code>A5</code><span>You have not yet decided whether romantic matching is allowed. It will happen anyway.</span></li>
+    <li><code>A6</code><span>"Regional" means Costa Rica first, then Panama / Guatemala / El Salvador.</span></li>
+  </ul>
+  <div class="prose" style="margin-top:18px">
+    <p class="note">If A3 is wrong — if you already have a gym or a club willing to pilot — several conclusions below get considerably more optimistic. Tell me and I'll redo the growth and moat sections.</p>
+    <div class="callout" style="margin-top:8px"><p>The single most consequential thing you told me: the core mechanic is “all of them.” That is not ambition. It is four cold-start problems stacked on one part-time founder, and it is the most likely cause of death.</p></div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="s2">
+  <div class="sechead"><span class="secnum">02</span><h2>Vulnerabilities, worst first</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Ranked by what can actually kill the company, not by how uncomfortable they are to read. Severity is damage if it happens; likelihood is my estimate given where you are today.</p>
+  </div>
+
+  <div class="risks">
+
+    <article class="risk c-crit">
+      <div class="risk-top"><span class="risk-id">V01</span><h3>Four products, one part-time founder</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-crit">Near-certain</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Matching, a feed, challenges, and a marketplace are four separate businesses. Matching needs two-sided local liquidity. A feed needs network density and content velocity. Challenges need retention mechanics. A marketplace needs supply acquisition, payments, and trust. Each has a different "first 100 users."</dd></div>
+        <div><dt>Why</dt><dd>Well-funded teams have died attempting any one of them. Splitting a part-time founder's attention four ways guarantees that none reaches the quality threshold where users switch away from what they already use.</dd></div>
+        <div><dt>Fix</dt><dd>Choose one mechanic this week. My recommendation is coordination of recurring group sessions — everything else is a distraction until that works in one district.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-crit">
+      <div class="risk-top"><span class="risk-id">V02</span><h3>Density, not reach — the matching math doesn't close</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-crit">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>A matching product is worthless below a local density threshold. National user counts are irrelevant; what matters is how many people are available <em>at one venue, in one time slot, on one day.</em></dd></div>
+        <div><dt>Why</dt><dd>The arithmetic is unforgiving at Costa Rica's scale:</dd></div>
+      </dl>
+      <div class="math" style="margin-top:12px">
+<span class="cmt">// Serviceable pool, honestly derived</span><br>
+Costa Rica population                    <b>~5.2 M</b><br>
+Gran Área Metropolitana (~50%)           <b>~2.6 M</b><br>
+Ages 18–40 (~33%)                        <b>~860 K</b><br>
+× physically active (~49%)               <b>~420 K</b><br>
+× gym-goers (33.6% of active)            <b>~145 K</b>  <span class="cmt">← your SAM</span><br><br>
+<span class="cmt">// What 2% penetration actually feels like</span><br>
+2% of 145 K                              <b>2,900 users</b><br>
+÷ ~40 viable venues in the GAM           <b>72 per venue</b><br>
+× ~15% active in any given week          <b>11 per venue</b><br>
+÷ ~6 realistic training time slots       <b>&lt; 2 per slot</b>  <span class="cmt">← nobody matches</span>
+      </div>
+      <dl style="margin-top:12px">
+        <div><dt>Fix</dt><dd>Launch one district, one activity, one recurring time slot — not a country. Concentrate 200 users into one place rather than 5,000 across a nation. Everything about your roadmap changes once you accept this.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-crit">
+      <div class="risk-top"><span class="risk-id">V03</span><h3>Your real competitor is a free WhatsApp group</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-crit">Near-certain</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Costa Rica's run clubs went from under ten participants to over 250 in roughly eighteen months — No Corro Nada, Un Club Secreto, Rise and Run — coordinated entirely through Instagram and WhatsApp, with DJs, cafés, and sponsors attached. Zero product. Zero cost. 100% installed base.</dd></div>
+        <div><dt>Why</dt><dd>You are not competing with an app; you are competing with a habit that already works. Asking a 250-person group to move to a new app is asking the organizer to take on migration risk for a benefit they haven't felt yet. Feature count is not persuasion here — it is friction.</dd></div>
+        <div><dt>Fix</dt><dd>Don't ask anyone to leave WhatsApp. Sit beside it: give the <em>organizer</em> the things WhatsApp genuinely cannot do — attendance history, rosters, waivers, route archives, and a sponsor report they can invoice against — and let members keep chatting where they already are.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-crit">
+      <div class="risk-top"><span class="risk-id">V04</span><h3>Consumer subscription arithmetic doesn't fund a company here</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-high">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>A B2C subscription priced for Costa Rican wallets, sold into the pool calculated in V02, cannot produce meaningful revenue.</dd></div>
+      </dl>
+      <div class="math" style="margin-top:12px">
+<span class="cmt">// Consumer subscription, generous assumptions</span><br>
+7,000 users (5% of SAM, year 3)<br>
+× 8% convert to paid                     <b>560 payers</b><br>
+× $4/mo                                  <b>$2,240/mo</b> ≈ <b>$27 K/yr</b><br>
+− app store 15–30%, infra, support       <span class="cmt">→ not a salary</span><br><br>
+<span class="cmt">// Supply-side SaaS, conservative assumptions</span><br>
+60 clubs / gyms / court venues in the GAM<br>
+× ₡45,000/mo (~$90)                      <b>₡2.7 M/mo</b> ≈ <b>$64 K/yr</b><br>
++ 4 brand sponsorship packages/yr        <span class="cmt">→ a regional business</span>
+      </div>
+      <dl style="margin-top:12px">
+        <div><dt>Fix</dt><dd>Monetize supply, not demand. The consumer app becomes free distribution, not the revenue line. See §08.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-crit">
+      <div class="risk-top"><span class="risk-id">V05</span><h3>Physical-safety liability in a one-media-cycle country</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-med">Low–Medium</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>You are introducing strangers who then meet in physical space, often early morning or after dark, in a country where perceived insecurity is already documented as the reason people moved their exercise indoors. One serious incident traceable to the app ends the company.</dd></div>
+        <div><dt>Why</dt><dd>Likelihood per meeting is low; consequence is unbounded and non-recoverable. In a market of five million with a single national news cycle, there is no "quiet incident."</dd></div>
+        <div><dt>Fix</dt><dd>Before a single stranger meets a stranger: identity verification (cédula or phone + selfie), groups of three or more by default with 1:1 disabled, public and named venues only, no precise real-time location sharing, in-app reporting with a named human responder, block/ban tooling, and a written incident protocol. Ship these <em>with</em> the matching feature, never after it.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V06</span><h3>Strava is shipping your feature set right now</h3>
+        <span class="pill p-high">High</span><span class="pill p-high">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Strava has ~180 M registered users, passed one million clubs, saw running clubs grow 3.5× year-on-year and club-organized events 1.5×, and has announced a club events tab, sub-group route sharing, and club-only leaderboards for the second half of 2026.</dd></div>
+        <div><dt>Why</dt><dd>That is your feed and half your community layer, shipped by an incumbent that already has your users' data and their friends. Competing on that surface is unwinnable.</dd></div>
+        <div><dt>Fix</dt><dd>Never build a feed. Integrate: read-only Strava OAuth so a session logged in your app appears in the user's existing Strava life. Be the layer Strava won't build — Costa Rican venue relationships, local operations, sponsor reporting, and Spanish-language ground truth.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V07</span><h3>Ley 8968 — fitness data is legally <em>sensitive</em> data</h3>
+        <span class="pill p-high">High</span><span class="pill p-high">Medium–High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Costa Rica's Ley 8968 classifies health data as sensitive and requires <em>express written</em> consent for it — an unsigned digital acknowledgment does not suffice. Processing sensitive data improperly is a serious or very serious infraction, carrying 5–30 base salaries (roughly ₡2.3 M–₡13.9 M in 2026). Personal data may leave Costa Rica only where PRODHAB has found adequacy or a derogation applies — directly relevant if you host on US-region Firebase.</dd></div>
+        <div><dt>Why</dt><dd>Weight, injuries, goals, heart rate and training history are health data. Most CR consumer apps ignore this and get away with it until they matter. A company selling to corporates or taking brand money is exactly the kind that gets asked.</dd></div>
+        <div><dt>Fix</dt><dd>Collect the minimum — you need a sport, a level and availability, not a body-fat percentage. Granular, separate, explicit consent in Spanish for anything health-adjacent. A written privacy notice and data map. Set Firebase to a defensible region or document your transfer basis. Budget a few hours of local counsel; it's cheap compared to the fine range.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V08</span><h3>Client-side authorization on Firebase</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-high">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>The standard failure mode of a solo-built Firebase prototype: permissive Firestore rules, business logic enforced in the client, and a <code>users</code> collection made broadly readable because matching "needs" it.</dd></div>
+        <div><dt>Why</dt><dd>Anything the client can read, anyone can read. A matching app's user collection contains names, photos, schedules and neighbourhoods — a package that is genuinely dangerous when combined with V05.</dd></div>
+        <div><dt>Fix</dt><dd>Deny-by-default rules with unit tests in the emulator; a separate minimal public profile document containing only what matching truly needs; every privileged operation behind a Cloud Function; App Check enabled before launch. Details in §10.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V09</span><h3>Two of the highest-churn categories, combined</h3>
+        <span class="pill p-high">High</span><span class="pill p-high">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Fitness apps and social-discovery apps both suffer brutal cohort collapse — fitness through motivation decay, discovery through "I found who I needed, goodbye." Stacking them doesn't average the churn; it compounds it.</dd></div>
+        <div><dt>Why</dt><dd>A successful match is a reason to stop opening your app. That is a structural problem, not a notifications problem.</dd></div>
+        <div><dt>Fix</dt><dd>Make the retained object a <em>recurring scheduled commitment with named people</em> — the standing Tuesday 6 p.m. — not a streak, a badge, or a match. The app must be the place the next session is confirmed, or it will be closed after the first one.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V10</span><h3>SINPE Móvil erases any take rate</h3>
+        <span class="pill p-high">High</span><span class="pill p-crit">Near-certain</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>SINPE Móvil has ~4.6 million active subscriptions in a country of 5.2 million, moved ₡12.5 trillion across 747 million transactions in 2025, and costs users nothing. Any fee you insert between two Costa Ricans gets routed around in one WhatsApp message.</dd></div>
+        <div><dt>Why</dt><dd>Marketplace and transaction-fee models assume you own the payment rail. Here, the rail is free, instant, universal, and outside your control. Hacienda is also tightening fiscal scrutiny of SINPE Móvil flows — another reason not to sit in the money path.</dd></div>
+        <div><dt>Fix</dt><dd>Charge for software and access, never for moving money. Subscriptions and sponsorship packages, invoiced with proper factura electrónica.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V11</span><h3>Marketplace supply has no reason to join</h3>
+        <span class="pill p-high">High</span><span class="pill p-high">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Costa Rican trainers already have Instagram for audience and SINPE for payment. You offer neither an audience they lack nor a payment method they need, and you'd take a cut of both.</dd></div>
+        <div><dt>Why</dt><dd>Marketplaces are won by whoever brings demand. You have none. This is the feature most likely to consume months and yield nothing.</dd></div>
+        <div><dt>Fix</dt><dd>Cut it from the designs today. Revisit only when you own an audience a coach cannot reach otherwise.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-high">
+      <div class="risk-top"><span class="risk-id">V12</span><h3>Founder capacity is the binding constraint</h3>
+        <span class="pill p-crit">Critical</span><span class="pill p-high">High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>This is a business that wins on local operations — showing up at clubs, standing at gym doors, chasing organizers — and it is competing for your hours against a job, an engineering degree, design coursework, and other ventures.</dd></div>
+        <div><dt>Why</dt><dd>Capital isn't your constraint and neither is code — you can build this. Sustained weekly presence in one district for ninety days is the constraint, and it is the one thing that cannot be batched, automated, or done at 11 p.m.</dd></div>
+        <div><dt>Fix</dt><dd>Write down the real number of hours per week you can defend for six months. If it is under ten, either recruit a co-founder who owns community and operations, or choose the version of this that is a tool rather than a network — the organizer-facing product needs far fewer hours than the consumer network does.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-med">
+      <div class="risk-top"><span class="risk-id">V13</span><h3>Gym culture in the GAM is individual on purpose</h3>
+        <span class="pill p-high">High</span><span class="pill p-med">Medium</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>The same study that shows gyms overtaking football attributes the shift to safety, weather and equipment — people moved indoors partly to be left alone. "Meet strangers at your gym" may be selling against the reason they chose the gym.</dd></div>
+        <div><dt>Fix</dt><dd>Target contexts where joining strangers is already the norm — group classes, run clubs, court sports, pickup football — rather than the weight room floor.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-med">
+      <div class="risk-top"><span class="risk-id">V14</span><h3>It becomes a dating app whether you allow it or not</h3>
+        <span class="pill p-med">Medium–High</span><span class="pill p-high">Medium–High</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>Any app that matches young adults for in-person meetings acquires a romantic use case. Playtomic, a padel booking app, has marriages attributed to it.</dd></div>
+        <div><dt>Why</dt><dd>If you become known as "el Tinder del gym," you inherit dating-app moderation costs and safety exposure while losing the people who came to train, plus the gyms and brands who won't associate with it.</dd></div>
+        <div><dt>Fix</dt><dd>Decide the policy before launch and encode it in the product: group-first, activity-first, no swipe interaction, no "looking for" field, no profile browsing without a session context. Ambiguity here is a decision to become a dating app by default.</dd></div>
+      </dl>
+    </article>
+
+    <article class="risk c-low">
+      <div class="risk-top"><span class="risk-id">V15</span><h3>Platform and vendor dependency</h3>
+        <span class="pill p-med">Medium</span><span class="pill p-med">Medium</span></div>
+      <dl>
+        <div><dt>Problem</dt><dd>App store commissions of 15–30% on any consumer subscription; Firebase cost cliffs once reads scale with a social graph; Strava and Apple Health API terms that can change unilaterally; WhatsApp Business API pricing if you build on it.</dd></div>
+        <div><dt>Fix</dt><dd>Web-first for anything transactional so payments avoid store fees; model Firestore reads per session before you have traffic; treat any third-party integration as a convenience layer that the product survives losing.</dd></div>
+      </dl>
+    </article>
+
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="s3">
+  <div class="sechead"><span class="secnum">03</span><h2>Windows of opportunity</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Ordered by how well they fit a part-time founder targeting a regional business. The first two are, in my view, considerably better businesses than the one you designed.</p>
+  </div>
+
+  <div class="opps">
+
+    <article class="opp">
+      <span class="tag">Opportunity 01 — strongest</span>
+      <h3>The run-club operating system</h3>
+      <dl>
+        <div><dt>Why now</dt><dd>CR run clubs grew from under 10 to 250+ attendees in ~18 months. Brands are now approaching organizers directly — and organizers have no attendance data, no roster, no waiver, no proof of delivery to invoice against. The money arrived before the tooling did.</dd></div>
+        <div><dt>Upside</dt><dd>20–60 CR clubs at ₡25–45K/mo, plus every club's roster as free consumer distribution, plus a path into sponsorship brokerage. Replicable in Panamá and Guatemala with identical dynamics.</dd></div>
+        <div><dt>Difficulty</dt><dd>Low–medium. Single-sided. No liquidity problem.</dd></div>
+        <div><dt>Cheap test</dt><dd>Run attendance and a one-page sponsor report by hand for one club for four weeks. Then stop, and see whether the organizer asks for it back.</dd></div>
+      </dl>
+    </article>
+
+    <article class="opp">
+      <span class="tag">Opportunity 02 — structural</span>
+      <h3>Sports that structurally require other people</h3>
+      <dl>
+        <div><dt>Why now</dt><dd>Playtomic — 4 M users, 66 countries, a 0–7 level algorithm, open matches with strangers — already operates in Costa Rica through Urban Sport, Park &amp; Padel and Play Pádel Tamarindo. It proves the model, and it proves the boundary: padel <em>cannot be played alone</em>. Running can. That's why padel matching works and gym matching struggles.</dd></div>
+        <div><dt>Upside</dt><dd>The sports Playtomic doesn't touch in CR: mejengas, basketball, volleyball, surf, group cycling. Enormous participation, coordinated entirely by WhatsApp, no tooling, and a scarce bookable resource (the cancha) to anchor monetization.</dd></div>
+        <div><dt>Difficulty</dt><dd>Medium. Needs venue supply, but venues have an obvious incentive: empty slots.</dd></div>
+        <div><dt>Cheap test</dt><dd>A "completar la mejenga" broker for five canchas, run over WhatsApp by you, personally, for two weeks. Count sessions that happened <em>only</em> because you filled them.</dd></div>
+      </dl>
+    </article>
+
+    <article class="opp">
+      <span class="tag">Opportunity 03 — unfair advantage</span>
+      <h3>Corporate wellness, using the door you already have</h3>
+      <dl>
+        <div><dt>Why now</dt><dd>Wellhub and TotalPass sell gym <em>access</em> to LatAm employers. Nobody sells team activity and belonging for hybrid workforces — which is the actual complaint HR has. Costa Rica's free-zone and services employers have budgets and measurable wellness mandates.</dd></div>
+        <div><dt>Upside</dt><dd>Contract revenue instead of consumer churn, per-employee pricing, and a logo that unlocks the next five. This is the fastest path to a real regional number.</dd></div>
+        <div><dt>Difficulty</dt><dd>Medium — but you work inside a large employer, which is a distribution advantage most founders would pay for.</dd></div>
+        <div><dt>Cheap test</dt><dd>Run a six-week team challenge for one internal team off a spreadsheet. Measure weekly participation, not signups.</dd></div>
+      </dl>
+    </article>
+
+    <article class="opp">
+      <span class="tag">Opportunity 04 — positioning</span>
+      <h3>Safety-first group training for women</h3>
+      <dl>
+        <div><dt>Why now</dt><dd>The documented driver pushing Costa Ricans indoors is perceived insecurity in public space. For women that constraint is sharper and largely unaddressed — the barrier to a 5 a.m. run is not motivation.</dd></div>
+        <div><dt>Upside</dt><dd>Turns your biggest liability (V05) into your positioning, produces unusually strong word-of-mouth, and gives brands a story worth sponsoring. Narrow enough to reach density in one district.</dd></div>
+        <div><dt>Difficulty</dt><dd>Medium. Demands genuine verification and moderation investment — which you needed anyway.</dd></div>
+        <div><dt>Cheap test</dt><dd>Two verified group runs in one district, co-hosted with an existing organizer. Measure return rate at week 3, not attendance at week 1.</dd></div>
+      </dl>
+    </article>
+
+    <article class="opp">
+      <span class="tag">Opportunity 05</span>
+      <h3>Sponsorship brokerage with verified attendance</h3>
+      <dl>
+        <div><dt>Why now</dt><dd>Brands are already contacting individual run clubs. Nobody can sell them twelve clubs at once with verified head counts and demographics.</dd></div>
+        <div><dt>Upside</dt><dd>Marketing budgets are an order of magnitude above what consumers pay. Attendance data becomes a genuine proprietary asset — see §06.</dd></div>
+        <div><dt>Difficulty</dt><dd>Medium–high. Requires club supply first; this is the second move, not the first.</dd></div>
+        <div><dt>Cheap test</dt><dd>Sell one ₡150K package to one local brand for one month across two clubs. Deliver a real report.</dd></div>
+      </dl>
+    </article>
+
+    <article class="opp">
+      <span class="tag">Opportunity 06</span>
+      <h3>Independent gyms losing to Smart Fit</h3>
+      <dl>
+        <div><dt>Why now</dt><dd>Smart Fit is expanding aggressively across the GAM. Independent gyms cannot compete on price or equipment; community and retention are the only ground left to them, and they have no software for it.</dd></div>
+        <div><dt>Upside</dt><dd>A defined, motivated, reachable set of buyers with an existential reason to say yes.</dd></div>
+        <div><dt>Difficulty</dt><dd>Medium. Long-ish sales cycle, small ticket, but honest recurring revenue.</dd></div>
+        <div><dt>Cheap test</dt><dd>Ten in-person conversations with independent gym owners in the GAM. Ask what they'd pay to cut monthly churn by a fifth.</dd></div>
+      </dl>
+    </article>
+
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="s4">
+  <div class="sechead"><span class="secnum">04</span><h2>If I took over as CEO today</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>First act: delete three of the four mechanics from the designs, permanently, before writing another line of code. The positioning becomes <b>"the tool that makes group training actually happen in your neighbourhood"</b> — and the customer becomes the person who <em>organizes</em>, not the person who attends.</p>
+  </div>
+  <div class="quad">
+    <div class="qbox must">
+      <h3>Must do</h3>
+      <ul>
+        <li>Cut to one mechanic: recurring group sessions at real venues.</li>
+        <li>Change the customer to the organizer / venue.</li>
+        <li>Pick one district and one activity. Nothing national.</li>
+        <li>Ship a mobile web app first — no store review, no store fees, no dual-platform tax.</li>
+        <li>Identity verification and group-only meetings, from day one.</li>
+        <li>Write the safety protocol before the first meetup.</li>
+        <li>Spanish-first copy, written for ticos, not translated.</li>
+        <li>Seed the map with real public club sessions so it is never empty.</li>
+        <li>Set a 90-day kill criterion in writing.</li>
+      </ul>
+    </div>
+    <div class="qbox should">
+      <h3>Should do</h3>
+      <ul>
+        <li>Read-only Strava OAuth, so users keep their existing habit.</li>
+        <li>Attendance history and roster export for organizers.</li>
+        <li>A one-page sponsor report generated automatically.</li>
+        <li>WhatsApp deep links for invites — meet users where they are.</li>
+        <li>One paid pilot with a gym, club or cancha within 60 days.</li>
+        <li>Session reminders 12 h and 1 h before. Nothing else notifies.</li>
+        <li>Ley 8968 consent flow and privacy notice in Spanish.</li>
+      </ul>
+    </div>
+    <div class="qbox could">
+      <h3>Could do</h3>
+      <ul>
+        <li>A skill-level system, once you have enough sessions to calibrate it.</li>
+        <li>Waivers and liability release per session.</li>
+        <li>Post-session photo archive — the actual reason people share.</li>
+        <li>Referral: an organizer who brings another organizer.</li>
+        <li>Rain contingency for the May–November season.</li>
+      </ul>
+    </div>
+    <div class="qbox dont">
+      <h3>Don't do</h3>
+      <ul>
+        <li><b>A social feed.</b> Strava wins this and is shipping more of it now.</li>
+        <li><b>A coach marketplace.</b> No demand to offer, no payment gap to fill.</li>
+        <li><b>In-app payments.</b> SINPE eats your take rate.</li>
+        <li>Streaks, badges, points. They don't retain adults.</li>
+        <li>An AI coach or chatbot. Nobody is switching apps for it.</li>
+        <li>Wearable integrations at this stage.</li>
+        <li>Native iOS + Android before product-market fit.</li>
+        <li>Swipe-based matching of any kind.</li>
+        <li>A second city before the first has 40% four-week retention.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="s5">
+  <div class="sechead"><span class="secnum">05</span><h2>Who you should actually be worried about</h2></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Competitor</th><th>Type</th><th>What they do better</th><th>Your response</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>WhatsApp + Instagram</b></td><td>Substitute</td><td>Free, zero friction, universal installation, already holds the group. The clubs at 250 people run on this today.</td><td>Don't replace it. Attach to it. Own the organizer's back office, not the members' chat.</td></tr>
+        <tr><td><b>Strava</b></td><td>Direct, future</td><td>180 M users, 1 M clubs, run clubs +3.5× YoY, and club events / route sharing / club leaderboards shipping H2 2026.</td><td>Integrate, never compete. Own venues, local ops and sponsor money — none of which Strava will do for Costa Rica.</td></tr>
+        <tr><td><b>Playtomic</b></td><td>Direct, in-market</td><td>4 M users, open matches with strangers, a working 0–7 level algorithm, already live in CR clubs. Solved matching by anchoring it to a court.</td><td>Take the lesson, not the fight: anchor matching to activities that <em>require</em> a group. Go where they aren't — mejengas, basket, volley, surf.</td></tr>
+        <tr><td><b>Existing run clubs</b></td><td>Indirect</td><td>Real community, real leaders, sponsors, culture. They <em>are</em> the product you're trying to build.</td><td>Make them customers, not competitors. This is the whole strategy.</td></tr>
+        <tr><td><b>Wellhub / TotalPass</b></td><td>Adjacent</td><td>Own the corporate wellness budget and gym supply across LatAm.</td><td>Sell the layer they don't: team activity and belonging, not access. Or become a partner inside their offer.</td></tr>
+        <tr><td><b>Smart Fit</b></td><td>Future</td><td>Scale, brand, expanding across the GAM, its own app and captive members.</td><td>Ally with the independents losing to them. Being the anti-Smart-Fit is a position.</td></tr>
+        <tr><td><b>Meetup</b></td><td>Substitute</td><td>Generic and weak in CR, but structurally the same product and already exists.</td><td>Beat it on locality and Spanish. Low threat, useful proof the shape works.</td></tr>
+        <tr><td><b>A pivoting startup</b></td><td>Future</td><td>Any LatAm booking or padel startup can add adjacent sports in a quarter.</td><td>The defence is venue relationships and local density, not features.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose" style="margin-top:18px">
+    <p class="note">Note what is absent from the response column: features. Against WhatsApp, more features is a disadvantage — every added surface is another reason for a 250-person group to stay where they are.</p>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="s6">
+  <div class="sechead"><span class="secnum">06</span><h2>The moat</h2></div>
+  <div class="prose" style="margin-bottom:18px">
+    <p>Directly: <b>as described, there is none.</b> Nothing in matching + feed + challenges + marketplace is defensible. A competent developer rebuilds it in eight weeks, and Strava is building the interesting half already. Here is what is actually available to you, ranked by how buildable it is from where you stand.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Candidate moat</th><th class="num">Viable?</th><th>What you'd have to do</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>Supply-side workflow lock-in</b></td><td class="num">Strong</td><td>Become where a club's attendance history, roster, waivers and sponsor reporting live. Once a year of history sits in your product, leaving costs the organizer real money. This is the most realistic moat available to you.</td></tr>
+        <tr class="hl"><td><b>Local operational density</b></td><td class="num">Strong</td><td>Own every viable venue and organizer in the GAM. Global players will not do country-of-five-million ground operations. This is precisely the moat a regional ambition should chase.</td></tr>
+        <tr><td><b>Proprietary participation data</b></td><td class="num">Medium</td><td>Verified attendance by club, sport, district, hour and demographic. Nobody in CR has it, and brands and gyms will pay for it. It accrues automatically if you build the organizer tool.</td></tr>
+        <tr><td><b>Trust &amp; safety reputation</b></td><td class="num">Medium</td><td>Verification, moderation and a clean incident record over years. Slow to build, nearly impossible to copy, and the thing parents and women will choose on.</td></tr>
+        <tr><td><b>Community &amp; brand</b></td><td class="num">Medium</td><td>Only if you host and own events yourself, not merely list them. Real but expensive in the one currency you're short of: hours.</td></tr>
+        <tr><td><b>Switching costs (consumer)</b></td><td class="num">Weak</td><td>Individuals have nothing to lose by leaving. Don't count on it.</td></tr>
+        <tr><td><b>Technology</b></td><td class="num">None</td><td>There is no hard technical problem here. Say so honestly to any investor; claiming otherwise costs credibility.</td></tr>
+        <tr><td><b>Network effects (consumer)</b></td><td class="num">None yet</td><td>Genuine but strictly local — and local network effects only exist above the density threshold in V02. In one district they're achievable; nationally they are not.</td></tr>
+        <tr><td><b>Being first</b></td><td class="num">None</td><td>You are not first. The clubs got there without you.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="s7">
+  <div class="sechead"><span class="secnum">07</span><h2>Growth</h2></div>
+  <div class="prose">
+    <p><b>Best initial customer:</b> not a user — an organizer. Specifically, a run club or cancha in the GAM with 50–250 recurring participants, an active Instagram, and at least one sponsor conversation already underway. There are perhaps 30–60 of them in the country and you can name most within a week.</p>
+    <p><b>Cheapest channel:</b> your legs. Twenty in-person visits to clubs, canchas and independent gyms. Cost is zero and the information is worth more than any ad you could buy.</p>
+    <p><b>Most scalable channel:</b> organizer-led distribution. One organizer brings their entire roster in a single message — the only real growth loop in this business. Consumer-by-consumer acquisition in a market this size will never compound.</p>
+    <p><b>The loop, stated plainly:</b> organizer adopts the tool → roster joins to see the schedule → attendance data accumulates → data becomes a sponsor report → sponsorship makes the organizer visibly more successful → other organizers ask what they're using.</p>
+    <p><b>Channels that will not work yet:</b> paid acquisition (no LTV to pay against), SEO (search volume in CR is negligible for this), influencers (expensive relative to just talking to the twelve people who matter).</p>
+    <h3>Three experiments to run now</h3>
+  </div>
+
+  <div class="tw" style="margin-top:14px">
+    <table>
+      <thead><tr><th style="width:80px">Experiment</th><th>Hypothesis &amp; setup</th><th class="num">Cost</th><th>Success metric → next move</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>E1</b><br><span class="rank">Concierge</span></td>
+          <td><b>H:</b> Organizers feel enough pain around attendance and sponsor proof to pay for relief.<br><b>Setup:</b> Offer two clubs free attendance tracking and a weekly one-page sponsor report. A form and a spreadsheet — no app. Four weeks, then stop without warning.</td>
+          <td class="num">₡0<br>~8 h/wk</td>
+          <td><b>Signal:</b> the organizer asks for it back, or offers to pay, within one week of you stopping.<br><b>Next:</b> if yes, that is your product — build exactly that and nothing else. If neither club notices, the organizer thesis is wrong and you should test E2 instead.</td>
+        </tr>
+        <tr>
+          <td><b>E2</b><br><span class="rank">Liquidity</span></td>
+          <td><b>H:</b> Sessions fail to happen because groups don't fill, and people will accept strangers to make one happen.<br><b>Setup:</b> Pick five canchas. Run a WhatsApp broker yourself: collect who wants to play, when, at what level, and fill incomplete groups by hand. Two weeks.</td>
+          <td class="num">₡0<br>~6 h/wk</td>
+          <td><b>Signal:</b> ≥4 sessions occur that demonstrably would not have happened otherwise, and ≥50% of participants come back the following week.<br><b>Next:</b> if yes, build the matching product anchored to venues. If people ghost, matching strangers is not viable here and the answer is organizer tooling only.</td>
+        </tr>
+        <tr>
+          <td><b>E3</b><br><span class="rank">Positioning</span></td>
+          <td><b>H:</b> "Organize your club without the chaos" outperforms "find someone to train with."<br><b>Setup:</b> One Spanish landing page, two headline variants, Instagram ads targeted to GAM 18–40 with fitness interests. Seven days.</td>
+          <td class="num">₡25–40 K</td>
+          <td><b>Signal:</b> &gt;8% visitor-to-email conversion, and a clear winner between framings.<br><b>Next:</b> the winning framing becomes your positioning everywhere. Under 4% on both means neither framing is compelling and the value proposition needs rewriting, not more traffic.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose" style="margin-top:16px">
+    <p class="note">E1 and E2 require no code at all. That is deliberate: both can be run before you finish the prototype, and either result changes what the prototype should be.</p>
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="s8">
+  <div class="sechead"><span class="secnum">08</span><h2>Monetization</h2></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Model</th><th class="num">Verdict</th><th>Reasoning</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>B2B SaaS to organizers &amp; venues</b></td><td class="num">Primary</td><td>Single-sided, contract revenue, low churn once history accumulates, and it builds the workflow moat. ₡25–45K/mo per club or venue; 60 accounts is a real regional business.</td></tr>
+        <tr class="hl"><td><b>Brand sponsorship packages</b></td><td class="num">Secondary</td><td>Marketing budgets are 10× consumer wallets, and brands are already chasing these clubs with nobody able to measure delivery. Requires supply first.</td></tr>
+        <tr><td><b>Corporate / enterprise plans</b></td><td class="num">Strong later</td><td>Per-employee pricing against a wellness budget. Your employer access is a genuine advantage. Slow sales cycle, so start the first conversation now and expect revenue in 6–9 months.</td></tr>
+        <tr><td><b>Freemium consumer</b></td><td class="num">Distribution only</td><td>Free forever. Its job is to bring rosters in, not revenue.</td></tr>
+        <tr><td><b>Consumer subscription</b></td><td class="num">Reject as primary</td><td>The arithmetic in V04 doesn't reach a salary, and app store fees take 15–30% of what little there is.</td></tr>
+        <tr><td><b>Transaction / marketplace fees</b></td><td class="num">Reject</td><td>SINPE Móvil is free, instant and in 4.6 M pockets. You will be routed around immediately.</td></tr>
+        <tr><td><b>Advertising</b></td><td class="num">Reject</td><td>Needs audience scale you will never have in this market.</td></tr>
+        <tr><td><b>Affiliate revenue</b></td><td class="num">Reject</td><td>Volumes too small to matter; distracts from the real model.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose" style="margin-top:18px">
+    <h3>What people pay for versus what they expect free</h3>
+    <ul>
+      <li><b>Expected free, forever:</b> finding sessions, joining one, seeing who's going, group chat, the schedule, a basic profile. Charging for any of these kills the distribution that makes the paid product work.</li>
+      <li><b>People will pay for:</b> organizing (rosters, attendance, waivers, payments collection), visibility (featured placement for a gym or cancha), proof (sponsor reports, participation analytics), and — cautiously — verification, if it credibly means safer sessions.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 09 -->
+<section id="s9">
+  <div class="sechead"><span class="secnum">09</span><h2>First-time user, walked through honestly</h2></div>
+  <div class="prose" style="margin-bottom:18px">
+    <p>I'm 27, live in Curridabat, train inconsistently, and a friend sent me a link. Here is where you lose me.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th style="width:150px">Moment</th><th>What goes wrong</th><th>Specific fix</th></tr></thead>
+      <tbody>
+        <tr><td><b>Before signup</b></td><td>I'm asked to create an account before I can see anything. I don't yet know if there's a single session near me.</td><td>Show real sessions in my district <em>before</em> any account. Signup happens at the moment I tap "join," and asks for a phone number only.</td></tr>
+        <tr><td><b>Onboarding</b></td><td>Goals, height, weight, fitness level, photo, interests. Six screens before value. I abandon at screen three — and you've now collected sensitive health data under Ley 8968 for no reason.</td><td>Two fields: what do you do, and when are you free. Everything else is inferred later or never asked.</td></tr>
+        <tr><td><b>The empty state</b></td><td>"No matches near you." This is the single most likely death screen and it's fatal on first open.</td><td>The map must never be empty. Seed it with real public club sessions, partnered venues, and open canchas from day one — even ones you don't yet control.</td></tr>
+        <tr><td><b>Trust</b></td><td>Unverified profiles with one photo. I won't meet these people at 5 a.m., and I especially won't if I'm a woman.</td><td>Verified badge, mutual connections, how many sessions they've attended, and the venue named with a map pin. Group size 3+ shown up front.</td></tr>
+        <tr><td><b>Joining</b></td><td>Nothing tells me what actually happens when I arrive. Social risk, not fitness, is what stops me.</td><td>Every session shows: pace or level, exact meeting point, who's the host, how many first-timers are coming, and what happens after. "Six people, three first-timers, coffee after" removes more friction than any UI change.</td></tr>
+        <tr><td><b>After session one</b></td><td>I had a good time and never open the app again. The match succeeded and the product became useless.</td><td>End every session by confirming the next one, inside the app, before people disperse. The recurring commitment is the retained object.</td></tr>
+        <tr><td><b>Notifications</b></td><td>"¡Te extrañamos!" and streak reminders. This is the uninstall.</td><td>Exactly two notification types: your session is tomorrow, and your session changed. Nothing else, ever.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose" style="margin-top:18px">
+    <ul>
+      <li><b>What makes me say "I need this":</b> seeing a real session, at a time I can make, four blocks away, with six named people going and one tap to join.</li>
+      <li><b>What makes me recommend it:</b> I showed up and it wasn't awkward. That is an operations achievement, not a design one — which is why you must run the first sessions yourself.</li>
+      <li><b>What creates habit:</b> one standing commitment, with people who notice when I don't show.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <div class="sechead"><span class="secnum">10</span><h2>Technical &amp; security review</h2></div>
+  <div class="prose" style="margin-bottom:18px">
+    <p>Assessed against the likely React / React Native + Firebase architecture. Described defensively — what the weakness is and how to close it.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="num" style="width:78px">Rank</th><th style="width:190px">Issue</th><th>Why it matters &amp; how to remediate</th></tr></thead>
+      <tbody>
+        <tr><td class="num"><span class="pill p-crit">Critical</span></td><td><b>Authorization enforced in the client</b></td><td>If Firestore rules are permissive and the app decides what a user may see, then anyone can read everything regardless of the UI. Remediate with deny-by-default rules, rules unit tests in the emulator as part of your normal workflow, and every privileged operation behind a Cloud Function with server-side checks.</td></tr>
+        <tr><td class="num"><span class="pill p-crit">Critical</span></td><td><b>Over-broad user documents</b></td><td>Matching tempts you to make the users collection widely readable. That collection holds names, photos, neighbourhoods and schedules — a package that is genuinely dangerous for meeting strangers. Split into a minimal public profile (display name, sport, level) and a private document; never expose the private one to clients.</td></tr>
+        <tr><td class="num"><span class="pill p-crit">Critical</span></td><td><b>Precise location storage</b></td><td>Storing exact coordinates or location history creates both a safety hazard and a Ley 8968 exposure. Store venue IDs and district-level areas only. Never real-time position, never location history.</td></tr>
+        <tr><td class="num"><span class="pill p-high">High</span></td><td><b>No App Check / no abuse controls</b></td><td>Without attestation, your backend is an open API: the entire user base can be enumerated by anyone who reads your bundle. Enable App Check before launch; rate-limit invites, messages and profile reads server-side.</td></tr>
+        <tr><td class="num"><span class="pill p-high">High</span></td><td><b>SMS-only authentication</b></td><td>Phone-only auth makes account takeover a SIM-swap away, and an account here carries real-world meeting privileges. Add a second factor or an email fallback for account recovery; re-verify on device change; alert on new-device sign-in.</td></tr>
+        <tr><td class="num"><span class="pill p-high">High</span></td><td><b>No moderation or reporting pipeline</b></td><td>Reporting, blocking, and a human who actually reads reports are not v2 features for a product that arranges physical meetings. Build report → auto-suspend threshold → human review, and log every action with an audit trail before launch.</td></tr>
+        <tr><td class="num"><span class="pill p-high">High</span></td><td><b>Cross-border transfer without a basis</b></td><td>Costa Rican personal data may leave the country only under an adequacy finding or a valid derogation. Select a defensible Firebase region, document the transfer basis, and reflect it in the privacy notice.</td></tr>
+        <tr><td class="num"><span class="pill p-high">High</span></td><td><b>Secrets in the client bundle</b></td><td>Anything shipped to a device is public: third-party keys, admin endpoints, webhook URLs. Keep every secret server-side in Functions config; rotate anything that has ever been committed to a repo.</td></tr>
+        <tr><td class="num"><span class="pill p-med">Medium</span></td><td><b>Unvalidated user content</b></td><td>Profile text, session descriptions and images render in other users' views. Validate and sanitize server-side; scan uploads; strip EXIF from photos, which otherwise carry GPS coordinates straight into a stranger's hands.</td></tr>
+        <tr><td class="num"><span class="pill p-med">Medium</span></td><td><b>No backup or export path</b></td><td>Once clubs keep attendance history with you, losing it is a business-ending event and a contractual one. Scheduled exports, tested restores, and a documented recovery procedure.</td></tr>
+        <tr><td class="num"><span class="pill p-med">Medium</span></td><td><b>Read-cost scaling</b></td><td>Social graph queries on Firestore scale in cost quadratically if modelled naively. Denormalize session and roster reads; model reads-per-session on paper before you have traffic, not after the bill arrives.</td></tr>
+        <tr><td class="num"><span class="pill p-low">Low</span></td><td><b>Dependency supply chain</b></td><td>Lockfiles, automated dependency alerts, and a policy of not adding a package for something you can write in twenty lines.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <div class="sechead"><span class="secnum">11</span><h2>Ten things you're most likely overlooking</h2></div>
+  <div class="prose">
+    <ol>
+      <li><b>Your competitor is WhatsApp</b>, it is free, it is already installed, and it is currently winning with 250 people at a time.</li>
+      <li><b>Connection is an outcome, not a feature.</b> You cannot ship belonging. You can only ship a reliable recurring event, and belonging happens on its own around week four.</li>
+      <li><b>The organizer is the customer.</b> There are ~40 of them in the GAM and each carries a roster. You have been designing for the roster.</li>
+      <li><b>Density beats reach.</b> Two hundred users in Escazú is a functioning product; five thousand spread across Costa Rica is an empty screen.</li>
+      <li><b>Rainy season is half the year.</b> May to November wrecks outdoor participation, and your retention charts will look like a collapsing business every June unless you plan indoor alternatives and read seasonality correctly.</li>
+      <li><b>Health data is legally sensitive here.</b> A checkbox is not consent under Ley 8968, and the sanctions are denominated in base salaries, not in dollars you can ignore.</li>
+      <li><b>A safety incident is existential</b>, not manageable, in a country with one national news cycle and five million people.</li>
+      <li><b>Gym-goers moved indoors partly to be alone.</b> You may be selling against the reason they chose the gym in the first place.</li>
+      <li><b>The moment a company pays you, Hacienda exists.</b> Factura electrónica, tax registration, and a legal entity are prerequisites for B2B revenue — and Hacienda is currently tightening scrutiny of SINPE Móvil flows specifically.</li>
+      <li><b>Attention is your scarcest input</b>, not money and not engineering. This is at least your fifth concurrent project. The version of this business that survives is the one designed around ten focused hours a week, not the one that assumes forty.</li>
+    </ol>
+    <p class="note" style="margin-top:6px">A bonus eleventh, because investors will ask it first: <b>"why hasn't a run club just built this?"</b> Have an answer. The honest one is that organizers are community people, not software people — which is exactly why the tool has to come from outside and exactly why they'll pay for it.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <div class="sechead"><span class="secnum">12</span><h2>Kill the idea</h2></div>
+  <div class="prose">
+    <h3>The strongest case that this fails</h3>
+    <ol>
+      <li><b>The problem is already solved, for free, by unpaid people doing it better every month.</b> Instagram plus WhatsApp took a run club from ten to 250 in eighteen months. Your app has to beat that, and "beating" a free tool everyone already has requires being ten times better at something, not slightly better at four things.</li>
+      <li><b>The market is arithmetically too small for the model you chose.</b> A consumer subscription against 145,000 realistic prospects cannot produce a salary, let alone a company. You picked a regional scope, which is a defensible choice — but it is incompatible with consumer-scale monetization.</li>
+      <li><b>Four mechanics from a part-time founder means shipping none of them well enough to switch anyone.</b> The bar is not "works." The bar is "better than the WhatsApp group I'm already in."</li>
+      <li><b>The incumbents are moving into this exact space now.</b> Strava is shipping club events, route sharing and club leaderboards in H2 2026. Playtomic has already solved social matching for the one sport where matching is structurally necessary, and is already in Costa Rica.</li>
+      <li><b>There is no moat and no supply.</b> No exclusive venues, no proprietary data, no distribution advantage, no switching cost. Everything in the current design is copyable in a quarter.</li>
+      <li><b>The one input that would fix all of the above — dense, sustained local operations — is the input a part-time founder with four other commitments structurally cannot provide.</b></li>
+    </ol>
+    <h3>What would have to be true for it to work anyway</h3>
+    <ol>
+      <li>You cut to one mechanic and one activity type within the week.</li>
+      <li>The customer becomes the organizer or the venue, not the individual.</li>
+      <li>You can personally be present in one district, every week, for ninety days.</li>
+      <li>Revenue comes from supply and brands, not consumer subscriptions.</li>
+      <li>You reach real liquidity in one micro-market before touching a second.</li>
+      <li>Safety and Ley 8968 are handled before the first stranger meets a stranger.</li>
+      <li>You can defend fifteen focused hours a week for six months.</li>
+    </ol>
+    <div class="callout" style="margin-top:6px"><p>Items 1, 3 and 7 are the load-bearing ones. If those three are not true, no amount of design quality, engineering skill, or feature work will save this — and you would be better off putting those hours into one of your other ventures.</p></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <div class="sechead"><span class="secnum">13</span><h2>Prioritized action plan</h2></div>
+  <div class="prose" style="margin-bottom:16px">
+    <p>Priority = (Impact × Confidence) ÷ Effort, all on a 1–10 scale. Sorted by score within each horizon. Note how much of the highest-value work involves deleting things and talking to people rather than building.</p>
+  </div>
+
+  <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px">Next 7 days</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Action</th><th class="num">Imp</th><th class="num">Eff</th><th class="num">Conf</th><th class="num">Score</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>Delete the feed and the coach marketplace from the designs.</b> Permanently, not "later."</td><td class="num">7</td><td class="num">1</td><td class="num">9</td><td class="num">63.0</td></tr>
+        <tr class="hl"><td><b>Write down the hours per week you can truly defend for six months.</b> Everything else depends on this number being honest.</td><td class="num">8</td><td class="num">1</td><td class="num">7</td><td class="num">56.0</td></tr>
+        <tr class="hl"><td><b>Choose one mechanic and one activity type.</b> My recommendation: recurring group sessions, starting with run clubs.</td><td class="num">9</td><td class="num">2</td><td class="num">9</td><td class="num">40.5</td></tr>
+        <tr><td>Write the safety protocol v0 — verification, group minimums, venues, reporting, incident response.</td><td class="num">7</td><td class="num">2</td><td class="num">8</td><td class="num">28.0</td></tr>
+        <tr><td>Interview 8 club organizers and 3 cancha or gym managers. Ask what they do today, not what they want.</td><td class="num">9</td><td class="num">3</td><td class="num">9</td><td class="num">27.0</td></tr>
+        <tr><td>Start experiment E1 — concierge attendance and sponsor report for one club. No code.</td><td class="num">8</td><td class="num">4</td><td class="num">8</td><td class="num">16.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px">Next 30 days</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Action</th><th class="num">Imp</th><th class="num">Eff</th><th class="num">Conf</th><th class="num">Score</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>Firestore deny-by-default rules, split public/private profiles, App Check on.</b></td><td class="num">7</td><td class="num">3</td><td class="num">9</td><td class="num">21.0</td></tr>
+        <tr class="hl"><td><b>Run experiment E2</b> — fill five canchas by hand over WhatsApp for two weeks.</td><td class="num">8</td><td class="num">3</td><td class="num">7</td><td class="num">18.7</td></tr>
+        <tr><td>Ley 8968 consent flow, Spanish privacy notice, minimize what you collect.</td><td class="num">6</td><td class="num">3</td><td class="num">8</td><td class="num">16.0</td></tr>
+        <tr><td>Run experiment E3 — landing page positioning test.</td><td class="num">6</td><td class="num">3</td><td class="num">7</td><td class="num">14.0</td></tr>
+        <tr><td>Seed the schedule with every real public club session in one district so it is never empty.</td><td class="num">7</td><td class="num">4</td><td class="num">7</td><td class="num">12.3</td></tr>
+        <tr><td>Ship a single-purpose mobile web app: sessions in one district, join, roster, reminder. Nothing else.</td><td class="num">8</td><td class="num">5</td><td class="num">7</td><td class="num">11.2</td></tr>
+        <tr><td>Sign one paying organizer or one sponsor, however small.</td><td class="num">9</td><td class="num">6</td><td class="num">6</td><td class="num">9.0</td></tr>
+        <tr><td>Read-only Strava OAuth integration.</td><td class="num">5</td><td class="num">4</td><td class="num">6</td><td class="num">7.5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px">Next 90 days</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Action</th><th class="num">Imp</th><th class="num">Eff</th><th class="num">Conf</th><th class="num">Score</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>Set and honour a written kill criterion:</b> if week-4 retention in district one is under 40% by day 90, stop.</td><td class="num">8</td><td class="num">1</td><td class="num">8</td><td class="num">64.0</td></tr>
+        <tr><td>Legal entity and factura electrónica, so B2B revenue is actually collectable.</td><td class="num">6</td><td class="num">4</td><td class="num">8</td><td class="num">12.0</td></tr>
+        <tr><td>Second district — only if the first clears 40% four-week retention.</td><td class="num">8</td><td class="num">6</td><td class="num">7</td><td class="num">9.3</td></tr>
+        <tr><td>Automated sponsor report as a product surface, not a manual favour.</td><td class="num">7</td><td class="num">5</td><td class="num">6</td><td class="num">8.4</td></tr>
+        <tr><td>Three paying organizers, or one corporate pilot at your employer.</td><td class="num">9</td><td class="num">7</td><td class="num">6</td><td class="num">7.7</td></tr>
+        <tr><td>100 weekly-active participants inside one district.</td><td class="num">10</td><td class="num">8</td><td class="num">6</td><td class="num">7.5</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 14 -->
+<section id="s14">
+  <div class="sechead"><span class="secnum">14</span><h2>Executive assessment</h2></div>
+  <div class="prose" style="margin-bottom:16px">
+    <p>Scored as the product is described today. The parenthetical is where the same dimension lands if you make the cuts in §04.</p>
+  </div>
+
+  <div class="scores">
+    <div class="score"><span class="nm">Problem severity</span><span class="track"><span class="fill f-med" style="width:60%"></span></span><span class="v">6</span></div>
+    <div class="score"><span class="nm">Product quality</span><span class="track"><span class="fill f-high" style="width:40%"></span></span><span class="v">4</span></div>
+    <div class="score"><span class="nm">Market opportunity</span><span class="track"><span class="fill f-high" style="width:40%"></span></span><span class="v">4</span></div>
+    <div class="score"><span class="nm">Differentiation</span><span class="track"><span class="fill f-crit" style="width:20%"></span></span><span class="v">2</span></div>
+    <div class="score"><span class="nm">Defensibility</span><span class="track"><span class="fill f-crit" style="width:20%"></span></span><span class="v">2</span></div>
+    <div class="score"><span class="nm">UX</span><span class="track"><span class="fill f-med" style="width:50%"></span></span><span class="v">5</span></div>
+    <div class="score"><span class="nm">Growth potential</span><span class="track"><span class="fill f-med" style="width:50%"></span></span><span class="v">5</span></div>
+    <div class="score"><span class="nm">Monetization</span><span class="track"><span class="fill f-crit" style="width:30%"></span></span><span class="v">3</span></div>
+    <div class="score"><span class="nm">Technical feasibility</span><span class="track"><span class="fill f-ok" style="width:80%"></span></span><span class="v">8</span></div>
+    <div class="score"><span class="nm">Security</span><span class="track"><span class="fill f-crit" style="width:30%"></span></span><span class="v">3</span></div>
+    <div class="score"><span class="nm">Scalability</span><span class="track"><span class="fill f-med" style="width:60%"></span></span><span class="v">6</span></div>
+    <div class="score total"><span class="nm">Overall potential — as designed</span><span class="track"><span class="fill f-high" style="width:40%"></span></span><span class="v">4</span></div>
+    <div class="score total" style="border-top:0;margin-top:0;padding-top:4px"><span class="nm">Overall — with §04 cuts applied</span><span class="track"><span class="fill f-ok" style="width:65%"></span></span><span class="v">6.5</span></div>
+  </div>
+
+  <div class="answers" style="margin-top:24px">
+    <div><dt>Biggest strength</dt><dd>You can design it, build it, market it, and sell it in Spanish, from inside the market — a combination most founders have to hire for. Add a real local insight window that a foreign competitor cannot see.</dd></div>
+    <div><dt>Biggest weakness</dt><dd>Four products, part-time, no supply, no moat, and no user has ever touched it.</dd></div>
+    <div><dt>Biggest opportunity</dt><dd>Become the operating system for Costa Rica's run clubs and canchas at the exact moment sponsorship money arrives and tooling doesn't exist.</dd></div>
+    <div><dt>Biggest threat</dt><dd>WhatsApp and Instagram — free, installed, and currently winning. Strava's H2 2026 club features are a distant second.</dd></div>
+    <div><dt>Most important change</dt><dd>Your customer is the organizer, not the athlete.</dd></div>
+    <div><dt>Most important thing NOT to build</dt><dd>The social feed. Strava has 180 million users and is shipping more of it this half.</dd></div>
+    <div><dt>Most important experiment</dt><dd>E1 — four weeks of concierge attendance and sponsor reporting for one real club, then stop and see who complains.</dd></div>
+    <div><dt>What would make it 10× better</dt><dd>Owning the venue and organizer supply in the GAM so thoroughly that being on your platform is the only reliable way to fill a session. That is the whole game.</dd></div>
+  </div>
+
+  <div class="prose" style="margin-top:26px">
+    <h3>Would I keep building it?</h3>
+    <p><b>Yes — but not this version, and not without a deadline.</b></p>
+    <p>I'd keep it because the underlying observation is correct and unusually well-timed. Half the country is sedentary, the fitness culture that's growing is a lonely one, an enormous grassroots wave of run clubs appeared in eighteen months, brands are pointing money at it, and nobody has built the tooling. That is a genuine window and it is open right now. You are also, unusually, capable of executing every function this needs alone.</p>
+    <p>I'd refuse to build <em>this</em> version because it's four products, its customer is the wrong person, its revenue model is arithmetically dead in a country of five million, and it has no moat. Those aren't fixable by iteration — they're fixable only by deciding differently, this week.</p>
+    <p>And I'd put a date on it. Ninety days, one district, one activity, one paying organizer or a hundred weekly-active participants. If neither exists on day ninety, I would close it without regret and put the hours into whichever of your other ventures is showing more pull. The most expensive outcome here isn't failing — it's spending two part-time years on something that never gets a clear answer because it never got a clear test.</p>
+  </div>
+</section>
+
+<footer>
+  <h3>Sources</h3>
+  <ul>
+    <li><a href="https://www.ucr.ac.cr/noticias/2026/8/12/la-costa-rica-del-futbol-se-traslada-al-gimnasio.html">UCR — La Costa Rica del fútbol se traslada al gimnasio</a> (Plideco: 33.6% gym vs 21.4% football in the GAM; 51% sedentary)</li>
+    <li><a href="https://delfino.cr/2026/04/laica-sedentarismo-afecta-a-casi-el-50-de-los-costarricenses">Delfino.cr — Sedentarismo afecta a casi el 50% de los costarricenses</a> (CCSS: 49.7% below WHO minimum)</li>
+    <li><a href="https://www.larepublica.net/noticia/run-clubs-evolucionan-la-forma-de-correr-en-costa-rica">La República — Run Clubs evolucionan la forma de correr en Costa Rica</a> (No Corro Nada, Un Club Secreto, Rise and Run)</li>
+    <li><a href="https://runninglookout.com/news/strava-2026-community-report-running-clubs-3-5x-growth-gen-z/">Running Lookout — Strava 2026 community report</a> (180 M users, 1 M clubs, 3.5× club growth, H2 2026 roadmap)</li>
+    <li><a href="https://fastcompany.mx/2026/04/16/playtomic-aplicacion-padel-pareja/">Fast Company MX — Playtomic y el "match" desde una app de pádel</a> (4 M users, 66 countries, open matches)</li>
+    <li><a href="https://padelcr.com/">Pádel Costa Rica</a> — Playtomic usage at CR clubs (Urban Sport, Park &amp; Padel, Play Pádel Tamarindo)</li>
+    <li><a href="https://nopasanada.com/leer/sinpe-movil-alcanza-record-de-transacciones-en-2025-usuarios-movilizaron-c125-billones">SINPE Móvil record 2025</a> (4.6 M subscriptions, 747 M transactions, ₡12.5 billones)</li>
+    <li><a href="https://www.recordinglaw.com/world-laws/world-data-privacy-laws/costa-rica-data-privacy-laws/">Ley 8968 &amp; PRODHAB compliance guide (2026)</a> (sensitive data, written consent, sanction ranges, transfer rules)</li>
+    <li><a href="https://revistaes.com/smart-fit-abrira-10-sedes-de-gimnasios-en-costa-rica/">Revista ES — Smart Fit expansion in Costa Rica</a></li>
+    <li><a href="https://wellhub.com/es-mx/">Wellhub (Gympass)</a> — LatAm corporate wellness incumbent</li>
+  </ul>
+</footer>
+
+</main>
+</div>
+</div>
+  </body>
+</html>

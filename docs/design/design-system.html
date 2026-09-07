@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="es-419">
+  <head>
+    <title>Movo Design System</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; }
+      body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f1f; }
+      img { max-width: 100%; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Movo commits to a single dark world on purpose — this is a dark product.
+   Every colour is therefore painted explicitly rather than inherited. */
+:root{
+  --bg-base:#0B0F1F; --bg-surface:#151A2E; --bg-raised:#1F2437; --bg-sunken:#070A14;
+  --border:#2A344A; --border-strong:#3B445B;
+  --text-primary:#FFFFFF; --text-secondary:#A9B2C3; --text-tertiary:#8892A8;
+  --text-disabled:#6E7A91; --text-inverse:#0B0F1F; --text-warm:#F6E9D7;
+  --sun:#FFC56B; --aqua:#60D1D4; --teal:#2F7A8A;
+  --danger:#E94E3D; --success:#46D6A0;
+  --h0:#0B0F1F; --h1:#1B334A; --h2:#2A677A; --h3:#A86D65;
+  --h4:#F36244; --h5:#FF9155; --h6:#FECA7D; --h7:#F6E9D7;
+  --w1:#2D7182; --w2:#D05E4F; --w3:#F76947; --w4:#FF9156; --w5:#FFBE68; --w6:#FBD6A1;
+  --ui:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-base);color:var(--text-primary);
+  font-family:var(--ui);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-family:var(--ui);text-wrap:balance}
+p{margin:0}
+a{color:var(--aqua)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
+code{font-family:var(--mono);font-size:.85em;color:var(--text-warm);
+  background:var(--bg-raised);padding:1px 5px;border-radius:4px}
+
+.shell{max-width:1240px;margin:0 auto;padding:0 24px 100px}
+.cols{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:1100px){.cols{grid-template-columns:190px minmax(0,1fr);gap:56px;align-items:start}}
+
+/* ---------- masthead ---------- */
+.mast{padding:56px 0 32px;border-bottom:1px solid var(--border)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:18px}
+h1{font-size:clamp(2.4rem,6vw,4rem);font-weight:700;letter-spacing:-.03em;line-height:.98;
+  text-transform:uppercase}
+h1 em{font-style:normal;color:var(--sun)}
+.dek{margin-top:18px;font-size:1.1rem;color:var(--text-secondary);max-width:60ch}
+.heatbar{display:flex;height:8px;margin-top:26px;border-radius:2px;overflow:hidden}
+.heatbar div{flex:1 1 0}
+
+/* ---------- nav ---------- */
+nav.toc{display:none}
+@media(min-width:1100px){
+  nav.toc{display:block;position:sticky;top:24px;padding-top:44px;
+    font-family:var(--mono);font-size:11.5px;line-height:1.5}
+  nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  nav.toc a{display:grid;grid-template-columns:20px 1fr;gap:6px;color:var(--text-disabled);
+    text-decoration:none}
+  nav.toc a:hover{color:var(--sun)}
+  nav.toc b{color:var(--border-strong);font-weight:500}
+  nav.toc a:hover b{color:var(--sun)}
+}
+
+/* ---------- sections ---------- */
+section{padding-top:56px}
+.shead{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;
+  border-top:1px solid var(--border);padding-top:16px;margin-bottom:20px}
+.snum{font-family:var(--mono);font-size:12px;color:var(--sun);font-weight:500}
+.shead h2{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;text-transform:uppercase}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:13px;color:var(--text-secondary)}
+.prose strong{color:var(--text-primary);font-weight:600}
+.prose ul{margin:0;padding-left:1.15rem;display:flex;flex-direction:column;gap:8px}
+.prose li::marker{color:var(--text-disabled)}
+h3.sub{font-size:.8rem;font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-tertiary);font-weight:500;margin:30px 0 14px}
+
+/* ---------- swatches ---------- */
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.sw{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-surface)}
+.sw .chip{height:64px}
+.sw .meta{padding:9px 11px;display:flex;flex-direction:column;gap:2px}
+.sw .nm{font-size:.82rem;font-weight:600;color:var(--text-primary)}
+.sw .hx{font-family:var(--mono);font-size:.68rem;color:var(--text-tertiary);letter-spacing:.03em}
+.sw .role{font-size:.7rem;color:var(--text-disabled);margin-top:2px;line-height:1.35}
+
+.ramp{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.ramp div{flex:1 1 0;height:56px;position:relative}
+.ramp span{position:absolute;bottom:-24px;left:0;right:0;text-align:center;
+  font-family:var(--mono);font-size:9px;color:var(--text-disabled)}
+.ramp-wrap{margin-bottom:34px}
+.ramp-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:520px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;
+  color:var(--text-secondary)}
+thead th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-tertiary);font-weight:500;background:var(--bg-raised)}
+tbody tr:last-child td{border-bottom:0}
+td.mono{font-family:var(--mono);font-size:.78rem;white-space:nowrap;color:var(--text-warm)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.pass{color:var(--success);font-weight:600}
+.fail{color:var(--danger);font-weight:600}
+
+/* ---------- component demo frame ---------- */
+.demos{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+  align-items:start}
+.demo{border:1px solid var(--border);border-radius:12px;background:var(--bg-surface);
+  padding:16px;display:flex;flex-direction:column;gap:12px}
+.demo>.cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--text-tertiary)}
+.demo>.spec{font-size:.76rem;color:var(--text-disabled);line-height:1.45;margin-top:auto}
+
+/* real components */
+.m-card{background:var(--bg-raised);border-radius:14px;padding:11px;display:flex;gap:11px;align-items:center}
+.m-thumb{width:52px;height:52px;border-radius:10px;flex:0 0 52px;
+  background:linear-gradient(135deg,var(--h2),var(--h5))}
+.m-card .t{font-size:.95rem;font-weight:600;color:#fff;line-height:1.2}
+.m-card .s{font-size:.75rem;color:var(--text-tertiary);margin-top:3px}
+.btn-join{background:var(--sun);color:var(--text-inverse);border:0;border-radius:999px;
+  padding:0 18px;height:36px;font-family:var(--ui);font-weight:600;font-size:.85rem;cursor:pointer}
+.btn-primary{background:var(--sun);color:var(--text-inverse);border:0;border-radius:12px;
+  height:48px;width:100%;font-family:var(--ui);font-weight:600;font-size:.95rem;cursor:pointer}
+.btn-ghost{background:transparent;color:var(--aqua);border:1px solid var(--border-strong);
+  border-radius:12px;height:48px;width:100%;font-family:var(--ui);font-weight:600;
+  font-size:.95rem;cursor:pointer}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);
+  border-radius:12px;height:44px;width:100%;font-family:var(--ui);font-weight:600;
+  font-size:.9rem;cursor:pointer}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip-t{border-radius:999px;padding:7px 13px;font-size:.78rem;font-weight:600;
+  border:1px solid var(--border-strong);color:var(--text-secondary);background:transparent}
+.chip-t.on{border-color:var(--aqua);color:var(--aqua);background:rgba(96,209,212,.1)}
+.fld{background:var(--bg-base);border:1px solid var(--border-strong);border-radius:10px;
+  height:46px;display:flex;align-items:center;padding:0 13px;color:var(--text-disabled);font-size:.9rem}
+.fld.err{border-color:var(--danger)}
+.err-msg{font-size:.75rem;color:var(--danger);display:flex;gap:6px;align-items:center}
+.stat{display:flex;gap:26px}
+.stat .n{font-size:1.7rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+.stat .l{font-size:.7rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--bg-raised);
+  border-radius:12px;overflow:hidden}
+.tabs>div{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 2px 9px;
+  color:var(--text-disabled);font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.tabs>div.on{color:var(--sun);box-shadow:inset 0 2px 0 var(--sun)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:0}
+.row .lbl{flex:1 1 auto;font-size:.9rem;color:var(--text-primary)}
+.badge{background:var(--danger);color:#fff;border-radius:999px;min-width:19px;height:19px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;padding:0 5px}
+.avstack{display:flex}
+.avstack div{width:26px;height:26px;border-radius:999px;border:2px solid var(--bg-surface);
+  margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;
+  color:var(--text-inverse)}
+.avstack div:first-child{margin-left:0}
+
+.rule{border-left:3px solid var(--sun);background:rgba(255,197,107,.07);padding:13px 16px;
+  border-radius:0 8px 8px 0}
+.rule.bad{border-left-color:var(--danger);background:rgba(233,78,61,.08)}
+.rule .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:5px}
+.rule.bad .lbl{color:var(--danger)}
+.rule p{font-size:.92rem;color:var(--text-secondary)}
+.rule p strong{color:#fff}
+.rules{display:flex;flex-direction:column;gap:11px;max-width:70ch}
+
+.typ{display:flex;flex-direction:column;gap:14px}
+.typ .r{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:baseline;
+  border-bottom:1px solid var(--border);padding-bottom:13px}
+.typ .k{font-family:var(--mono);font-size:10px;color:var(--text-tertiary);letter-spacing:.06em}
+
+footer{margin-top:66px;padding-top:22px;border-top:1px solid var(--border);
+  color:var(--text-tertiary);font-size:.88rem;max-width:70ch}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+<header class="mast">
+  <div class="kicker">Design system · v0.1 · Septiembre 2026</div>
+  <h1>Movo<br><em>Sistema</em></h1>
+  <p class="dek">Oscuro, deportivo y construido alrededor de un mapa de calor. Cada color de acá abajo está medido contra WCAG AA; los cuatro que no pasaban están corregidos y marcados.</p>
+  <div class="heatbar">
+    <div style="background:var(--h1)"></div>
+    <div style="background:var(--h2)"></div><div style="background:var(--h3)"></div>
+    <div style="background:var(--h4)"></div><div style="background:var(--h5)"></div>
+    <div style="background:var(--h6)"></div><div style="background:var(--h7)"></div>
+  </div>
+</header>
+
+<div class="cols">
+<nav class="toc" aria-label="Secciones">
+  <ol>
+    <li><a href="#s1"><b>01</b> Qué cambió</a></li>
+    <li><a href="#s2"><b>02</b> Color</a></li>
+    <li><a href="#s3"><b>03</b> Mapa de calor</a></li>
+    <li><a href="#s4"><b>04</b> Calma / Heatwave</a></li>
+    <li><a href="#s5"><b>05</b> Tipografía</a></li>
+    <li><a href="#s6"><b>06</b> Espacio y forma</a></li>
+    <li><a href="#s7"><b>07</b> Componentes</a></li>
+    <li><a href="#s8"><b>08</b> Reglas</a></li>
+    <li><a href="#s9"><b>09</b> Contraste</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="s1">
+  <div class="shead"><span class="snum">01</span><h2>Qué cambió</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>La paleta se mantiene. Cinco ajustes, todos medidos:</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Antes</th><th>Ahora</th><th>Por qué</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Mist #6E7A91<br>texto secundario</td><td class="mono">→ deshabilitado</td>
+          <td>3.98:1 sobre cards. No alcanza el mínimo de 4.5 para texto.</td></tr>
+        <tr><td class="mono">Cloud #A9B2C3<br>deshabilitado</td><td class="mono">→ texto secundario</td>
+          <td>8.07:1. Los roles estaban invertidos: el más claro es el que debe leerse.</td></tr>
+        <tr><td class="mono">—</td><td class="mono">#8892A8<br>texto terciario</td>
+          <td>Faltaba un escalón entre secundario y deshabilitado. 5.52:1.</td></tr>
+        <tr><td class="mono">Coral #FF7A4D<br>acentos, alertas</td><td class="mono">→ sólo calor</td>
+          <td>Coral y Heat Red están a 1.45:1 — son el mismo color a simple vista.</td></tr>
+        <tr><td class="mono">Heat Red #E94E3D<br>calor + notificaciones</td><td class="mono">→ sólo peligro</td>
+          <td>Rojo no puede significar «sesión llena» y «error» a la vez.</td></tr>
+        <tr><td class="mono">—</td><td class="mono">#46D6A0<br>éxito</td>
+          <td>No había verde. Confirmaciones no pueden usar Aqua, que ya es el acento frío.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="s2">
+  <div class="shead"><span class="snum">02</span><h2>Color</h2></div>
+
+  <h3 class="sub">Fondos y bordes</h3>
+  <div class="sw-grid">
+    <div class="sw"><div class="chip" style="background:#0B0F1F;border-bottom:1px solid #2A344A"></div>
+      <div class="meta"><span class="nm">bg.base</span><span class="hx">#0B0F1F</span>
+        <span class="role">Fondo de pantalla</span></div></div>
+    <div class="sw"><div class="chip" style="background:#151A2E"></div>
+      <div class="meta"><span class="nm">bg.surface</span><span class="hx">#151A2E</span>
+        <span class="role">Secciones, barras</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1F2437"></div>
+      <div class="meta"><span class="nm">bg.raised</span><span class="hx">#1F2437</span>
+        <span class="role">Cards, modales</span></div></div>
+    <div class="sw"><div class="chip" style="background:#070A14"></div>
+      <div class="meta"><span class="nm">bg.sunken</span><span class="hx">#070A14</span>
+        <span class="role">Pozo del mapa, inputs</span></div></div>
+    <div class="sw"><div class="chip" style="background:#2A344A"></div>
+      <div class="meta"><span class="nm">border</span><span class="hx">#2A344A</span>
+        <span class="role">Divisores</span></div></div>
+    <div class="sw"><div class="chip" style="background:#3B445B"></div>
+      <div class="meta"><span class="nm">border.strong</span><span class="hx">#3B445B</span>
+        <span class="role">Inputs, chips</span></div></div>
+  </div>
+
+  <h3 class="sub">Texto</h3>
+  <div class="sw-grid">
+    <div class="sw"><div class="chip" style="background:#0B0F1F;display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-size:1.5rem;font-weight:700">Aa</div>
+      <div class="meta"><span class="nm">text.primary</span><span class="hx">#FFFFFF · 19.05:1</span>
+        <span class="role">Títulos, valores</span></div></div>
+    <div class="sw"><div class="chip" style="background:#0B0F1F;display:flex;align-items:center;justify-content:center;color:#A9B2C3;font-size:1.5rem;font-weight:600">Aa</div>
+      <div class="meta"><span class="nm">text.secondary</span><span class="hx">#A9B2C3 · 8.93:1</span>
+        <span class="role">Descripciones, meta</span></div></div>
+    <div class="sw"><div class="chip" style="background:#0B0F1F;display:flex;align-items:center;justify-content:center;color:#8892A8;font-size:1.5rem;font-weight:600">Aa</div>
+      <div class="meta"><span class="nm">text.tertiary</span><span class="hx">#8892A8 · 6.10:1</span>
+        <span class="role">Etiquetas, hints</span></div></div>
+    <div class="sw"><div class="chip" style="background:#0B0F1F;display:flex;align-items:center;justify-content:center;color:#6E7A91;font-size:1.5rem;font-weight:600">Aa</div>
+      <div class="meta"><span class="nm">text.disabled</span><span class="hx">#6E7A91 · 4.40:1</span>
+        <span class="role">Sólo deshabilitado</span></div></div>
+    <div class="sw"><div class="chip" style="background:#FFC56B;display:flex;align-items:center;justify-content:center;color:#0B0F1F;font-size:1.5rem;font-weight:700">Aa</div>
+      <div class="meta"><span class="nm">text.inverse</span><span class="hx">#0B0F1F · 12.20:1</span>
+        <span class="role">Sobre Sun y Aqua</span></div></div>
+    <div class="sw"><div class="chip" style="background:#F36244;display:flex;align-items:center;justify-content:center;color:#F6E9D7;font-size:1.5rem;font-weight:700">Aa</div>
+      <div class="meta"><span class="nm">text.warm</span><span class="hx">#F6E9D7</span>
+        <span class="role">Sobre superficies de calor</span></div></div>
+  </div>
+
+  <h3 class="sub">Acentos y semántica</h3>
+  <div class="sw-grid">
+    <div class="sw"><div class="chip" style="background:#FFC56B"></div>
+      <div class="meta"><span class="nm">accent.primary</span><span class="hx">Sun · #FFC56B</span>
+        <span class="role">Acción principal, pestaña activa</span></div></div>
+    <div class="sw"><div class="chip" style="background:#60D1D4"></div>
+      <div class="meta"><span class="nm">accent.cool</span><span class="hx">Aqua · #60D1D4</span>
+        <span class="role">Íconos, enlaces, selección</span></div></div>
+    <div class="sw"><div class="chip" style="background:#2F7A8A"></div>
+      <div class="meta"><span class="nm">accent.deep</span><span class="hx">Teal · #2F7A8A</span>
+        <span class="role">Base del mapa, superficies frías</span></div></div>
+    <div class="sw"><div class="chip" style="background:#E94E3D"></div>
+      <div class="meta"><span class="nm">danger</span><span class="hx">#E94E3D · 5.10:1</span>
+        <span class="role">Errores, destructivo, badges</span></div></div>
+    <div class="sw"><div class="chip" style="background:#46D6A0"></div>
+      <div class="meta"><span class="nm">success</span><span class="hx">#46D6A0 · 9.34:1</span>
+        <span class="role">Confirmado, asistió</span></div></div>
+    <div class="sw"><div class="chip" style="background:linear-gradient(90deg,#FFC56B,transparent);border:1px solid #FFC56B"></div>
+      <div class="meta"><span class="nm">warning</span><span class="hx">Sun, sólo contorno</span>
+        <span class="role">Nunca relleno — eso es la acción principal</span></div></div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="s3">
+  <div class="shead"><span class="snum">03</span><h2>Mapa de calor</h2></div>
+  <div class="prose" style="margin-bottom:24px">
+    <p>La rampa es el elemento de identidad y a la vez la única codificación de densidad que tiene la app. Dos colores no alcanzan: ocho paradas, con luminancia que <strong>sube de forma monótona</strong>, para que «más brillante» siempre signifique «más gente» sin que el usuario tenga que aprenderlo.</p>
+    <p>Aqua queda fuera de la rampa a propósito. Su luminancia (0.53) es mayor que la de Coral (0.36), así que dentro del mapa leería como <em>más</em> caliente que el naranja.</p>
+  </div>
+
+  <div class="ramp-wrap">
+    <div class="ramp-label"><span>Vacío</span><span>Pico</span></div>
+    <div class="ramp">
+      <div style="background:var(--h0)"><span>#0B0F1F</span></div>
+      <div style="background:var(--h1)"><span>#1B334A</span></div>
+      <div style="background:var(--h2)"><span>#2A677A</span></div>
+      <div style="background:var(--h3)"><span>#A86D65</span></div>
+      <div style="background:var(--h4)"><span>#F36244</span></div>
+      <div style="background:var(--h5)"><span>#FF9155</span></div>
+      <div style="background:var(--h6)"><span>#FECA7D</span></div>
+      <div style="background:var(--h7)"><span>#F6E9D7</span></div>
+    </div>
+  </div>
+
+  <div class="rule bad" style="max-width:70ch">
+    <div class="lbl">Punto débil conocido</div>
+    <p><strong>#A86D65</strong> es un malva apagado. Cruzar de teal a rojo obliga a pasar por ahí. Se puede limpiar quitando el teal del extremo frío y arrancando en granate — más limpio, pero se pierde el azul del gradiente «Heat Map» original. Decisión pendiente.</p>
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="s4">
+  <div class="shead"><span class="snum">04</span><h2>Calma / Heatwave</h2></div>
+  <div class="prose" style="margin-bottom:24px">
+    <p>Los dos temas son oscuros. No cambian los colores — cambia <strong>a qué velocidad la rampa llega al calor</strong>. Una sola constante en el código: <code>t</code> en Calma, <code>t^0.6</code> en Heatwave.</p>
+    <p>En Calma una sesión de actividad media se ve teal. En Heatwave ya es roja. Misma información, distinta temperatura emocional — y el usuario elige cuál quiere ver.</p>
+  </div>
+
+  <div class="ramp-wrap">
+    <div class="ramp-label"><span>Calma — <code style="font-size:.9em">t</code></span><span>por defecto</span></div>
+    <div class="ramp">
+      <div style="background:var(--h0)"></div><div style="background:var(--h1)"></div>
+      <div style="background:var(--h2)"></div><div style="background:var(--h3)"></div>
+      <div style="background:var(--h4)"></div><div style="background:var(--h5)"></div>
+      <div style="background:var(--h6)"></div><div style="background:var(--h7)"></div>
+    </div>
+  </div>
+
+  <div class="ramp-wrap">
+    <div class="ramp-label"><span>Heatwave — <code style="font-size:.9em">t^0.6</code></span><span>el calor llega antes</span></div>
+    <div class="ramp">
+      <div style="background:var(--h0)"></div><div style="background:var(--w1)"></div>
+      <div style="background:var(--w2)"></div><div style="background:var(--w3)"></div>
+      <div style="background:var(--w4)"></div><div style="background:var(--w5)"></div>
+      <div style="background:var(--w6)"></div><div style="background:var(--h7)"></div>
+    </div>
+  </div>
+
+  <div class="tw" style="margin-top:10px">
+    <table>
+      <thead><tr><th>Parada</th><th class="mono">Calma</th><th class="mono">Heatwave</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td class="num">0</td><td class="mono">#0B0F1F</td><td class="mono">#0B0F1F</td><td>Vacío</td></tr>
+        <tr><td class="num">1</td><td class="mono">#1B334A</td><td class="mono">#2D7182</td><td>Muy bajo</td></tr>
+        <tr><td class="num">2</td><td class="mono">#2A677A</td><td class="mono">#D05E4F</td><td>Bajo</td></tr>
+        <tr><td class="num">3</td><td class="mono">#A86D65</td><td class="mono">#F76947</td><td>Medio</td></tr>
+        <tr><td class="num">4</td><td class="mono">#F36244</td><td class="mono">#FF9156</td><td>Activo</td></tr>
+        <tr><td class="num">5</td><td class="mono">#FF9155</td><td class="mono">#FFBE68</td><td>Muy activo</td></tr>
+        <tr><td class="num">6</td><td class="mono">#FECA7D</td><td class="mono">#FBD6A1</td><td>Lleno</td></tr>
+        <tr><td class="num">7</td><td class="mono">#F6E9D7</td><td class="mono">#F6E9D7</td><td>Pico</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="s5">
+  <div class="shead"><span class="snum">05</span><h2>Tipografía</h2></div>
+  <div class="prose" style="margin-bottom:22px">
+    <p><strong>Barlow</strong>, una sola familia en tres papeles. Es una grotesca de señalética — diseñada para leerse rápido y de lejos, que es exactamente la condición de uso: alguien mirando el teléfono antes de salir a correr.</p>
+    <p>Una familia en vez de dos ahorra peso de descarga en Expo y elimina la posibilidad de que dos caras se peleen. Los números siempre en <code>tabular-nums</code>: horas, cupos y contadores viven en columnas y no deben bailar al actualizarse.</p>
+  </div>
+  <div class="typ">
+    <div class="r"><span class="k">display / 700<br>34–44px</span>
+      <span style="font-size:2.2rem;font-weight:700;letter-spacing:-.03em;line-height:1;text-transform:uppercase">Corrida martes</span></div>
+    <div class="r"><span class="k">title / 600<br>20px</span>
+      <span style="font-size:1.25rem;font-weight:600;letter-spacing:-.01em">Arenal Volcano Hiking</span></div>
+    <div class="r"><span class="k">body / 400<br>16px</span>
+      <span style="font-size:1rem;color:var(--text-secondary)">Salimos del portón norte a las 6 en punto. Nadie se queda atrás.</span></div>
+    <div class="r"><span class="k">label / 600<br>11px · .12em</span>
+      <span style="font-size:.69rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary)">Actividades organizadas</span></div>
+    <div class="r" style="border-bottom:0"><span class="k">data / 700<br>tabular</span>
+      <span style="font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums">18:00 · 14/20 · ₡2.500</span></div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="s6">
+  <div class="shead"><span class="snum">06</span><h2>Espacio y forma</h2></div>
+  <div class="prose" style="margin-bottom:20px">
+    <p>Escala de 4. Radios generosos — la app es cálida, no técnica. Todo lo tocable llega a 44&nbsp;px aunque se vea más pequeño.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Token</th><th class="mono">Valor</th><th>Uso</th></tr></thead>
+      <tbody>
+        <tr><td>space.1 … 8</td><td class="mono">4 8 12 16 20 24 32 40</td><td>Escala base de 4</td></tr>
+        <tr><td>radius.sm</td><td class="mono">8px</td><td>Chips, inputs pequeños</td></tr>
+        <tr><td>radius.md</td><td class="mono">12px</td><td>Inputs, botones rectangulares</td></tr>
+        <tr><td>radius.lg</td><td class="mono">16px</td><td>Cards, modales</td></tr>
+        <tr><td>radius.full</td><td class="mono">999px</td><td>Botón Unirse, chips, avatares</td></tr>
+        <tr><td>target.min</td><td class="mono">44 × 44px</td><td>Área táctil mínima, siempre</td></tr>
+        <tr><td>elevation</td><td class="mono">bg.surface → bg.raised</td><td>La profundidad es luminancia, no sombra</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="s7">
+  <div class="shead"><span class="snum">07</span><h2>Componentes</h2></div>
+  <div class="demos">
+
+    <div class="demo">
+      <span class="cap">Card de actividad</span>
+      <div class="m-card">
+        <div class="m-thumb"></div>
+        <div style="flex:1 1 auto">
+          <div class="t">Sunset Yoga</div>
+          <div class="s">Tamarindo · 8 van</div>
+        </div>
+        <button class="btn-join">Unirse</button>
+      </div>
+      <span class="spec">bg.raised · radius.lg · miniatura con gradiente de calor cuando no hay foto.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Botones</span>
+      <button class="btn-primary">Crear actividad</button>
+      <button class="btn-ghost">Ver el mapa</button>
+      <button class="btn-danger">Cancelar sesión</button>
+      <span class="spec">Sun relleno con etiqueta #0B0F1F. Blanco sobre Sun da 1.56:1 — nunca.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Barra de navegación</span>
+      <div class="tabs">
+        <div class="on">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 8.5 10 3l7 5.5V17H3z"/></svg>Inicio</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M2.5 5.2 7.3 3l5.4 2.2L17.5 3v11.8l-4.8 2.2-5.4-2.2-4.8 2.2z"/><path d="M7.3 3v11.8M12.7 5.2V17"/></svg>Mapa</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M10 3.5v13M3.5 10h13"/></svg>Crear</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="7.2" cy="7.4" r="2.9"/><path d="M2.4 17c0-2.9 2.1-4.8 4.8-4.8s4.8 1.9 4.8 4.8"/><path d="M13.2 5.2a2.9 2.9 0 0 1 0 5.6"/></svg>Clubes</div>
+        <div><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="10" cy="6.6" r="3.2"/><path d="M3.6 17.2c0-3.4 2.7-5.6 6.4-5.6s6.4 2.2 6.4 5.6"/></svg>Perfil</div>
+      </div>
+      <span class="spec">Activa en Sun, no en Coral. Los rojos cálidos quedan reservados al calor.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Filtros</span>
+      <div class="chips">
+        <span class="chip-t on">Hiking</span>
+        <span class="chip-t">Running</span>
+        <span class="chip-t">Surf</span>
+        <span class="chip-t">Social</span>
+      </div>
+      <span class="spec">Selección en Aqua con fondo al 10%. El borde cambia además del color, para no depender del tono.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Campo y error</span>
+      <div class="fld">e.g. Beach Volley</div>
+      <div class="fld err" style="color:var(--text-primary)">30 de febrero</div>
+      <div class="err-msg">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v5M10 13.4v.6"/></svg>
+        Esa fecha no existe
+      </div>
+      <span class="spec">El error lleva ícono y texto, no sólo borde rojo.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Estadísticas de perfil</span>
+      <div class="stat">
+        <div><div class="n">15</div><div class="l">Organizadas</div></div>
+        <div><div class="n">4</div><div class="l">Clubes</div></div>
+        <div><div class="n">92%</div><div class="l">Asistencia</div></div>
+      </div>
+      <span class="spec">Cifras en tabular. «Asistencia» sale del check-in — es el dato que un patrocinador pide.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Leyenda del mapa</span>
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="font-family:var(--mono);font-size:9.5px;color:var(--text-tertiary)">0</span>
+        <div style="flex:1 1 auto;display:flex;height:9px;border-radius:2px;overflow:hidden">
+          <div style="flex:1;background:var(--h1)"></div><div style="flex:1;background:var(--h2)"></div>
+          <div style="flex:1;background:var(--h3)"></div><div style="flex:1;background:var(--h4)"></div>
+          <div style="flex:1;background:var(--h5)"></div><div style="flex:1;background:var(--h6)"></div>
+          <div style="flex:1;background:var(--h7)"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:9.5px;color:var(--text-warm)">40+</span>
+      </div>
+      <span class="spec">Obligatoria siempre que se muestre calor. Sin leyenda el color no significa nada.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Fila de ajustes y badge</span>
+      <div>
+        <div class="row">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#60D1D4" stroke-width="1.8"><path d="M10 2.5a5 5 0 0 0-5 5v3l-1.5 3h13L15 10.5v-3a5 5 0 0 0-5-5Z"/><path d="M8.2 16.5a1.9 1.9 0 0 0 3.6 0"/></svg>
+          <span class="lbl">Notificaciones</span><span class="badge">3</span>
+        </div>
+        <div class="row">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#60D1D4" stroke-width="1.8"><rect x="3" y="8.5" width="14" height="9" rx="1.5"/><path d="M6.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+          <span class="lbl">Privacidad y datos</span>
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#6E7A91" stroke-width="2"><path d="M8 4.5 13.5 10 8 15.5"/></svg>
+        </div>
+      </div>
+      <span class="spec">El badge usa danger, nunca un color de la rampa — si no, un aviso se confunde con calor.</span>
+    </div>
+
+    <div class="demo">
+      <span class="cap">Club</span>
+      <div class="m-card" style="align-items:flex-start">
+        <div class="m-thumb" style="background:linear-gradient(135deg,var(--teal),var(--aqua))"></div>
+        <div style="flex:1 1 auto">
+          <div class="t">CR Surf Squad</div>
+          <div class="s" style="margin-bottom:8px">Próxima: sábado 6 a.m.</div>
+          <div class="avstack">
+            <div style="background:#FFC56B">SF</div><div style="background:#60D1D4">MA</div>
+            <div style="background:#FF9155">JR</div>
+            <div style="background:#2A344A;color:#A9B2C3">+9</div>
+          </div>
+        </div>
+      </div>
+      <span class="spec">Los avatares llevan borde del color de la superficie para separarse al solaparse.</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="s8">
+  <div class="shead"><span class="snum">08</span><h2>Reglas</h2></div>
+  <div class="rules">
+    <div class="rule bad"><div class="lbl">Nunca</div>
+      <p><strong>Blanco sobre Sun.</strong> 1.56:1. La etiqueta de todo botón Sun es <code>#0B0F1F</code>.</p></div>
+    <div class="rule bad"><div class="lbl">Nunca</div>
+      <p><strong>Un color de la rampa fuera del mapa.</strong> Coral y los naranjas significan «hay gente». Si aparecen en un badge o una alerta, el usuario ya no puede distinguir una sesión llena de un problema.</p></div>
+    <div class="rule bad"><div class="lbl">Nunca</div>
+      <p><strong>Aqua dentro de la rampa.</strong> Es más luminoso que el naranja y rompe la lectura de intensidad.</p></div>
+    <div class="rule"><div class="lbl">Siempre</div>
+      <p><strong>Leyenda junto al calor.</strong> Un degradado sin escala es decoración, no información.</p></div>
+    <div class="rule"><div class="lbl">Siempre</div>
+      <p><strong>El estado también en la forma.</strong> Borde, ícono o relleno además del color — cerca del 8% de los hombres no distingue rojo de verde.</p></div>
+    <div class="rule"><div class="lbl">Siempre</div>
+      <p><strong>44&nbsp;px de área táctil</strong>, aunque el elemento se vea de 32.</p></div>
+    <div class="rule"><div class="lbl">Siempre</div>
+      <p><strong>Cifras en tabular.</strong> Horas, cupos y contadores se actualizan en vivo; sin tabular la fila se mueve sola.</p></div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section id="s9">
+  <div class="shead"><span class="snum">09</span><h2>Contraste verificado</h2></div>
+  <div class="prose" style="margin-bottom:18px">
+    <p>Calculado sobre los fondos reales. <span class="pass">Verde</span> pasa AA para texto normal (4.5:1); <span class="fail">rojo</span> no debe llevar texto.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Color</th><th class="num">bg.base</th><th class="num">bg.surface</th><th class="num">bg.raised</th><th>Veredicto</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">#FFFFFF</td><td class="num pass">19.05</td><td class="num pass">17.23</td><td class="num pass">15.38</td><td>Texto principal</td></tr>
+        <tr><td class="mono">#F6E9D7</td><td class="num pass">15.93</td><td class="num pass">14.40</td><td class="num pass">12.85</td><td>Texto cálido</td></tr>
+        <tr><td class="mono">#FFC56B</td><td class="num pass">12.20</td><td class="num pass">11.03</td><td class="num pass">9.85</td><td>Acento principal</td></tr>
+        <tr><td class="mono">#60D1D4</td><td class="num pass">10.49</td><td class="num pass">9.49</td><td class="num pass">8.47</td><td>Acento frío</td></tr>
+        <tr><td class="mono">#46D6A0</td><td class="num pass">10.33</td><td class="num pass">9.34</td><td class="num pass">8.34</td><td>Éxito</td></tr>
+        <tr><td class="mono">#A9B2C3</td><td class="num pass">8.93</td><td class="num pass">8.07</td><td class="num pass">7.21</td><td>Texto secundario</td></tr>
+        <tr><td class="mono">#8892A8</td><td class="num pass">6.10</td><td class="num pass">5.52</td><td class="num pass">4.93</td><td>Texto terciario</td></tr>
+        <tr><td class="mono">#E94E3D</td><td class="num pass">5.10</td><td class="num pass">4.61</td><td class="num fail">4.12</td><td>Peligro — no sobre cards</td></tr>
+        <tr><td class="mono">#6E7A91</td><td class="num fail">4.40</td><td class="num fail">3.98</td><td class="num fail">3.56</td><td>Sólo deshabilitado</td></tr>
+        <tr><td class="mono">#4B5A73</td><td class="num fail">2.73</td><td class="num fail">2.47</td><td class="num fail">2.20</td><td>Sólo bordes — nunca texto</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="rule bad" style="margin-top:18px">
+    <div class="lbl">Detalle a vigilar</div>
+    <p><strong>Danger sobre bg.raised da 4.12:1.</strong> Un mensaje de error dentro de una card no alcanza AA. Ponelo sobre <code>bg.base</code> o <code>bg.surface</code>, o subilo a <code>#F26150</code> cuando vaya sobre card.</p>
+  </div>
+</section>
+
+<footer>
+  Los ocho valores de la rampa y los dos temas salen de un cálculo en OKLab, no de ajuste a ojo: mismos anclajes, distinta distribución. El siguiente paso natural es convertir todo esto en <code>src/theme/</code> — tokens tipados que las pantallas importen, para que este documento y el código no se separen.
+</footer>
+
+</main>
+</div>
+</div>
+  </body>
+</html>

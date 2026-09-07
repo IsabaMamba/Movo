@@ -18,9 +18,11 @@ psql_run \
   -f supabase/migrations/0001_schema.sql \
   -f supabase/migrations/0002_functions.sql \
   -f supabase/migrations/0003_rls.sql \
-  -f supabase/migrations/0004_seed_categories.sql
+  -f supabase/migrations/0004_seed_categories.sql \
+  -f supabase/migrations/0005_currency.sql
 
 echo "==> running behavioural + RLS suite"
 psql_run -f supabase/tests/01_participation_test.sql
+psql_run -f supabase/tests/02_currency_test.sql
 
 echo "==> ok"

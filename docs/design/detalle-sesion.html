@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="es-419">
+  <head>
+    <title>Detalle de Sesión</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; }
+      body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f1f; }
+      img { max-width: 100%; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --base:#0B0F1F; --surface:#151A2E; --raised:#1F2437; --sunken:#070A14;
+  --border:#2A344A; --strong:#3B445B;
+  --t1:#FFFFFF; --t2:#A9B2C3; --t3:#8892A8; /* disabled ONLY — 4.40:1, below AA. Never for text to be read. */
+  --dis:#6E7A91; --inv:#0B0F1F; --warm:#F6E9D7;
+  --sun:#FFC56B; --aqua:#60D1D4; --teal:#2F7A8A;
+  --danger:#E94E3D; --danger-r:#F26150; --success:#46D6A0;
+  --h1c:#1B334A; --h2c:#2A677A; --h3c:#A86D65; --h4c:#F36244; --h5c:#FF9155; --h6c:#FECA7D; --h7c:#F6E9D7;
+  --ui:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--base);color:var(--t1);font-family:var(--ui);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+code{font-family:var(--mono);font-size:.82em;color:var(--warm);background:var(--raised);
+  padding:1px 5px;border-radius:4px}
+.shell{max-width:1180px;margin:0 auto;padding:0 22px 96px}
+
+header{padding:52px 0 26px;border-bottom:1px solid var(--border)}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:15px}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;
+  text-transform:uppercase}
+h1 em{font-style:normal;color:var(--sun)}
+.dek{margin-top:15px;color:var(--t2);max-width:64ch;font-size:1.05rem}
+
+section{padding-top:48px}
+.sh{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:baseline;
+  border-top:1px solid var(--border);padding-top:15px;margin-bottom:18px}
+.sn{font-family:var(--mono);font-size:12px;color:var(--sun)}
+.sh h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;text-transform:uppercase}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:12px;color:var(--t2)}
+.prose strong{color:var(--t1);font-weight:600}
+
+.stage{display:grid;grid-template-columns:1fr;gap:26px;align-items:start}
+@media(min-width:880px){.stage{grid-template-columns:390px minmax(0,1fr);gap:38px}}
+
+.phone{width:100%;max-width:390px;background:var(--base);border:1px solid var(--border);
+  border-radius:22px;overflow:hidden}
+
+/* hero */
+.hero{position:relative;padding:16px 16px 18px;overflow:hidden;background:#0E1626}
+.heroglow{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 78% 118%,#F36244 0%,rgba(243,98,68,0) 42%),
+             radial-gradient(ellipse at 70% 122%,#2A677A 0%,rgba(42,103,122,0) 62%);
+  filter:blur(18px)}
+.herolat{position:absolute;inset:0;background-image:
+  repeating-linear-gradient(to right,rgba(242,238,246,.08) 0 1px,transparent 1px 24px)}
+.heroin{position:relative}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.iconbtn{width:34px;height:34px;border-radius:999px;background:#0B0F1FAA;display:flex;
+  align-items:center;justify-content:center}
+.badges{display:flex;gap:5px;margin-bottom:11px;flex-wrap:wrap}
+.bdg{font-size:.63rem;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  padding:4px 8px;border-radius:999px}
+.bdg.cat{background:var(--aqua);color:var(--inv)}
+.bdg.ser{border:1.5px solid #FFFFFF66;color:#fff}
+.htitle{font-size:1.85rem;font-weight:700;letter-spacing:-.03em;line-height:1.02}
+
+/* density strip */
+.dens{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;gap:12px}
+.dens .n{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.dens .lb{font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--t3);margin-top:3px}
+.dbar{flex:1 1 auto;display:flex;height:8px;border-radius:2px;overflow:hidden}
+.dbar div{flex:1 1 0}
+.dscale{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.06em}
+
+.body{padding:0 16px}
+.blk{padding:16px 0;border-bottom:1px solid var(--border)}
+.blk:last-child{border-bottom:0}
+.bt{font-size:.67rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:12px}
+
+.org{display:flex;align-items:center;gap:11px}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:var(--inv);flex:0 0 auto}
+.org .nm{font-size:.98rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.org .mt{font-size:.75rem;color:var(--t3);margin-top:1px}
+
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.fact{background:var(--surface);padding:11px 12px}
+.fact .k{font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.fact .v{font-size:1.02rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
+.fact .v.free{color:var(--success)}
+
+.meet{display:flex;gap:12px;align-items:flex-start;background:var(--surface);
+  border-left:3px solid var(--sun);border-radius:0 12px 12px 0;padding:13px 14px}
+.meet .k{font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--sun)}
+.meet .v{font-size:.98rem;font-weight:600;line-height:1.32;margin-top:4px}
+.meet .s{font-size:.79rem;color:var(--t3);margin-top:5px}
+
+.avstack{display:flex;margin-bottom:13px}
+.avstack .av{width:38px;height:38px;font-size:.75rem;border:2px solid var(--base);margin-left:-6px}
+.avstack .av:first-child{margin-left:0}
+.social{display:flex;flex-direction:column;gap:8px}
+.srow{display:flex;align-items:flex-start;gap:9px;font-size:.89rem;color:var(--t2)}
+.srow .dot{width:9px;height:9px;flex:0 0 9px;margin-top:6px}
+.srow b{color:var(--t1);font-weight:600}
+
+.attr{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:1.5px solid var(--strong);color:var(--t2);border-radius:999px;padding:6px 12px;
+  font-size:.78rem;font-weight:600}
+.tag.good{border-color:var(--success);color:var(--success)}
+.link{color:var(--aqua);font-size:.86rem;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+
+.safety{display:flex;justify-content:center;gap:20px;padding:16px 0 4px}
+.safety a{font-size:.82rem;color:var(--t2);text-decoration:none;font-weight:600}
+
+/* footer states */
+.pfoot{border-top:1px solid var(--border);padding:13px 16px 16px;background:var(--surface)}
+.btn{border:0;border-radius:12px;height:50px;width:100%;font-family:var(--ui);
+  font-weight:600;font-size:1rem;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px}
+.btn.sun{background:var(--sun);color:var(--inv)}
+.btn.wait{background:transparent;border:1.5px solid var(--sun);color:var(--sun)}
+.btn.ghost{background:transparent;border:1.5px solid var(--strong);color:var(--t2)}
+.btn.dis{background:var(--strong);color:var(--dis)}
+.fnote{font-size:.78rem;color:var(--t3);text-align:center;margin-top:9px;line-height:1.4}
+.fnote b{color:var(--warm)}
+.status{display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:12px;margin-bottom:10px}
+.status.go{background:#46D6A01A;border:1.5px solid var(--success)}
+.status.wl{background:#FFC56B14;border:1.5px solid var(--sun)}
+.status .txt{flex:1 1 auto;font-size:.9rem;font-weight:600}
+.status .pos{font-family:var(--mono);font-size:1.15rem;font-weight:600;font-variant-numeric:tabular-nums}
+
+.notes{display:flex;flex-direction:column;gap:13px}
+.note{border-left:3px solid var(--sun);background:#FFC56B10;padding:12px 15px;border-radius:0 8px 8px 0}
+.note.bad{border-left-color:var(--danger);background:#E94E3D12}
+.note.new{border-left-color:var(--aqua);background:#60D1D410}
+.note .l{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--sun);margin-bottom:5px}
+.note.bad .l{color:var(--danger-r)}
+.note.new .l{color:var(--aqua)}
+.note p{font-size:.9rem;color:var(--t2)}
+.note p strong{color:var(--t1)}
+
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;align-items:start}
+.mini{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px}
+.mini h3{font-size:.95rem;font-weight:700;margin-bottom:2px}
+.mini .sub{font-family:var(--mono);font-size:.7rem;color:var(--t3);margin-bottom:14px}
+.mini .hint{font-size:.79rem;color:var(--t3);margin-top:12px;line-height:1.5}
+.mini .hint b{color:var(--warm)}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--border);
+  color:var(--t3);font-size:.88rem;max-width:70ch}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="shell">
+
+<header>
+  <div class="kick">Pantalla 02 de 3 · Detalle</div>
+  <h1>Detalle<br><em>de sesión</em></h1>
+  <p class="dek">La pantalla que convence a alguien de aparecer. Lo que frena a la gente no es el ejercicio — es el riesgo social: quién va a estar, si voy a ser el más lento, qué pasa cuando llegue. Todo lo demás es secundario a eso.</p>
+</header>
+
+<!-- 01 -->
+<section>
+  <div class="sh"><span class="sn">01</span><h2>La pantalla</h2></div>
+
+  <div class="stage">
+    <div class="phone">
+
+      <div class="hero">
+        <div class="heroglow"></div><div class="herolat"></div>
+        <div class="heroin">
+          <div class="topbar">
+            <span class="iconbtn"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2.1"><path d="M12 3.5 5.5 10l6.5 6.5"/></svg></span>
+            <div style="display:flex;gap:8px">
+              <span class="iconbtn"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.9"><path d="M4 10.5v6h12v-6"/><path d="M10 2.5v10M6.4 6.1 10 2.5l3.6 3.6"/></svg></span>
+              <span class="iconbtn"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.9"><path d="M4.5 3.5h11v13l-5.5-4-5.5 4z"/></svg></span>
+            </div>
+          </div>
+          <div class="badges">
+            <span class="bdg cat">Running</span>
+            <span class="bdg ser">Cada martes</span>
+          </div>
+          <div class="htitle">Corrida martes 6K</div>
+        </div>
+      </div>
+
+      <div class="dens">
+        <div>
+          <div class="n">14</div>
+          <div class="lb">van</div>
+        </div>
+        <div style="flex:1 1 auto">
+          <div class="dbar">
+            <div style="background:var(--h1c)"></div><div style="background:var(--h2c)"></div>
+            <div style="background:var(--h3c)"></div><div style="background:var(--h4c)"></div>
+            <div style="background:var(--h5c)"></div>
+            <div style="background:#141A28"></div><div style="background:#141A28"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:5px">
+            <span class="dscale">Tranquila</span><span class="dscale">Llena</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="body">
+
+        <div class="blk">
+          <div class="org">
+            <div class="av" style="width:40px;height:40px;background:var(--h5c);font-size:.85rem">NC</div>
+            <div style="flex:1 1 auto">
+              <div class="nm">No Corro Nada
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--aqua)" stroke-width="2.6"><path d="M3.5 10.4 8 15l8.5-10"/></svg>
+              </div>
+              <div class="mt">128 sesiones · 94% asistencia</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#6E7A91" stroke-width="2.2"><circle cx="4" cy="10" r="1"/><circle cx="10" cy="10" r="1"/><circle cx="16" cy="10" r="1"/></svg>
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="facts">
+            <div class="fact"><div class="k">Cuándo</div><div class="v" style="font-size:.9rem">mar 8 sep</div></div>
+            <div class="fact"><div class="k">Hora</div><div class="v">18:00</div></div>
+            <div class="fact"><div class="k">Dura</div><div class="v">45 min</div></div>
+            <div class="fact"><div class="k">Distancia</div><div class="v">6,0 km</div></div>
+            <div class="fact"><div class="k">Ritmo</div><div class="v">6:30 /km</div></div>
+            <div class="fact"><div class="k">Precio</div><div class="v free">Gratis</div></div>
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="meet">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="var(--sun)" stroke-width="1.9" style="flex:0 0 19px;margin-top:2px"><path d="M10 18s6-5.2 6-9.4A6 6 0 0 0 4 8.6C4 12.8 10 18 10 18Z"/><circle cx="10" cy="8.5" r="2.1"/></svg>
+            <div>
+              <div class="k">Dónde nos vemos</div>
+              <div class="v">Parque La Sabana — portón norte, junto a la fuente</div>
+              <div class="s">Llega 10 min antes. Salimos en punto.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="bt">Quién va</div>
+          <div class="avstack">
+            <div class="av" style="width:36px;height:36px;background:var(--sun)">SF</div>
+            <div class="av" style="width:36px;height:36px;background:var(--aqua)">MA</div>
+            <div class="av" style="width:36px;height:36px;background:var(--h5c)">JR</div>
+            <div class="av" style="width:36px;height:36px;background:var(--h6c)">DV</div>
+            <div class="av" style="width:36px;height:36px;background:var(--strong);color:var(--t2)">+10</div>
+          </div>
+          <div class="social">
+            <div class="srow"><span class="dot" style="border:2px solid var(--success);border-radius:2px"></span>
+              <span><b>3 vienen por primera vez.</b> No eres la única persona nueva.</span></div>
+            <div class="srow"><span class="dot" style="background:var(--sun);border-radius:2px"></span>
+              <span>Sofía recibe a las nuevas en el portón</span></div>
+            <div class="srow"><span class="dot" style="background:var(--aqua);border-radius:2px"></span>
+              <span>Después caemos al café Franco, Barrio Escalante</span></div>
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="bt">Cómo es</div>
+          <div class="attr">
+            <span class="tag good">Nadie se queda atrás</span>
+            <span class="tag">Moderada</span>
+            <span class="tag">Calle</span>
+            <span class="tag">Cualquier nivel</span>
+          </div>
+          <div style="margin-top:13px"><span class="link">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 11a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.7-5.7l-1.1 1.1"/><path d="M12 9a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 9.7 16l1.1-1.1"/></svg>
+            Ver la ruta</span></div>
+        </div>
+
+        <div class="blk">
+          <div class="bt">Lleva</div>
+          <div class="attr">
+            <span class="tag">Agua</span><span class="tag">Luz o reflectivo</span>
+          </div>
+        </div>
+
+        <div class="safety">
+          <a href="#">Reportar esta sesión</a>
+          <a href="#">Ayuda</a>
+        </div>
+      </div>
+
+      <div class="pfoot">
+        <button class="btn sun">Voy</button>
+        <div class="fnote">Puedes cancelar hasta la hora de salida</div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note new">
+        <div class="l">Cambio de regla · el calor</div>
+        <p>La regla anterior decía «los colores de la rampa nunca salen del mapa». Es demasiado estrecha. La regla correcta es: <strong>el calor aparece sólo donde codifica densidad, y siempre con escala.</strong> La franja de arriba y la barra de «14 van» son densidad — la misma variable. Un badge de notificación no lo es, y sigue prohibido.</p>
+      </div>
+      <div class="note">
+        <div class="l">El riesgo social va antes que los datos</div>
+        <p>«3 vienen por primera vez» y «Sofía recibe a las nuevas» pesan más que la distancia. Alguien que nunca ha ido a un club no duda de si puede correr 6 km — duda de si va a quedar como un extraño parado en un portón.</p>
+      </div>
+      <div class="note">
+        <div class="l">El punto de encuentro es el bloque destacado</div>
+        <p>Es el único dato cuya ausencia hace que alguien no aparezca aunque haya dicho que sí. Por eso lleva el borde Sun y no está enterrado entre los hechos.</p>
+      </div>
+      <div class="note">
+        <div class="l">«14 van», no «14 de 20»</div>
+        <p>Esta sesión no tiene cupo. La barra usa la referencia de sesión concurrida, no un denominador inventado — y el número dice lo único que se sabe con certeza.</p>
+      </div>
+      <div class="note">
+        <div class="l">94% de asistencia</div>
+        <p>Sale del check-in del organizador. Es la señal que convierte un club desconocido en uno confiable — y es exactamente el dato que un patrocinador pide después.</p>
+      </div>
+      <div class="note">
+        <div class="l">Reportar vive acá</div>
+        <p>Esta es la pantalla donde alguien decide encontrarse con desconocidos, así que reportar no puede estar en Ajustes. Bloquear a una persona vive en su perfil; reportar una sesión, acá.</p>
+      </div>
+      <div class="note bad">
+        <div class="l">Nunca</div>
+        <p><strong>Teléfono, fecha de nacimiento ni contacto de emergencia.</strong> Están en <code>profile_private</code> y no salen en la pantalla de nadie más. Acá sólo hay nombre y avatar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section>
+  <div class="sh"><span class="sn">02</span><h2>Los tres resultados de unirse</h2></div>
+  <div class="prose" style="margin-bottom:22px">
+    <p><code>join_activity()</code> devuelve <strong>joined</strong> o <strong>waitlisted</strong> — nunca falla por estar llena, porque llena no significa cerrada. Eso obliga a una decisión de copy: el botón tiene que decir el resultado <em>antes</em> de que lo toquen.</p>
+  </div>
+  <div class="states">
+
+    <div class="mini">
+      <h3>Hay campo</h3>
+      <div class="sub">antes de unirse</div>
+      <button class="btn sun">Voy</button>
+      <div class="fnote">Puedes cancelar hasta la hora de salida</div>
+      <p class="hint">«Voy» y no «Unirme»: es lo que la persona va a decirle a otro. La app habla como habla la gente.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Ya vas</h3>
+      <div class="sub">status = joined</div>
+      <div class="status go">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="var(--success)" stroke-width="2.6"><path d="M3.5 10.4 8 15l8.5-10"/></svg>
+        <span class="txt">Vas a esta sesión</span>
+      </div>
+      <button class="btn ghost">No voy a poder</button>
+      <p class="hint">La cancelación no se esconde. Un cupo liberado a tiempo <b>sube a alguien de la lista</b>; uno liberado tarde no le sirve a nadie.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Está llena</h3>
+      <div class="sub">joined_count = max · antes de tocar</div>
+      <button class="btn wait">Entrar a la lista de espera</button>
+      <div class="fnote">Quedarías en el puesto <b>#4</b>. Subes solo si alguien cancela.</div>
+      <p class="hint">Prometer «Voy» y devolver «lista de espera» es un engaño. El botón cambia de palabra y de color, y dice el número antes.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Estás en lista</h3>
+      <div class="sub">status = waitlisted</div>
+      <div class="status wl">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="var(--sun)" stroke-width="2"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v4.5l3 1.8"/></svg>
+        <span class="txt">En lista de espera</span>
+        <span class="pos" style="color:var(--sun)">#3</span>
+      </div>
+      <button class="btn ghost">Salir de la lista</button>
+      <p class="hint">El número baja solo y te avisa cuando entrás. Sin número, «lista de espera» es indistinguible de «no».</p>
+    </div>
+
+    <div class="mini">
+      <h3>Ya pasó</h3>
+      <div class="sub">starts_at &lt; now</div>
+      <button class="btn dis">Esta sesión ya pasó</button>
+      <div class="fnote">La próxima es el <b>mar 15 sep, 18:00</b></div>
+      <p class="hint">Como pertenece a una serie, el callejón sin salida se convierte en la siguiente fecha. Una sesión suelta sólo diría que pasó.</p>
+    </div>
+
+    <div class="mini">
+      <h3>No es nuestra</h3>
+      <div class="sub">source = imported</div>
+      <button class="btn ghost">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 11a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.7-5.7l-1.1 1.1"/><path d="M12 9a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 9.7 16l1.1-1.1"/></svg>
+        Abrir en Instagram</button>
+      <div class="fnote">Publicada por <b>Un Club Secreto</b>. Confirma con ellos.</div>
+      <p class="hint">Sin botón de unirse: no controlamos esa lista y decir «vas» sería mentira. ¿Eres el organizador? <span style="color:var(--aqua)">Reclámala.</span></p>
+    </div>
+
+    <div class="mini">
+      <h3>Es tuya</h3>
+      <div class="sub">organizer_id = auth.uid()</div>
+      <button class="btn sun">Pasar lista</button>
+      <div class="fnote">14 confirmadas · abre 30 min antes</div>
+      <p class="hint">El organizador nunca ve «Voy» — ya va. Su acción es la que genera el dato de asistencia que todo lo demás usa.</p>
+    </div>
+
+    <div class="mini">
+      <h3>Sólo para el club</h3>
+      <div class="sub">visibility = community</div>
+      <button class="btn ghost">Unirme a No Corro Nada</button>
+      <div class="fnote">Esta sesión es sólo para el club</div>
+      <p class="hint">El error de RLS <code>42501</code> no se muestra como error: se traduce en la acción que sí desbloquea la sesión.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 03 -->
+<section>
+  <div class="sh"><span class="sn">03</span><h2>Lo que la pantalla nunca muestra</h2></div>
+  <div class="prose">
+    <ul style="margin:0;padding-left:1.15rem;display:flex;flex-direction:column;gap:9px">
+      <li><strong>Datos privados de nadie.</strong> Teléfono, fecha de nacimiento y contacto de emergencia viven en <code>profile_private</code>, legible sólo por su dueño. Acá hay nombre visible y avatar, nada más.</li>
+      <li><strong>Coordenadas exactas de una persona.</strong> El lugar es un punto público. No existe posición en vivo ni historial — las columnas no existen, que es la única forma confiable de no filtrarlas.</li>
+      <li><strong>La lista de participantes a quien no va.</strong> RLS la limita al organizador y a quienes ya están dentro. Alguien que sólo mira ve el conteo y las caras, no la lista.</li>
+      <li><strong>Sesiones de gente bloqueada.</strong> <code>is_blocked()</code> filtra en ambos sentidos y en la política, no en la interfaz — así que ni siquiera llegan a esta pantalla.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  Construida sobre <code>src/theme/</code> y el kit. Los ocho estados del pie salen directo de lo que <code>join_activity()</code>, <code>leave_activity()</code> y las políticas RLS pueden devolver — ninguno es inventado. Sigue <strong>Descubrir</strong>, que ya funciona y sólo está sin estilo, y donde el estado vacío importa tanto como el lleno.
+</footer>
+
+</div>
+  </body>
+</html>
