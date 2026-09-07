@@ -472,3 +472,59 @@ export async function createSeries(
   const generated = await generateSeriesOccurrences(db, seriesId, until);
   return { seriesId, generated };
 }
+
+// ----------------------------------------------------------------- detail
+
+/** An activity with the rows a detail screen cannot render without. */
+export interface ActivityDetail extends Activity {
+  location: Location;
+  organizer: { id: string; display_name: string; avatar_url: string | null };
+  category: Category;
+}
+
+/**
+ * One round trip for the detail screen.
+ *
+ * The venue, the organizer's public profile and the category schema are all
+ * required to render anything useful, and three sequential requests would show
+ * the screen assembling itself.
+ */
+export async function fetchActivityDetail(
+  db: SupabaseClient,
+  activityId: string,
+): Promise<ActivityDetail | null> {
+  const { data, error } = await db
+    .from('activities')
+    .select(
+      '*, location:locations!activities_location_id_fkey(*), ' +
+        'organizer:profiles!activities_organizer_id_fkey(id, display_name, avatar_url), ' +
+        'category:categories!activities_category_id_fkey(*)',
+    )
+    .eq('id', activityId)
+    .maybeSingle();
+
+  if (error) throw toApiError(error);
+  return (data as ActivityDetail | null) ?? null;
+}
+
+/**
+ * The caller's own participation row, or null.
+ *
+ * Readable even by someone who is not otherwise on the roster: the policy on
+ * activity_participants allows `user_id = auth.uid()`.
+ */
+export async function fetchMyParticipation(
+  db: SupabaseClient,
+  activityId: string,
+  userId: string,
+): Promise<ActivityParticipant | null> {
+  const { data, error } = await db
+    .from('activity_participants')
+    .select('*')
+    .eq('activity_id', activityId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw toApiError(error);
+  return (data as ActivityParticipant | null) ?? null;
+}
