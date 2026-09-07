@@ -24,5 +24,6 @@ psql_run \
 echo "==> running behavioural + RLS suite"
 psql_run -f supabase/tests/01_participation_test.sql
 psql_run -f supabase/tests/02_currency_test.sql
+psql_run -f supabase/tests/03_anon_visibility_test.sql
 
 echo "==> ok"
