@@ -23,7 +23,8 @@ import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../..
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
-import { formatDistance, formatPrice, formatSpots } from './format';
+import { priceLabel } from '../../theme';
+import { formatDistance, formatSpots } from './format';
 import { discoverStyles as s } from './styles';
 
 /**
@@ -109,6 +110,9 @@ export function DiscoverScreen() {
           {session ? (
             <>
               <Text style={s.accountText}>{session.user.email}</Text>
+              <Link href="/crear">
+                <Text style={s.linkText}>Crear sesión</Text>
+              </Link>
               <Pressable
                 onPress={() => {
                   void signOut();
@@ -207,7 +211,7 @@ export function DiscoverScreen() {
               </Text>
               <View style={s.cardFacts}>
                 <Text style={s.fact}>{formatSpots(item.joined_count, item.max_participants)}</Text>
-                <Text style={s.fact}>{formatPrice(item.price_minor, item.currency)}</Text>
+                <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
                 {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
               </View>
             </View>

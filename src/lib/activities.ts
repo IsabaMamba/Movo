@@ -12,11 +12,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Activity,
   ActivityParticipant,
+  ActivityVisibility,
   Category,
   CategoryId,
+  CurrencyCode,
   JsonSchemaObject,
+  Location,
   NearbyActivity,
   ParticipationStatus,
+  SkillLevel,
 } from '../types/database';
 
 /** Maps SQLSTATE codes raised by the RPCs onto something a screen can use. */
@@ -304,4 +308,167 @@ export function formatSessionTime(
     minute: '2-digit',
     timeZone,
   }).format(new Date(isoInstant));
+}
+
+// ------------------------------------------------------------- authoring
+
+/**
+ * Thrown when attributes do not satisfy the category's schema. Carries the
+ * per-field issues so a form can mark the offending inputs rather than showing
+ * one message at the top.
+ */
+export class AttributeValidationError extends Error {
+  readonly issues: ValidationIssue[];
+
+  constructor(issues: ValidationIssue[]) {
+    super(`Attributes failed validation: ${issues.map((i) => i.field).join(', ')}`);
+    this.name = 'AttributeValidationError';
+    this.issues = issues;
+  }
+}
+
+/**
+ * Venues a session may be published at.
+ *
+ * Only public ones. `locations.is_public_venue` exists so a session cannot be
+ * held at somebody's house, and the create flow is where that is enforced in
+ * front of the person rather than after the fact.
+ */
+export async function fetchPublicVenues(db: SupabaseClient): Promise<Location[]> {
+  const { data, error } = await db
+    .from('locations')
+    .select('*')
+    .eq('is_public_venue', true)
+    .order('is_verified', { ascending: false })
+    .order('name');
+
+  if (error) throw toApiError(error);
+  return (data ?? []) as Location[];
+}
+
+/** Everything the two authoring calls share. */
+export interface NewSessionBase {
+  categoryId: CategoryId;
+  locationId: string;
+  title: string;
+  durationMinutes: number;
+  skill: SkillLevel;
+  /** Stored 1-5; the UI collects three bands and maps them. */
+  difficulty: number | null;
+  /** null means uncapped, which is the common case. */
+  maxParticipants: number | null;
+  priceMinor: number;
+  currency: CurrencyCode;
+  attributes: Record<string, unknown>;
+}
+
+export interface NewActivityInput extends NewSessionBase {
+  startsAt: Date;
+  meetingPoint?: string | null;
+  visibility: ActivityVisibility;
+  /** Published sessions appear in Descubrir; drafts are visible only to their organizer. */
+  publish: boolean;
+}
+
+function assertAttributes(schema: JsonSchemaObject, attributes: Record<string, unknown>): void {
+  const issues = validateAttributes(schema, attributes);
+  if (issues.length > 0) throw new AttributeValidationError(issues);
+}
+
+/**
+ * Create one session and return its id.
+ *
+ * There is no RPC for this: `activities` grants INSERT to authenticated and the
+ * policy pins `organizer_id` to `auth.uid()`, so the row is safe to write
+ * directly. Participation is the thing that needs a function, because capacity
+ * is only correct under a lock.
+ */
+export async function createActivity(
+  db: SupabaseClient,
+  organizerId: string,
+  input: NewActivityInput,
+  schema: JsonSchemaObject,
+): Promise<string> {
+  assertAttributes(schema, input.attributes);
+
+  const endsAt = new Date(input.startsAt.getTime() + input.durationMinutes * 60_000);
+
+  const { data, error } = await db
+    .from('activities')
+    .insert({
+      organizer_id: organizerId,
+      category_id: input.categoryId,
+      location_id: input.locationId,
+      title: input.title.trim(),
+      starts_at: input.startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      meeting_point: input.meetingPoint?.trim() || null,
+      max_participants: input.maxParticipants,
+      skill: input.skill,
+      difficulty: input.difficulty,
+      price_minor: input.priceMinor,
+      currency: input.currency,
+      attributes: input.attributes,
+      visibility: input.visibility,
+      status: input.publish ? 'published' : 'draft',
+    })
+    .select('id')
+    .single();
+
+  if (error) throw toApiError(error);
+  return (data as { id: string }).id;
+}
+
+export interface NewSeriesInput extends NewSessionBase {
+  /** 0 = Sunday, matching Postgres extract(dow). */
+  weekday: number;
+  /** 'HH:MM' in the series timezone. */
+  localStartTime: string;
+  timezone?: string;
+}
+
+/**
+ * Create a recurring series and materialize its first occurrences.
+ *
+ * A run club is one object that meets every Tuesday, not forty unrelated rows —
+ * which is why the create form offers a switch rather than a second flow.
+ * Returns the series id and how many sessions were actually generated, because
+ * "se repite" without a number is a promise nobody can check.
+ */
+export async function createSeries(
+  db: SupabaseClient,
+  organizerId: string,
+  input: NewSeriesInput,
+  schema: JsonSchemaObject,
+  until?: Date,
+): Promise<{ seriesId: string; generated: number }> {
+  assertAttributes(schema, input.attributes);
+
+  const { data, error } = await db
+    .from('activity_series')
+    .insert({
+      organizer_id: organizerId,
+      category_id: input.categoryId,
+      location_id: input.locationId,
+      title: input.title.trim(),
+      frequency: 'weekly',
+      weekday: input.weekday,
+      local_start_time: input.localStartTime,
+      duration_minutes: input.durationMinutes,
+      timezone: input.timezone ?? DEFAULT_TIMEZONE,
+      skill: input.skill,
+      difficulty: input.difficulty,
+      max_participants: input.maxParticipants,
+      price_minor: input.priceMinor,
+      currency: input.currency,
+      attributes: input.attributes,
+    })
+    .select('id')
+    .single();
+
+  if (error) throw toApiError(error);
+
+  const seriesId = (data as { id: string }).id;
+  const generated = await generateSeriesOccurrences(db, seriesId, until);
+  return { seriesId, generated };
 }
