@@ -7,7 +7,7 @@
  * the cold-start argument in docs/architecture.md.
  */
 
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -38,6 +38,7 @@ const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
 export function DiscoverScreen() {
   const { session, signOut } = useAuth();
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selected, setSelected] = useState<CategoryId | null>(null);
   const [radiusM, setRadiusM] = useState<number>(15_000);
@@ -212,7 +213,12 @@ export function DiscoverScreen() {
             </View>
           }
           renderItem={({ item }) => (
-            <View style={s.card}>
+            <Pressable
+              onPress={() => {
+                router.push({ pathname: '/sesion/[id]', params: { id: item.id } });
+              }}
+              style={s.card}
+            >
               <View style={s.cardTop}>
                 <Text style={s.cardTitle}>{item.title}</Text>
                 <View
@@ -238,7 +244,7 @@ export function DiscoverScreen() {
                 <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
                 {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
               </View>
-            </View>
+            </Pressable>
           )}
         />
       )}
