@@ -221,6 +221,9 @@ export function DiscoverScreen() {
                 Probá ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
                 grupos que ya entrenan en la GAM.
               </Text>
+              <Link href="/solo">
+                <Text style={s.linkText}>Igual podés ir — modo solo</Text>
+              </Link>
             </View>
           }
           renderItem={({ item }) => (
