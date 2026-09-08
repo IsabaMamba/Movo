@@ -105,6 +105,8 @@ export const createStyles = StyleSheet.create({
   },
   publishDisabled: { opacity: 0.4 },
   publishText: { ...type.action, color: color.text.inverse },
+  /** Says why the publish button is inert, rather than only dimming it. */
+  missing: { ...type.bodySmall, color: color.text.warm, textAlign: 'center' },
 
   banner: {
     backgroundColor: color.bg.raised,
