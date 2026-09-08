@@ -174,7 +174,7 @@ export function GrupoDetailScreen() {
               accessibilityLabel={busy ? 'Un momento…' : isMember ? 'Salir del grupo' : 'Unirme'}
               accessibilityHint={
                 isMember
-                  ? 'Dejas de ser parte del grupo y pierdes acceso a sus sesiones para miembros.'
+                  ? 'Dejás de ser parte del grupo y perdés acceso a sus sesiones para miembros.'
                   : undefined
               }
               accessibilityState={{ disabled: busy }}

@@ -13,7 +13,7 @@
 
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import {
   fetchActivityDetail,
@@ -22,10 +22,14 @@ import {
   formatSessionTime,
   joinActivity,
   leaveActivity,
+  createReport,
+  REPORT_REASONS,
   type ActivityDetail,
+  type ReportReason,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
 import {
+  color,
   densityOf,
   difficultyBand,
   difficultyLabel,
@@ -81,6 +85,11 @@ export function SessionDetailScreen() {
   const [mine, setMine] = useState<ActivityParticipant | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [reason, setReason] = useState<ReportReason | null>(null);
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportSent, setReportSent] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
 
   const userId = session?.user.id;
 
@@ -162,6 +171,25 @@ export function SessionDetailScreen() {
       });
   };
 
+  const sendReport = () => {
+    if (!session || !reason) return;
+    setReportBusy(true);
+    setError(null);
+    createReport(supabase, session.user.id, 'activity', activity.id, reason, reportDetails)
+      .then(() => {
+        setReportSent(true);
+        setReporting(false);
+        setReason(null);
+        setReportDetails('');
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : 'No se pudo enviar el reporte.');
+      })
+      .finally(() => {
+        setReportBusy(false);
+      });
+  };
+
   const actionLabel = !session
     ? 'Iniciá sesión para apuntarte'
     : busy
@@ -181,11 +209,11 @@ export function SessionDetailScreen() {
    * confirmation for both only arrives after the tap.
    */
   const actionHint = going
-    ? 'Dejas la sesión y tu lugar queda libre para otra persona.'
+    ? 'Dejás la sesión y tu lugar queda libre para otra persona.'
     : waiting
-      ? 'Sales de la lista de espera y pierdes tu puesto.'
+      ? 'Salís de la lista de espera y perdés tu puesto.'
       : full
-        ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
+        ? 'La sesión está llena. Entrás a la lista de espera y ocupás el lugar automáticamente si alguien cancela.'
         : undefined;
 
   return (
@@ -377,13 +405,94 @@ export function SessionDetailScreen() {
       {/* No onPress yet, so the label states what the control is and nothing
           about where it leads — a hint here would describe a flow that does not
           exist. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Reportar esta sesión"
-        style={s.report}
-      >
-        <Text style={s.reportText}>Reportar esta sesión</Text>
-      </Pressable>
+      {reportSent ? (
+        <View style={s.status}>
+          <Text style={s.statusText}>
+            Reporte enviado. Lo revisa una persona del equipo; si hace falta te escribimos.
+          </Text>
+        </View>
+      ) : reporting ? (
+        <View style={s.sheet}>
+          <Text style={s.sheetTitle}>Reportar esta sesión</Text>
+          <Text style={s.sheetBody}>
+            Contanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
+          </Text>
+
+          <View style={s.reasonRow}>
+            {REPORT_REASONS.map((option) => {
+              const on = reason === option.value;
+              return (
+                <Pressable
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  key={option.value}
+                  onPress={() => {
+                    setReason(option.value);
+                  }}
+                  style={[s.reason, on && s.reasonOn]}
+                >
+                  <Text style={[s.reasonText, on && s.reasonTextOn]}>{option.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <TextInput
+            accessibilityLabel="Detalles del reporte, opcional"
+            maxLength={2000}
+            multiline
+            onChangeText={setReportDetails}
+            placeholder="Si querés, agregá lo que viste."
+            placeholderTextColor={color.text.tertiary}
+            style={s.detailsInput}
+            value={reportDetails}
+          />
+
+          <View style={s.sheetActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Enviar reporte"
+              accessibilityState={{ disabled: !reason || reportBusy }}
+              disabled={!reason || reportBusy}
+              onPress={sendReport}
+              style={[s.send, (!reason || reportBusy) && s.sendDisabled]}
+            >
+              <Text style={s.sendText}>{reportBusy ? 'Enviando…' : 'Enviar reporte'}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar el reporte"
+              onPress={() => {
+                setReporting(false);
+                setReason(null);
+              }}
+              style={s.cancel}
+            >
+              <Text style={s.cancelText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Reportar esta sesión"
+          accessibilityHint={
+            session
+              ? 'Abre el formulario para contar qué pasa.'
+              : 'Necesitás iniciar sesión para reportar.'
+          }
+          onPress={() => {
+            if (!session) {
+              router.push('/sign-in');
+              return;
+            }
+            setReporting(true);
+          }}
+          style={s.report}
+        >
+          <Text style={s.reportText}>Reportar esta sesión</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
