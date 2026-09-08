@@ -1,28 +1,29 @@
-# Status — 6 September 2026
+# Status — 8 September 2026
 
 An honest read of what exists, what does not, and what is blocking. Update this file when
 the answer changes; a status document that lags is worse than none.
 
 ## Built and verified
 
-| Area                   | State                                                                                                                                                                                                                             |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database schema**    | 9 tables, PostGIS geography with a GiST index, trigger-maintained counters. Applies clean from zero                                                                                                                               |
-| **Row-level security** | Deny by default — every grant revoked from `anon`/`authenticated`, then handed back per table. Helper predicates are `SECURITY DEFINER` to avoid policy recursion                                                                 |
-| **Participation RPCs** | `join_activity()` / `leave_activity()` take `SELECT … FOR UPDATE` before reading capacity. Verified against three genuinely concurrent psql sessions on a 2-slot activity: 2 joined, 1 waitlisted, no overbooking                 |
-| **Waitlist**           | Ordered, with automatic promotion on leave                                                                                                                                                                                        |
-| **Series generation**  | `generate_series_occurrences()`, horizon of 8                                                                                                                                                                                     |
-| **Nearby search**      | `nearby_activities()`, deliberately `SECURITY INVOKER` so RLS still applies to the caller                                                                                                                                         |
-| **Currency**           | `price_minor` + a `currency_code` domain across locations, activities and series                                                                                                                                                  |
-| **Category seed**      | Three categories — running, hiking, football — each with its JSON Schema. Adding a fourth is an `INSERT`, not a migration                                                                                                         |
-| **SQL test suite**     | Participation, RLS, currency, and what a logged-out visitor can read. `npm run db:test` runs the whole thing against a throwaway database                                                                                         |
-| **Live project**       | Supabase project in `us-east-1`, Postgres 17.6. Migrations 0001–0006 applied, including one seeded public venue. RLS verified against it: `anon` is denied `profile_private` and denied a direct write to `activity_participants` |
-| **API layer**          | Generated database types and typed RPC wrappers                                                                                                                                                                                   |
-| **Design tokens**      | `src/theme/` — palette, type, spacing, heat ramp, accessibility floors. `tsc --strict` with `noUncheckedIndexedAccess` passes                                                                                                     |
-| **Screens designed**   | Field kit, Crear, Detalle, Descubrir, Roles/IA — see [`docs/design/`](design/)                                                                                                                                                    |
-| **CI**                 | Format, lint, types, plus the database suite against a `postgis/postgis:17-3.5` service container, matching the live project. Conventional Commits enforced on PR titles                                                          |
-| **App shell**          | Expo SDK 57, Expo Router, Barlow loaded, session persistence with an AsyncStorage adapter and refresh tied to `AppState`                                                                                                          |
-| **Screens built**      | Descubrir, Detalle, Crear, Organizar, roster and check-in, sign-in, sign-up — all on `src/theme/`, no placeholder colours left                                                                                                    |
+| Area                   | State                                                                                                                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database schema**    | 9 tables, PostGIS geography with a GiST index, trigger-maintained counters. Applies clean from zero                                                                                                                                                               |
+| **Row-level security** | Deny by default — every grant revoked from `anon`/`authenticated`, then handed back per table. Helper predicates are `SECURITY DEFINER` to avoid policy recursion                                                                                                 |
+| **Participation RPCs** | `join_activity()` / `leave_activity()` take `SELECT … FOR UPDATE` before reading capacity. Verified against three genuinely concurrent psql sessions on a 2-slot activity: 2 joined, 1 waitlisted, no overbooking                                                 |
+| **Waitlist**           | Ordered, with automatic promotion on leave                                                                                                                                                                                                                        |
+| **Series generation**  | `generate_series_occurrences()`, horizon of 8                                                                                                                                                                                                                     |
+| **Nearby search**      | `nearby_activities()`, deliberately `SECURITY INVOKER` so RLS still applies to the caller                                                                                                                                                                         |
+| **Currency**           | `price_minor` + a `currency_code` domain across locations, activities and series                                                                                                                                                                                  |
+| **Category seed**      | Three categories — running, hiking, football — each with its JSON Schema. Adding a fourth is an `INSERT`, not a migration                                                                                                                                         |
+| **SQL test suite**     | Participation, RLS, currency, what a logged-out visitor can read, and community ownership. `db-test.sh` globs both folders, so a new migration or test file is picked up without editing the script — it used to list files by hand, and the list stopped at 0005 |
+| **Live project**       | Supabase project in `us-east-1`, Postgres 17.6. All seven migrations applied, including one seeded public venue. RLS verified against it: `anon` is denied `profile_private` and denied a direct write to `activity_participants`                                 |
+| **API layer**          | Generated database types and typed RPC wrappers                                                                                                                                                                                                                   |
+| **Design tokens**      | `src/theme/` — palette, type, spacing, heat ramp, accessibility floors. `tsc --strict` with `noUncheckedIndexedAccess` passes                                                                                                                                     |
+| **Screens designed**   | Field kit, Crear, Detalle, Descubrir, Roles/IA — see [`docs/design/`](design/)                                                                                                                                                                                    |
+| **CI**                 | Format, lint, types, plus the database suite against a `postgis/postgis:17-3.5` service container, matching the live project. Conventional Commits enforced on PR titles                                                                                          |
+| **App shell**          | Expo SDK 57, Expo Router, Barlow loaded, session persistence with an AsyncStorage adapter and refresh tied to `AppState`                                                                                                                                          |
+| **Screens built**      | Descubrir, Detalle, Crear, Organizar, roster and check-in, Grupos and group detail, modo solo, sign-in, sign-up — eleven routes, all on `src/theme/`, no placeholder colours left                                                                                 |
+| **Accessibility**      | Labels, roles, states and hints across all twelve screens; a global `:focus-visible` ring; 44px targets via `hitSlopFor`; heat hidden from screen readers with `occupancyA11yLabel` speaking in its place. Untested with an actual screen reader                  |
 
 Both gates are green as delivered:
 
@@ -55,13 +56,34 @@ empty for anyone not signed in — which is the entire cold-start argument in
 The cause is not known. `03_anon_visibility_test.sql` proves the policy is correct: `anon` can read
 a public, published activity, cannot read an unlisted one, and gets it back from
 `nearby_activities()`. `createActivity()` sets `visibility` and `status` explicitly. Both halves
-read correctly and the result is still wrong, which means the rows do not hold what the code
-appears to write. Nobody has looked at them yet.
+read correctly and the result is still wrong.
 
-### 3. Grupos
+The reason that is not a contradiction is that there are **three** gates, not one, and they do not
+agree with each other:
 
-Names, rules, members, and owner/organiser/member roles are all modelled in the schema.
-Nothing is built on top.
+1. The `activities_read` policy allows `visibility = 'public'` and
+   `status in ('published','full','completed')`.
+2. `nearby_activities()` narrows that further: `status in ('published','full')` — note that
+   `completed` passes the policy and is dropped here — plus `starts_at >= now()` and the radius.
+3. Descubrir calls it from a fixed `GAM_CENTRE`, because device location needs a permission prompt
+   that does not exist yet.
+
+A row can satisfy the policy and still never reach the screen, so reading `visibility` and
+`status` back cannot tell you which gate closed. A session whose start time has passed is the
+first thing to rule out, and it is invisible to every check made so far.
+
+### 3. Nobody has reported anything, and nothing would happen if they did
+
+`reports` exists with its triage index, its `insert` and `read_own` policies, and its
+resolution columns. Detalle renders a "Reportar esta sesión" button. The button has **no
+`onPress`** — there is no `createReport()` anywhere in `src/lib/`, so the control is inert.
+
+That is worse than having no button. A person who feels unsafe presses it, nothing happens,
+and they conclude the report went through. `docs/security.md` lists in-app reporting with a
+human reading it as a blocker for the first public session, so this is not a v2 item either.
+
+The backend is entirely done. What is missing is a reason picker, one insert, and somebody
+whose job is to read the queue.
 
 ### 4. Attendance history
 
@@ -70,10 +92,19 @@ Tables (`user_location_history` plus a consent record) are designed, not written
 the security document describes a control the system does not have — treat that as a launch
 blocker, not a v2 item.
 
-### 5. AI features and modo solo
+### 5. AI features
 
-Modo solo first: it works at zero liquidity and needs no other users. AI proposals need
-attendance data, which needs check-in, which is item 1.
+Modo solo shipped in #23, so the zero-liquidity case is covered. AI proposals still need
+attendance data, which needs check-in, which is item 1. Nothing here is startable yet.
+
+### 6. The copy went back to voseo in eight places
+
+`docs/product.md` settles the voice: neutral Latin American Spanish, second person `tú`, so
+that launching in Panamá or Colombia does not need a copy rewrite. Eight strings across
+Descubrir, Detalle, Crear, modo solo and both auth screens use `vos` — _probá_, _podés_,
+_tenés_, _entrás_, _Registrate_, _Iniciá_.
+
+Small, and worth doing before there are two hundred strings rather than eight.
 
 ## Verified, and not
 
@@ -93,18 +124,29 @@ covered by the SQL suite on every pull request. It is the client paths that are 
 
 ## Open accessibility findings
 
-Closed in this delivery: all five contrast failures, the type-size floor, the `es-419`
+Closed at token level earlier: all five contrast failures, the type-size floor, the `es-419`
 language pass, and a token rename (`text.disabled` → `text.disabledOnly`) that makes the
 below-AA value hard to reach for by accident.
 
+Closed in the app in the same pull request as this correction — until then the twelve screens
+carried **zero** `accessibilityLabel` or `accessibilityRole` props between them, and
+`hitSlopFor`, `focusRing` and `occupancyA11yLabel` were exported and called from nowhere:
+
+- **Focus ring** now comes from `src/app/+html.tsx` as a single `:focus-visible` rule, rather
+  than from each component remembering to set one.
+- **Touch targets** — every control under 44px is padded with `hitSlopFor`.
+- **Heat is hidden from screen readers** and `occupancyA11yLabel` speaks the number instead.
+- **Composite rows announce once**, with one composed label rather than nine fragments.
+- **Consequences are in hints** where the label does not carry them: waitlists, giving up a
+  place, sixty days of generated sessions, and the irreversible close-out.
+
 Still open:
 
-- **Focus states are not applied** to cards and chips. Blocking for the web build. The
-  organiser console makes this more urgent, not less — a keyboard user is a primary user of
-  a data-entry console.
-- **`hitSlopFor()` is defined but never called.** Chips are ~30px against a 44px floor.
-  Defining the floor and not applying it is the same class of gap as item 4 above.
-- **Line heights are fixed** and do not respond to OS text scaling.
+- **Line heights are fixed** and do not respond to OS text scaling. The only one of the
+  original findings still standing.
+- **Nothing has been tested with a screen reader running.** Labels that typecheck are not
+  labels that make sense out loud, and every claim above is a claim about the code, not about
+  the experience. One pass with VoiceOver or TalkBack would settle it.
 
 Out of scope until an app runs: reading order, VoiceOver/TalkBack labels, keyboard
 navigation.
@@ -136,14 +178,21 @@ navigation.
 
 ## Suggested order of work
 
-1. **Use the console once.** Sign in, open a session, mark somebody present, close it. That single
+1. **Explain the visibility anomaly.** Until it is understood, Descubrir is empty for every
+   stranger, and the product's cold-start plan does not hold. There are three independent gates
+   between a created session and a stranger seeing it — the RLS policy, the extra filters inside
+   `nearby_activities()` (`status in ('published','full')`, `starts_at >= now()`, radius), and the
+   fixed `GAM_CENTRE` origin Descubrir calls from. Checking `visibility` and `status` alone cannot
+   say which one closed.
+2. **Use the console once.** Sign in, open a session, mark somebody present, close it. That single
    pass exercises the only irreversible path in the product and produces the first attendance row
    that has ever existed.
-2. **Explain the visibility anomaly.** Until it is understood, Descubrir is empty for every
-   stranger, and the product's cold-start plan does not hold.
-3. **Focus states and `hitSlop`** — `focusRing` and `hitSlopFor()` are defined and still never
-   called. Cheap now, not cheap at fifty components.
-4. **Grupos** — fully modelled, no screen.
-5. **Modo solo** — the only feature that works before there are users.
-6. **Storage lockdown, EXIF stripping, App Check** — before the first public session, not after.
+3. **Wire up reporting.** The table, the policies and the button all exist; the `onPress` does not.
+   A safety control that silently does nothing is the one kind of bug that costs somebody
+   something real.
+4. **Email confirmation back on**, with custom SMTP. Anyone can currently register with an address
+   they do not own.
+5. **Storage lockdown, EXIF stripping, App Check** — before the first public session, not after.
+6. **The voseo strings**, while there are still eight of them.
 7. **Attendance history plus its 90-day delete job** — together, or neither.
+8. **A screen-reader pass.** The labels are in; whether they read well is untested.
