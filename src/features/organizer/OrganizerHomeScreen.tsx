@@ -18,7 +18,7 @@ import {
   type OrganizedActivity,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import { occupancyLabel } from '../../theme';
+import { densityOf, occupancyA11yLabel, occupancyLabel } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
 import { organizerStyles as s } from './styles';
 
@@ -82,6 +82,26 @@ export function OrganizerHomeScreen() {
     const state = stateOf(activity);
     return (
       <Pressable
+        /* One card is one decision — whether this session needs the organizer
+           now — and that reading depends on the state, the time and the counts
+           together. Field by field they are four unrelated fragments. */
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={[
+          activity.title,
+          state.label,
+          formatSessionTime(activity.starts_at),
+          activity.location.name,
+          occupancyA11yLabel(
+            activity.joined_count,
+            activity.max_participants,
+            densityOf(activity.joined_count, activity.max_participants),
+          ),
+          activity.waitlist_count > 0 ? `${activity.waitlist_count} en espera` : null,
+        ]
+          .filter((part): part is string => part !== null)
+          .join('. ')}
+        accessibilityHint="Abre la lista de quién va y el check-in"
         key={activity.id}
         onPress={() => {
           router.push({ pathname: '/organizar/[id]', params: { id: activity.id } });
@@ -114,7 +134,11 @@ export function OrganizerHomeScreen() {
         <Text style={s.subtitle}>Tus sesiones, la lista de quién va y el check-in.</Text>
       </View>
 
-      {error && <Text style={s.error}>{error}</Text>}
+      {error && (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      )}
 
       {activities === null ? (
         <ActivityIndicator />

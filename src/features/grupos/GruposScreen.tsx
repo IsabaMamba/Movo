@@ -21,9 +21,15 @@ import {
   type CommunityWithCount,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import { color } from '../../theme';
+import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
 import { gruposStyles as s } from './styles';
+
+/**
+ * The visibility chips render at `size.controlSm` (36px), so the target is
+ * padded back up to 44 without changing how big the chips look.
+ */
+const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
 
 export function GruposScreen() {
   const { session } = useAuth();
@@ -89,7 +95,11 @@ export function GruposScreen() {
         <Text style={s.subtitle}>Clubes y mejengas con nombre propio.</Text>
       </View>
 
-      {error && <Text style={s.error}>{error}</Text>}
+      {error && (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      )}
 
       {session ? (
         creating ? (
@@ -97,6 +107,7 @@ export function GruposScreen() {
             <View style={s.field}>
               <Text style={s.label}>Nombre</Text>
               <TextInput
+                accessibilityLabel="Nombre del grupo"
                 maxLength={80}
                 onChangeText={setName}
                 placeholder="Mejengueros"
@@ -110,6 +121,7 @@ export function GruposScreen() {
             <View style={s.field}>
               <Text style={s.label}>De qué se trata</Text>
               <TextInput
+                accessibilityLabel="De qué se trata el grupo"
                 multiline
                 onChangeText={setDescription}
                 placeholder="Mejenga los jueves en La Sabana, 7v7, todos los niveles."
@@ -121,8 +133,16 @@ export function GruposScreen() {
 
             <View style={s.field}>
               <Text style={s.label}>Quién puede entrar</Text>
-              <View style={s.chipRow}>
+              <View
+                accessibilityRole="tablist"
+                accessibilityLabel="Quién puede entrar"
+                style={s.chipRow}
+              >
                 <Pressable
+                  accessibilityRole="tab"
+                  accessibilityLabel="Cualquiera puede entrar"
+                  accessibilityState={{ selected: isPublic }}
+                  hitSlop={CHIP_HIT_SLOP}
                   onPress={() => {
                     setIsPublic(true);
                   }}
@@ -131,6 +151,10 @@ export function GruposScreen() {
                   <Text style={[s.chipText, isPublic && s.chipTextOn]}>Cualquiera</Text>
                 </Pressable>
                 <Pressable
+                  accessibilityRole="tab"
+                  accessibilityLabel="Solo invitados"
+                  accessibilityState={{ selected: !isPublic }}
+                  hitSlop={CHIP_HIT_SLOP}
                   onPress={() => {
                     setIsPublic(false);
                   }}
@@ -146,7 +170,15 @@ export function GruposScreen() {
               </Text>
             </View>
 
+            {/* Disabled, the button gives no reason on screen either; the hint
+                is the only place the requirement is stated. */}
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={busy ? 'Creando…' : 'Crear grupo'}
+              accessibilityHint={
+                canCreate ? undefined : 'Escribe un nombre de al menos dos letras para continuar.'
+              }
+              accessibilityState={{ disabled: !canCreate }}
               disabled={!canCreate}
               onPress={submit}
               style={[s.primary, !canCreate && s.primaryDisabled]}
@@ -154,6 +186,9 @@ export function GruposScreen() {
               <Text style={s.primaryText}>{busy ? 'Creando…' : 'Crear grupo'}</Text>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar"
+              accessibilityHint="Cierra el formulario sin crear el grupo."
               onPress={() => {
                 setCreating(false);
               }}
@@ -164,6 +199,9 @@ export function GruposScreen() {
           </View>
         ) : (
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Crear un grupo"
+            accessibilityHint="Abre el formulario para crear un grupo en esta misma pantalla."
             onPress={() => {
               setCreating(true);
             }}
@@ -194,6 +232,20 @@ export function GruposScreen() {
           </Text>
           {communities.map((community) => (
             <Pressable
+              /* One card, one sentence. The slug stays out of it: it is a URL
+                 fragment, and spelled out letter by letter it buries the two
+                 facts someone actually chooses on — size and who may enter. */
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={[
+                community.name,
+                `${community.member_count} ${community.member_count === 1 ? 'miembro' : 'miembros'}`,
+                community.is_public ? 'Abierto a cualquiera' : 'Solo invitados',
+                community.description,
+              ]
+                .filter(Boolean)
+                .join('. ')}
+              accessibilityHint="Abre el detalle del grupo"
               key={community.id}
               onPress={() => {
                 router.push({ pathname: '/grupos/[slug]', params: { slug: community.slug } });

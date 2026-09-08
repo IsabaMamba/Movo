@@ -30,6 +30,7 @@ import {
   difficultyBand,
   difficultyLabel,
   heatColor,
+  occupancyA11yLabel,
   occupancyLabel,
   priceLabel,
   UNCAPPED_REFERENCE,
@@ -137,6 +138,8 @@ export function SessionDetailScreen() {
   );
   const going = mine?.status === 'joined' || mine?.status === 'attended';
   const waiting = mine?.status === 'waitlisted';
+  const full =
+    activity.max_participants !== null && activity.joined_count >= activity.max_participants;
 
   const act = () => {
     if (!session) {
@@ -167,9 +170,23 @@ export function SessionDetailScreen() {
         ? 'Ya no voy'
         : waiting
           ? 'Salir de la lista'
-          : activity.max_participants !== null && activity.joined_count >= activity.max_participants
+          : full
             ? 'Entrar a la lista de espera'
             : 'Voy';
+
+  /**
+   * The label names the button; the hint names what it costs. Leaving frees a
+   * place somebody else can take, and a full session hands you a waitlist
+   * position rather than a spot — neither consequence is in the label, and the
+   * confirmation for both only arrives after the tap.
+   */
+  const actionHint = going
+    ? 'Dejas la sesión y tu lugar queda libre para otra persona.'
+    : waiting
+      ? 'Sales de la lista de espera y pierdes tu puesto.'
+      : full
+        ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
+        : undefined;
 
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
@@ -188,12 +205,25 @@ export function SessionDetailScreen() {
       {/* Occupancy: the bar and the number are the same variable. */}
       <View style={s.occupancy}>
         <View style={s.occupancyTop}>
-          <Text style={s.occupancyCount}>
+          {/* Which is why the bar below is hidden and this line carries the
+              meaning aloud: a fill colour and a width say nothing spoken. */}
+          <Text
+            accessibilityLabel={occupancyA11yLabel(
+              activity.joined_count,
+              activity.max_participants,
+              density,
+            )}
+            style={s.occupancyCount}
+          >
             {occupancyLabel(activity.joined_count, activity.max_participants)}
           </Text>
           {band && <Text style={s.occupancyWord}>· {difficultyLabel[band]}</Text>}
         </View>
-        <View style={s.bar}>
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={s.bar}
+        >
           <View
             style={[
               s.barFill,
@@ -212,7 +242,13 @@ export function SessionDetailScreen() {
       </View>
 
       <View style={s.organizer}>
-        <View style={s.avatar}>
+        {/* Initials are a compressed form of the name spelled out beside them,
+            so aloud they are two stray letters. */}
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={s.avatar}
+        >
           <Text style={s.avatarText}>{initials(activity.organizer.display_name)}</Text>
         </View>
         <View>
@@ -283,7 +319,13 @@ export function SessionDetailScreen() {
       <View style={s.section}>
         <Text style={s.sectionTitle}>Quién va</Text>
         {roster.length > 0 ? (
-          <View style={s.roster}>
+          /* The size of the list is worth knowing before walking it name by
+             name — sighted readers get it from the shape of the block. */
+          <View
+            accessibilityRole="list"
+            accessibilityLabel={`Quién va: ${roster.length} ${roster.length === 1 ? 'persona' : 'personas'}`}
+            style={s.roster}
+          >
             {roster.map((person) => (
               <View key={person.user_id} style={s.tag}>
                 <Text style={s.rosterName}>{person.profile.display_name}</Text>
@@ -301,7 +343,9 @@ export function SessionDetailScreen() {
 
       {mine && (going || waiting) && (
         <View style={[s.status, waiting && s.statusWait]}>
-          <Text style={s.statusText}>
+          {/* Appears only after the join or leave resolves, so it has to
+              announce itself rather than wait to be found. */}
+          <Text accessibilityRole="alert" style={s.statusText}>
             {waiting
               ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entrás automáticamente.`
               : 'Vas a esta sesión.'}
@@ -309,9 +353,17 @@ export function SessionDetailScreen() {
         </View>
       )}
 
-      {error && <Text style={s.error}>{error}</Text>}
+      {error && (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      )}
 
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        accessibilityHint={actionHint}
+        accessibilityState={{ disabled: busy }}
         disabled={busy}
         onPress={act}
         style={[s.action, (going || waiting) && s.actionSecondary, busy && s.actionDisabled]}
@@ -322,7 +374,14 @@ export function SessionDetailScreen() {
       </Pressable>
       <Text style={s.actionNote}>Podés cancelar hasta la hora de salida.</Text>
 
-      <Pressable style={s.report}>
+      {/* No onPress yet, so the label states what the control is and nothing
+          about where it leads — a hint here would describe a flow that does not
+          exist. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Reportar esta sesión"
+        style={s.report}
+      >
         <Text style={s.reportText}>Reportar esta sesión</Text>
       </Pressable>
     </ScrollView>

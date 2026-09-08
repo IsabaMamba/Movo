@@ -25,6 +25,7 @@ import {
   type RosterEntry,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
+import { hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
 import { organizerStyles as s } from './styles';
 
@@ -34,6 +35,17 @@ const STATE_LABEL: Record<string, string> = {
   attended: 'Llegó',
   no_show: 'No llegó',
 };
+
+/** `checkButton` renders at `size.controlSm`; the target is padded back up to 44. */
+const CHECK_HIT_SLOP = hitSlopFor(size.controlSm);
+
+/**
+ * What closing does, in words. The button says "cerrar", which sounds like
+ * leaving the screen — the consequence is that everyone still unmarked becomes
+ * a permanent no-show, so it is the hint on every control that can trigger it.
+ */
+const CLOSE_HINT =
+  'Marca como no llegó a quien quede sin marcar y cancela a quien esté en espera. No se puede deshacer.';
 
 export function RosterScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -135,21 +147,23 @@ export function RosterScreen() {
         </Text>
       </View>
 
+      {/* A count is a number and its noun; read as two stops they arrive as
+          "12" and, later, "llegaron" — which is not a count. */}
       <View style={s.counts}>
-        <View style={s.count}>
+        <View accessible accessibilityLabel={`${attended} llegaron`} style={s.count}>
           <Text style={s.countValue}>{attended}</Text>
           <Text style={s.countLabel}>llegaron</Text>
         </View>
-        <View style={s.count}>
+        <View accessible accessibilityLabel={`${expected} sin marcar`} style={s.count}>
           <Text style={s.countValue}>{expected}</Text>
           <Text style={s.countLabel}>sin marcar</Text>
         </View>
-        <View style={s.count}>
+        <View accessible accessibilityLabel={`${waiting} en espera`} style={s.count}>
           <Text style={s.countValue}>{waiting}</Text>
           <Text style={s.countLabel}>en espera</Text>
         </View>
         {absent > 0 && (
-          <View style={s.count}>
+          <View accessible accessibilityLabel={`${absent} no llegaron`} style={s.count}>
             <Text style={s.countValue}>{absent}</Text>
             <Text style={s.countLabel}>no llegaron</Text>
           </View>
@@ -158,10 +172,18 @@ export function RosterScreen() {
 
       {notice && (
         <View style={s.banner}>
-          <Text style={s.bannerText}>{notice}</Text>
+          {/* Close-out reports how many people it turned into no-shows, and the
+              button that caused it is gone by the time this renders. */}
+          <Text accessibilityRole="alert" style={s.bannerText}>
+            {notice}
+          </Text>
         </View>
       )}
-      {error && <Text style={s.error}>{error}</Text>}
+      {error && (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      )}
 
       {!isOrganizer && (
         <Text style={s.hint}>Solo quien organiza puede marcar llegadas o cerrar la sesión.</Text>
@@ -174,10 +196,28 @@ export function RosterScreen() {
         ) : (
           roster.map((person) => {
             const done = person.status === 'attended';
+            const name = person.profile.display_name;
+            const state = STATE_LABEL[person.status] ?? person.status;
+            const position =
+              person.status === 'waitlisted' && person.waitlist_pos
+                ? `, puesto ${person.waitlist_pos} en la lista de espera`
+                : '';
             return (
               <View key={person.user_id} style={s.row}>
-                <Text style={s.rowName}>{person.profile.display_name}</Text>
-                <Text style={s.rowState}>
+                {/* Name and state are one fact about one person. They are folded
+                    into this label rather than into the row, because grouping
+                    the row would take the check-in control out of the tab
+                    order — and that control is the work this screen exists for. */}
+                <Text accessibilityLabel={`${name}. ${state}${position}`} style={s.rowName}>
+                  {name}
+                </Text>
+                <Text
+                  /* Said aloud by the name above; here it is a second reading of
+                     the same field. */
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={s.rowState}
+                >
                   {STATE_LABEL[person.status] ?? person.status}
                   {person.status === 'waitlisted' && person.waitlist_pos
                     ? ` · ${person.waitlist_pos}`
@@ -185,7 +225,20 @@ export function RosterScreen() {
                 </Text>
                 {isOrganizer && !closed && (
                   <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={done ? `${name} ya llegó` : `Marcar llegada de ${name}`}
+                    /* Check-in is what writes attendance, and this screen offers
+                       no way back once it is written. */
+                    accessibilityHint={
+                      done ? undefined : 'No se puede deshacer desde esta pantalla'
+                    }
+                    accessibilityState={{
+                      checked: done,
+                      disabled: done || pending === person.user_id,
+                      busy: pending === person.user_id,
+                    }}
                     disabled={done || pending === person.user_id}
+                    hitSlop={CHECK_HIT_SLOP}
                     onPress={() => {
                       mark(person.user_id);
                     }}
@@ -206,16 +259,29 @@ export function RosterScreen() {
         <>
           {confirming ? (
             <View style={s.confirm}>
-              <Text style={s.confirmText}>
+              {/* The consequence arrives as a count that did not exist a moment
+                  ago, so it has to be announced, not only rendered. */}
+              <Text accessibilityRole="alert" style={s.confirmText}>
                 Al cerrar, {expected === 0 ? 'nadie' : expected}{' '}
                 {expected === 1 ? 'persona sin marcar queda' : 'personas sin marcar quedan'} como no
                 llegó, y quien esté en espera pasa a cancelado. No se puede deshacer.
               </Text>
               <View style={s.confirmRow}>
-                <Pressable onPress={close} style={[s.close, { flex: 1 }]}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Cerrar de todas formas"
+                  accessibilityHint={CLOSE_HINT}
+                  onPress={close}
+                  style={[s.close, { flex: 1 }]}
+                >
                   <Text style={s.closeText}>Cerrar de todas formas</Text>
                 </Pressable>
                 <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Volver"
+                  /* "Volver" reads as navigation; here it abandons the close. */
+                  accessibilityHint="Cancela el cierre y vuelve a la lista"
+                  hitSlop={CHECK_HIT_SLOP}
                   onPress={() => {
                     setConfirming(false);
                   }}
@@ -227,6 +293,9 @@ export function RosterScreen() {
             </View>
           ) : (
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar sesión y registrar asistencia"
+              accessibilityHint={`Pide confirmación antes de cerrar. ${CLOSE_HINT}`}
               onPress={() => {
                 setConfirming(true);
               }}

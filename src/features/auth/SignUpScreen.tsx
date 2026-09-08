@@ -27,7 +27,9 @@ export function SignUpScreen() {
     return (
       <View style={s.screen}>
         <Text style={s.title}>Revisá tu correo</Text>
-        <Text style={s.notice}>
+        {/* Nothing else marks the transition: the form is replaced in place, so
+            this text is the whole outcome of pressing the button. */}
+        <Text accessibilityRole="alert" style={s.notice}>
           Te enviamos un enlace de confirmación a {email.trim()}. Abrilo para activar tu cuenta y
           después iniciá sesión.
         </Text>
@@ -67,6 +69,10 @@ export function SignUpScreen() {
 
       <Text style={s.label}>Nombre</Text>
       <TextInput
+        accessibilityLabel="Nombre"
+        /* The length bounds are enforced by silently disabling the button, so
+           they have to be said somewhere a screen reader reaches. */
+        accessibilityHint={`Entre ${NAME_MIN} y ${NAME_MAX} caracteres.`}
         autoComplete="name"
         maxLength={NAME_MAX}
         onChangeText={setDisplayName}
@@ -78,6 +84,7 @@ export function SignUpScreen() {
 
       <Text style={s.label}>Correo</Text>
       <TextInput
+        accessibilityLabel="Correo"
         autoCapitalize="none"
         autoComplete="email"
         inputMode="email"
@@ -90,6 +97,10 @@ export function SignUpScreen() {
 
       <Text style={s.label}>Contraseña</Text>
       <TextInput
+        accessibilityLabel="Contraseña"
+        /* The minimum only exists in the placeholder, which is gone as soon as
+           there is a character in the field. */
+        accessibilityHint="Mínimo 6 caracteres."
         autoCapitalize="none"
         autoComplete="new-password"
         onChangeText={setPassword}
@@ -101,9 +112,21 @@ export function SignUpScreen() {
         value={password}
       />
 
-      {error ? <Text style={s.error}>{error}</Text> : null}
+      {/* The only feedback a failed signup has. It appears below the field the
+          user just left, so without a role it lands silently. */}
+      {error ? (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      ) : null}
 
       <Pressable
+        /* The label tracks the visible text: "Creando…" is how the button
+           reports that the request is in flight, and a fixed label would hide
+           the only sign that anything happened. */
+        accessibilityRole="button"
+        accessibilityLabel={busy ? 'Creando…' : 'Crear cuenta'}
+        accessibilityState={{ disabled: !canSubmit }}
         disabled={!canSubmit}
         onPress={submit}
         style={[s.button, !canSubmit && s.buttonDisabled]}
