@@ -36,6 +36,7 @@ export function SignInScreen() {
 
       <Text style={s.label}>Correo</Text>
       <TextInput
+        accessibilityLabel="Correo"
         autoCapitalize="none"
         autoComplete="email"
         inputMode="email"
@@ -48,6 +49,7 @@ export function SignInScreen() {
 
       <Text style={s.label}>Contraseña</Text>
       <TextInput
+        accessibilityLabel="Contraseña"
         autoCapitalize="none"
         autoComplete="current-password"
         onChangeText={setPassword}
@@ -59,9 +61,21 @@ export function SignInScreen() {
         value={password}
       />
 
-      {error ? <Text style={s.error}>{error}</Text> : null}
+      {/* The only feedback a failed sign-in has. It appears below the field the
+          user just left, so without a role it lands silently. */}
+      {error ? (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      ) : null}
 
       <Pressable
+        /* The label tracks the visible text: "Entrando…" is how the button
+           reports that the request is in flight, and a fixed label would hide
+           the only sign that anything happened. */
+        accessibilityRole="button"
+        accessibilityLabel={busy ? 'Entrando…' : 'Entrar'}
+        accessibilityState={{ disabled: busy || !email || !password }}
         disabled={busy || !email || !password}
         onPress={submit}
         style={[s.button, (busy || !email || !password) && s.buttonDisabled]}

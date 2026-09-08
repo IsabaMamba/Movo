@@ -18,12 +18,46 @@ updates:
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
 
+      # Everything below is version-locked by the Expo SDK, not by us.
+      #
+      # `node_modules/expo/bundledNativeModules.json` is the manifest Expo
+      # resolves against, and for SDK 57 it pins react-native to 0.86.3 and
+      # async-storage to 2.2.0 exactly, with `~` ranges on the rest. Those are
+      # not conservative estimates — a version outside them is a version Expo
+      # has not built its native modules against, and the failure shows up at
+      # build or at runtime rather than in `npm ci`.
+      #
+      # Dependabot cannot see that manifest, so it proposed react-native 0.87.1
+      # and async-storage 3.1.1 against SDK 57. Both were closed. Without these
+      # rules they come back every Monday, and eventually one gets merged on a
+      # tired afternoon — the async-storage one especially, because it is a
+      # single line and the module it replaces is the adapter behind session
+      # persistence, so the breakage would look like random sign-outs rather
+      # than like a dependency bump.
+      #
+      # These move as a set, at an SDK boundary, with `npx expo install --fix`
+      # and `npx expo-doctor`. Never one at a time.
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+      - dependency-name: '@react-native-async-storage/async-storage'
+      - dependency-name: 'expo'
+      - dependency-name: 'expo-*'
+      - dependency-name: '@expo/*'
+      - dependency-name: '@expo-google-fonts/*'
+      # React itself is pinned to whatever the SDK's react-native was built
+      # against; upgrading it alone puts the renderer and the runtime out of
+      # step.
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+
     groups:
       # One PR per group keeps a part-time review load manageable.
       dev-tooling:
         patterns: ['eslint*', '@eslint/*', 'typescript*', 'prettier', '@types/*']
+      # Expo-managed packages are ignored above, so this group now covers the
+      # dependencies we actually own the versions of.
       runtime:
-        patterns: ['@supabase/*', 'expo*', 'react*']
+        patterns: ['@supabase/*']
 
   - package-ecosystem: github-actions
     directory: /

@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 
-import { color } from '../../theme';
+import { color, hitSlopFor, size } from '../../theme';
 import type { JsonSchemaObject, JsonSchemaProperty } from '../../types/database';
 import type { ValidationIssue } from '../../lib/activities';
 import { createStyles as s } from './styles';
@@ -42,6 +42,21 @@ function orderedFields(schema: JsonSchemaObject): [string, JsonSchemaProperty][]
     .filter((entry): entry is [string, JsonSchemaProperty] => entry[1] !== undefined);
 }
 
+/** Chips render at `size.controlSm`; the target is padded back up to 44. */
+const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
+
+/**
+ * The spoken name of a generated field.
+ *
+ * Same source as the visible label — `title` if the schema gives one, the key
+ * otherwise — because a hard-coded name here would be wrong the day a category
+ * is added. Required is spoken rather than shown: the design marks the optional
+ * fields, and absence of a word is not something a screen reader can announce.
+ */
+function fieldA11yLabel(label: string, isRequired: boolean): string {
+  return isRequired ? `${label}, obligatorio` : `${label}, opcional`;
+}
+
 /** "Distancia (km)" carries its own unit, so the range hint stays bare. */
 function rangeHint(property: JsonSchemaProperty): string | null {
   const { minimum, maximum } = property;
@@ -66,6 +81,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
         const label = property.title ?? key;
         const isRequired = required.has(key);
         const error = issueFor(key);
+        const a11yLabel = fieldA11yLabel(label, isRequired);
 
         return (
           <View key={key} style={s.field}>
@@ -76,6 +92,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
 
             {property.type === 'boolean' ? (
               <Switch
+                accessibilityLabel={a11yLabel}
                 onValueChange={(next) => {
                   onChange(key, next);
                 }}
@@ -84,11 +101,15 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                 value={values[key] === true}
               />
             ) : property.enum ? (
-              <View style={s.chipRow}>
+              <View accessibilityRole="tablist" accessibilityLabel={a11yLabel} style={s.chipRow}>
                 {property.enum.map((option) => {
                   const on = values[key] === option;
                   return (
                     <Pressable
+                      accessibilityRole="tab"
+                      accessibilityLabel={option}
+                      accessibilityState={{ selected: on }}
+                      hitSlop={CHIP_HIT_SLOP}
                       key={option}
                       onPress={() => {
                         onChange(key, on ? undefined : option);
@@ -101,12 +122,20 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                 })}
               </View>
             ) : property.type === 'array' && property.items?.enum ? (
+              /* An array field takes any number of options, so each chip is its
+                 own checkbox rather than one choice out of a set. There is no
+                 grouping role for that in React Native, so each chip carries the
+                 field name — still from the schema, never hard coded. */
               <View style={s.chipRow}>
                 {property.items.enum.map((option) => {
                   const selected = Array.isArray(values[key]) ? (values[key] as string[]) : [];
                   const on = selected.includes(option);
                   return (
                     <Pressable
+                      accessibilityRole="checkbox"
+                      accessibilityLabel={`${label}: ${option}`}
+                      accessibilityState={{ checked: on }}
+                      hitSlop={CHIP_HIT_SLOP}
                       key={option}
                       onPress={() => {
                         onChange(
@@ -123,6 +152,10 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
               </View>
             ) : property.type === 'number' || property.type === 'integer' ? (
               <TextInput
+                accessibilityLabel={a11yLabel}
+                // The range is the only constraint the schema states, and it is
+                // shown as helper text, so it is the hint.
+                accessibilityHint={rangeHint(property) ?? undefined}
                 inputMode={property.type === 'integer' ? 'numeric' : 'decimal'}
                 onChangeText={(text) => {
                   setDraft((d) => ({ ...d, [key]: text }));
@@ -138,6 +171,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
               />
             ) : (
               <TextInput
+                accessibilityLabel={a11yLabel}
                 onChangeText={(text) => {
                   onChange(key, text === '' ? undefined : text);
                 }}
@@ -148,7 +182,11 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
             )}
 
             {error ? (
-              <Text style={s.error}>{error}</Text>
+              /* These arrive from the server after a failed submit, so they are
+                 new information at a moment the field is not focused. */
+              <Text accessibilityRole="alert" style={s.error}>
+                {error}
+              </Text>
             ) : rangeHint(property) && property.type !== 'boolean' && !property.enum ? (
               <Text style={s.hint}>{rangeHint(property)}</Text>
             ) : null}

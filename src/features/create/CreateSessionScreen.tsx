@@ -33,7 +33,14 @@ import {
   type ValidationIssue,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import { color, difficultyLabel, difficultyValue, type DifficultyBand } from '../../theme';
+import {
+  color,
+  difficultyLabel,
+  difficultyValue,
+  hitSlopFor,
+  size,
+  type DifficultyBand,
+} from '../../theme';
 import type { Category, Location, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { SchemaFields } from './SchemaFields';
@@ -56,6 +63,12 @@ const BANDS: DifficultyBand[] = ['suave', 'moderada', 'exigente'];
 const CR_OFFSET = '-06:00';
 
 const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+/** Chips are `size.controlSm`; the target is padded back up to 44 without resizing them. */
+const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
+
+/** `s.link` is 20px of line plus 8px of padding either side — 36 tall, same shortfall. */
+const LINK_HIT_SLOP = hitSlopFor(36);
 
 interface Result {
   ok: boolean;
@@ -210,9 +223,17 @@ export function CreateSessionScreen() {
 
       {result && (
         <View style={[s.banner, result.ok && s.bannerOk]}>
-          <Text style={s.bannerText}>{result.message}</Text>
+          {/* The banner is the only report of whether the submit worked, and it
+              appears far from the button that caused it. Alert on the text, not
+              on the wrapper, so the link below stays its own focus stop. */}
+          <Text accessibilityRole="alert" style={s.bannerText}>
+            {result.message}
+          </Text>
           {result.ok && (
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ver en Descubrir"
+              hitSlop={LINK_HIT_SLOP}
               onPress={() => {
                 router.replace('/');
               }}
@@ -230,11 +251,18 @@ export function CreateSessionScreen() {
           <Text style={s.sectionNumber}>01</Text>
           <Text style={s.sectionTitle}>¿Qué vas a hacer?</Text>
         </View>
-        <View style={s.chipRow}>
+        <View accessibilityRole="tablist" accessibilityLabel="Categoría" style={s.chipRow}>
           {categories.map((c) => {
             const on = categoryId === c.id;
             return (
               <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={c.name_es}
+                accessibilityState={{ selected: on }}
+                /* Changing category clears section 04 and any errors in it, which
+                   nothing on the chip says. */
+                accessibilityHint="Cambia los detalles que pide el formulario"
+                hitSlop={CHIP_HIT_SLOP}
                 key={c.id}
                 onPress={() => {
                   setCategoryId(c.id);
@@ -252,6 +280,8 @@ export function CreateSessionScreen() {
         <View style={s.field}>
           <Text style={s.label}>Título</Text>
           <TextInput
+            accessibilityLabel="Título"
+            accessibilityHint="Obligatorio. Mínimo tres caracteres."
             maxLength={120}
             onChangeText={setTitle}
             placeholder="Corrida martes 6K"
@@ -283,6 +313,17 @@ export function CreateSessionScreen() {
             const on = venueId === v.id;
             return (
               <Pressable
+                /* Name and meta are one choice, so they are one label — read
+                   apart, "Verificado · CRC" belongs to no venue in particular. */
+                accessible
+                accessibilityRole="tab"
+                accessibilityLabel={[
+                  v.name,
+                  v.district ?? 'Sin distrito',
+                  v.is_verified ? 'Verificado' : 'Sin verificar',
+                  v.currency,
+                ].join('. ')}
+                accessibilityState={{ selected: on }}
                 key={v.id}
                 onPress={() => {
                   setVenueId(v.id);
@@ -308,6 +349,7 @@ export function CreateSessionScreen() {
             <Text style={s.optional}>opcional</Text>
           </View>
           <TextInput
+            accessibilityLabel="Punto de encuentro, opcional"
             maxLength={200}
             onChangeText={setMeetingPoint}
             placeholder="portón norte, junto a la fuente"
@@ -321,6 +363,8 @@ export function CreateSessionScreen() {
           <View style={s.rowItem}>
             <Text style={s.label}>Día</Text>
             <TextInput
+              accessibilityLabel="Día"
+              accessibilityHint="Formato año-mes-día, por ejemplo 2026-09-08"
               inputMode="numeric"
               onChangeText={setDate}
               placeholder="2026-09-08"
@@ -332,6 +376,8 @@ export function CreateSessionScreen() {
           <View style={s.rowItem}>
             <Text style={s.label}>Hora</Text>
             <TextInput
+              accessibilityLabel="Hora"
+              accessibilityHint="Formato de 24 horas, por ejemplo 18:00. Hora de Costa Rica."
               inputMode="numeric"
               onChangeText={setTime}
               placeholder="18:00"
@@ -343,6 +389,8 @@ export function CreateSessionScreen() {
           <View style={s.rowItem}>
             <Text style={s.label}>Duración</Text>
             <TextInput
+              accessibilityLabel="Duración"
+              accessibilityHint="En minutos. Mínimo 15."
               inputMode="numeric"
               onChangeText={setDuration}
               placeholder="60"
@@ -353,12 +401,15 @@ export function CreateSessionScreen() {
           </View>
         </View>
         {date !== '' && !startsValid && (
-          <Text style={s.error}>Usá el formato 2026-09-08 y 18:00.</Text>
+          <Text accessibilityRole="alert" style={s.error}>
+            Usá el formato 2026-09-08 y 18:00.
+          </Text>
         )}
 
         <View style={s.switchRow}>
           <Text style={s.switchLabel}>Se repite cada semana</Text>
           <Switch
+            accessibilityLabel="Se repite cada semana"
             onValueChange={setRepeats}
             trackColor={{ false: color.border.default, true: color.accent.deep }}
             thumbColor={repeats ? color.accent.cool : color.text.tertiary}
@@ -383,11 +434,21 @@ export function CreateSessionScreen() {
 
         <View style={s.field}>
           <Text style={s.label}>Nivel de quien viene</Text>
-          <View style={s.chipRow}>
+          {/* The chip labels are bare words — "Cualquiera" only means anything
+              once the group says what is being chosen. */}
+          <View
+            accessibilityRole="tablist"
+            accessibilityLabel="Nivel de quien viene"
+            style={s.chipRow}
+          >
             {SKILLS.map((option) => {
               const on = skill === option.value;
               return (
                 <Pressable
+                  accessibilityRole="tab"
+                  accessibilityLabel={option.label}
+                  accessibilityState={{ selected: on }}
+                  hitSlop={CHIP_HIT_SLOP}
                   key={option.value}
                   onPress={() => {
                     setSkill(option.value);
@@ -406,11 +467,19 @@ export function CreateSessionScreen() {
             <Text style={s.label}>Qué tan dura es</Text>
             <Text style={s.optional}>opcional</Text>
           </View>
-          <View style={s.chipRow}>
+          <View
+            accessibilityRole="tablist"
+            accessibilityLabel="Qué tan dura es, opcional"
+            style={s.chipRow}
+          >
             {BANDS.map((option) => {
               const on = band === option;
               return (
                 <Pressable
+                  accessibilityRole="tab"
+                  accessibilityLabel={difficultyLabel[option]}
+                  accessibilityState={{ selected: on }}
+                  hitSlop={CHIP_HIT_SLOP}
                   key={option}
                   onPress={() => {
                     setBand(on ? null : option);
@@ -426,8 +495,12 @@ export function CreateSessionScreen() {
 
         <View style={s.field}>
           <Text style={s.label}>Cupo</Text>
-          <View style={s.chipRow}>
+          <View accessibilityRole="tablist" accessibilityLabel="Cupo" style={s.chipRow}>
             <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel="Sin límite"
+              accessibilityState={{ selected: !capped }}
+              hitSlop={CHIP_HIT_SLOP}
               onPress={() => {
                 setCapped(false);
               }}
@@ -436,6 +509,12 @@ export function CreateSessionScreen() {
               <Text style={[s.chipText, !capped && s.chipTextOn]}>Sin límite</Text>
             </Pressable>
             <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel="Con cupo"
+              accessibilityState={{ selected: capped }}
+              /* Choosing this replaces the helper line with a number field. */
+              accessibilityHint="Agrega un campo para el número de personas"
+              hitSlop={CHIP_HIT_SLOP}
               onPress={() => {
                 setCapped(true);
               }}
@@ -446,6 +525,8 @@ export function CreateSessionScreen() {
           </View>
           {capped ? (
             <TextInput
+              accessibilityLabel="Cupo"
+              accessibilityHint="Número de personas. Mínimo 2."
               inputMode="numeric"
               onChangeText={setCapacity}
               placeholder="12"
@@ -464,6 +545,8 @@ export function CreateSessionScreen() {
             <Text style={s.optional}>opcional</Text>
           </View>
           <TextInput
+            accessibilityLabel="Precio, opcional"
+            accessibilityHint={`En ${venue?.currency ?? 'CRC'}, unidades enteras. Vacío es gratis.`}
             inputMode="numeric"
             onChangeText={setPrice}
             placeholder="Gratis"
@@ -506,8 +589,13 @@ export function CreateSessionScreen() {
           <Text style={s.sectionNumber}>05</Text>
           <Text style={s.sectionTitle}>¿Quién la ve?</Text>
         </View>
-        <View style={s.chipRow}>
+        <View accessibilityRole="tablist" accessibilityLabel="¿Quién la ve?" style={s.chipRow}>
           <Pressable
+            accessibilityRole="tab"
+            accessibilityLabel="Pública"
+            accessibilityState={{ selected: !unlisted }}
+            accessibilityHint="Aparece en Descubrir para cualquiera dentro del radio"
+            hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
               setUnlisted(false);
             }}
@@ -516,6 +604,11 @@ export function CreateSessionScreen() {
             <Text style={[s.chipText, !unlisted && s.chipTextOn]}>Pública</Text>
           </Pressable>
           <Pressable
+            accessibilityRole="tab"
+            accessibilityLabel="Con enlace"
+            accessibilityState={{ selected: unlisted }}
+            accessibilityHint="No se lista en Descubrir; solo llega quien tenga el enlace"
+            hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
               setUnlisted(true);
             }}
@@ -531,6 +624,14 @@ export function CreateSessionScreen() {
       </View>
 
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={busy ? 'Publicando…' : repeats ? 'Crear serie' : 'Publicar sesión'}
+        /* A series writes 60 days of sessions in one press, which the two-word
+           label does not say. The single-session case needs no hint. */
+        accessibilityHint={
+          repeats ? 'Crea las sesiones de los próximos 60 días, una por semana' : undefined
+        }
+        accessibilityState={{ disabled: !canSubmit, busy }}
         disabled={!canSubmit}
         onPress={submit}
         style={[s.publish, !canSubmit && s.publishDisabled]}

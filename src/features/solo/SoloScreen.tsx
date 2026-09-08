@@ -29,7 +29,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { fetchPublicVenues } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import { color, locale, timeZone } from '../../theme';
+import { color, hitSlopFor, locale, size, timeZone } from '../../theme';
 import type { Location } from '../../types/database';
 import { soloStyles as s } from './styles';
 
@@ -37,6 +37,13 @@ import { soloStyles as s } from './styles';
 const PLAN_KEY = 'movo.solo.plan';
 
 const DURATIONS = [30, 45, 60, 90] as const;
+
+/**
+ * The duration chips render at `size.controlSm` (36px), so the target is padded
+ * back up to 44 rather than the chip being grown — same trade as the filter
+ * chips in Descubrir.
+ */
+const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
 
 interface StoredPlan {
   venueId: string;
@@ -160,6 +167,15 @@ export function SoloScreen() {
             const on = venueId === v.id;
             return (
               <Pressable
+                /* One option, one label. Name, district and venue kind are
+                   three fragments of the same sentence, and the selected border
+                   is the only thing that says which one is chosen. */
+                accessible
+                accessibilityRole="tab"
+                accessibilityLabel={[v.name, v.district ?? 'Sin distrito', 'lugar público'].join(
+                  '. ',
+                )}
+                accessibilityState={{ selected: on }}
                 key={v.id}
                 onPress={() => {
                   setVenueId(v.id);
@@ -176,11 +192,19 @@ export function SoloScreen() {
 
       <View style={s.field}>
         <Text style={s.label}>¿Cuánto vas a estar?</Text>
-        <View style={s.chipRow}>
+        <View
+          accessibilityRole="tablist"
+          accessibilityLabel="¿Cuánto vas a estar?"
+          style={s.chipRow}
+        >
           {DURATIONS.map((option) => {
             const on = minutes === option;
             return (
               <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={`${option} minutos`}
+                accessibilityState={{ selected: on }}
+                hitSlop={CHIP_HIT_SLOP}
                 key={option}
                 onPress={() => {
                   setMinutes(option);
@@ -224,6 +248,10 @@ export function SoloScreen() {
         <View style={s.field}>
           <Text style={s.label}>Algo más que quieras agregar</Text>
           <TextInput
+            accessibilityLabel="Algo más que quieras agregar"
+            /* What is typed here is appended to the message below, which is not
+               visible from the field itself. */
+            accessibilityHint="Se agrega al mensaje que vas a compartir."
             onChangeText={(text) => {
               setNote(text);
               setCopied(false);
@@ -238,10 +266,28 @@ export function SoloScreen() {
         {message ? <Text style={s.message}>{message}</Text> : null}
 
         <View style={s.actionRow}>
-          <Pressable disabled={!message} onPress={share} style={s.primary}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Compartir"
+            /* "Compartir" says nothing about what leaves the device, and the
+               message is the whole point of the block. */
+            accessibilityHint="Abre el menú del sistema para enviar el mensaje del plan."
+            accessibilityState={{ disabled: !message }}
+            disabled={!message}
+            onPress={share}
+            style={s.primary}
+          >
             <Text style={s.primaryText}>Compartir</Text>
           </Pressable>
-          <Pressable disabled={!message} onPress={copy} style={s.secondary}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copied ? 'Copiado' : 'Copiar'}
+            accessibilityHint="Copia el mensaje del plan al portapapeles."
+            accessibilityState={{ disabled: !message }}
+            disabled={!message}
+            onPress={copy}
+            style={s.secondary}
+          >
             <Text style={s.secondaryText}>{copied ? 'Copiado' : 'Copiar'}</Text>
           </Pressable>
         </View>
@@ -249,7 +295,9 @@ export function SoloScreen() {
 
       {copied && (
         <View style={s.banner}>
-          <Text style={s.bannerText}>
+          {/* The copy itself is invisible — the clipboard gives no feedback of
+              its own, and this banner is the only confirmation there is. */}
+          <Text accessibilityRole="alert" style={s.bannerText}>
             Copiado. Mandáselo a alguien antes de salir, no cuando ya vas en camino.
           </Text>
         </View>

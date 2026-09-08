@@ -23,9 +23,26 @@ import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../..
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
-import { densityOf, heatColor, heatStops, occupancyLabel, priceLabel } from '../../theme';
+import {
+  densityOf,
+  heatColor,
+  heatStops,
+  hitSlopFor,
+  occupancyA11yLabel,
+  occupancyLabel,
+  priceLabel,
+  size,
+} from '../../theme';
 import { formatDistance } from './format';
 import { discoverStyles as s } from './styles';
+
+/**
+ * Chips render at `size.controlSm` (36px) because a 44px chip row looks like a
+ * row of buttons. The target is padded back up to 44 instead — visual size and
+ * touch target are separate things, which is the whole reason `hitSlopFor`
+ * exists.
+ */
+const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
 
 /**
  * Centre of the Greater Metropolitan Area. Device location needs a permission
@@ -121,6 +138,8 @@ export function DiscoverScreen() {
                 <Text style={s.linkText}>Grupos</Text>
               </Link>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar sesión"
                 onPress={() => {
                   void signOut();
                 }}
@@ -141,9 +160,19 @@ export function DiscoverScreen() {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filters}>
+      <ScrollView
+        accessibilityRole="tablist"
+        accessibilityLabel="Filtrar por categoría"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={s.filters}
+      >
         <View style={s.filterRow}>
           <Pressable
+            accessibilityRole="tab"
+            accessibilityLabel="Todas las categorías"
+            accessibilityState={{ selected: selected === null }}
+            hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
               setSelected(null);
             }}
@@ -155,6 +184,10 @@ export function DiscoverScreen() {
             const on = selected === category.id;
             return (
               <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={category.name_es}
+                accessibilityState={{ selected: on }}
+                hitSlop={CHIP_HIT_SLOP}
                 key={category.id}
                 onPress={() => {
                   setSelected(on ? null : category.id);
@@ -168,12 +201,22 @@ export function DiscoverScreen() {
         </View>
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filters}>
+      <ScrollView
+        accessibilityRole="tablist"
+        accessibilityLabel="Radio de búsqueda"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={s.filters}
+      >
         <View style={s.filterRow}>
           {RADIUS_OPTIONS.map((metres) => {
             const on = radiusM === metres;
             return (
               <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={`Buscar en ${metres / 1000} kilómetros a la redonda`}
+                accessibilityState={{ selected: on }}
+                hitSlop={CHIP_HIT_SLOP}
                 key={metres}
                 onPress={() => {
                   setRadiusM(metres);
@@ -187,7 +230,15 @@ export function DiscoverScreen() {
         </View>
       </ScrollView>
 
-      <View style={s.legend}>
+      {/* One label for the whole ramp. Read stop by stop it is eight
+          unpronounceable colour swatches; the scale is what carries meaning,
+          and each card states its own occupancy in words anyway. */}
+      <View
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel="Escala de ocupación: de vacío, en azul, a lleno, en naranja"
+        style={s.legend}
+      >
         <Text style={s.legendLabel}>vacío</Text>
         <View style={s.legendRamp}>
           {heatStops().map((stop) => (
@@ -226,40 +277,54 @@ export function DiscoverScreen() {
               </Link>
             </View>
           }
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => {
-                router.push({ pathname: '/sesion/[id]', params: { id: item.id } });
-              }}
-              style={s.card}
-            >
-              <View style={s.cardTop}>
-                <Text style={s.cardTitle}>{item.title}</Text>
-                <View
-                  style={[
-                    s.heatDot,
-                    {
-                      backgroundColor: heatColor(
-                        densityOf(item.joined_count, item.max_participants),
-                      ),
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
-              <Text style={s.cardWhere}>
-                {item.location_name}
-                {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
-              </Text>
-              <View style={s.cardFacts}>
-                <Text style={s.fact}>
-                  {occupancyLabel(item.joined_count, item.max_participants)}
+          renderItem={({ item }) => {
+            const density = densityOf(item.joined_count, item.max_participants);
+            return (
+              <Pressable
+                /* One element, one label. Read field by field a card is nine
+                   fragments with no relationship between them; this is the
+                   sentence a sighted user assembles at a glance. */
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={[
+                  item.title,
+                  formatSessionTime(item.starts_at),
+                  item.location_name,
+                  formatDistance(item.distance_m),
+                  occupancyA11yLabel(item.joined_count, item.max_participants, density),
+                  priceLabel(item.price_minor, item.currency),
+                ].join('. ')}
+                accessibilityHint="Abre el detalle de la sesión"
+                onPress={() => {
+                  router.push({ pathname: '/sesion/[id]', params: { id: item.id } });
+                }}
+                style={s.card}
+              >
+                <View style={s.cardTop}>
+                  <Text style={s.cardTitle}>{item.title}</Text>
+                  {/* The dot and the occupancy line encode the same variable, so
+                      to a screen reader the dot is decoration. */}
+                  <View
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    style={[s.heatDot, { backgroundColor: heatColor(density) }]}
+                  />
+                </View>
+                <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
+                <Text style={s.cardWhere}>
+                  {item.location_name}
+                  {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
                 </Text>
-                <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
-                {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
-              </View>
-            </Pressable>
-          )}
+                <View style={s.cardFacts}>
+                  <Text style={s.fact}>
+                    {occupancyLabel(item.joined_count, item.max_participants)}
+                  </Text>
+                  <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
+                  {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
+                </View>
+              </Pressable>
+            );
+          }}
         />
       )}
     </View>

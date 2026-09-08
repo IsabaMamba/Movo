@@ -123,13 +123,32 @@ export function GrupoDetailScreen() {
         </View>
       )}
 
-      {error && <Text style={s.error}>{error}</Text>}
+      {error && (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      )}
 
-      <View>
+      {/* The count is only true when the roll came back; for a non-member the
+          empty list means hidden, not empty, so it gets no list role. */}
+      <View
+        accessibilityRole={members.length > 0 ? 'list' : undefined}
+        accessibilityLabel={
+          members.length > 0
+            ? `Quién está: ${members.length} ${members.length === 1 ? 'persona' : 'personas'}`
+            : undefined
+        }
+      >
         <Text style={s.sectionTitle}>Quién está</Text>
         {members.length > 0 ? (
           members.map((member) => (
-            <View key={member.user_id} style={s.row}>
+            /* Name and role are one person, not two readings. */
+            <View
+              accessible
+              accessibilityLabel={`${member.profile.display_name}. ${ROLE_LABEL[member.role] ?? member.role}`}
+              key={member.user_id}
+              style={s.row}
+            >
               <Text style={s.rowName}>{member.profile.display_name}</Text>
               <Text style={[s.rowRole, member.role !== 'member' && s.rowRoleOwner]}>
                 {ROLE_LABEL[member.role] ?? member.role}
@@ -148,7 +167,17 @@ export function GrupoDetailScreen() {
       {session ? (
         community.is_public || isMember ? (
           <>
+            {/* Leaving also drops access to the member-only sessions and to the
+                roll above, which the word "Salir" does not say. */}
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={busy ? 'Un momento…' : isMember ? 'Salir del grupo' : 'Unirme'}
+              accessibilityHint={
+                isMember
+                  ? 'Dejas de ser parte del grupo y pierdes acceso a sus sesiones para miembros.'
+                  : undefined
+              }
+              accessibilityState={{ disabled: busy }}
               disabled={busy}
               onPress={toggle}
               style={[isMember ? s.secondary : s.primary, busy && s.primaryDisabled]}
