@@ -86,7 +86,15 @@ export function CreateSessionScreen() {
   const [title, setTitle] = useState('');
   const [venueId, setVenueId] = useState<string | null>(null);
   const [meetingPoint, setMeetingPoint] = useState('');
-  const [date, setDate] = useState('');
+  // Defaults to today rather than empty. An empty required field disables the
+  // publish button while rendering nothing, which is indistinguishable from the
+  // button being broken — which is exactly how it was read.
+  const [date, setDate] = useState(() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(
+      t.getDate(),
+    ).padStart(2, '0')}`;
+  });
   const [time, setTime] = useState('18:00');
   const [duration, setDuration] = useState('60');
   const [repeats, setRepeats] = useState(false);
@@ -136,15 +144,28 @@ export function CreateSessionScreen() {
   const durationMinutes = Number(duration);
   const capacityValue = capped ? Number(capacity) : null;
 
-  const canSubmit =
-    !busy &&
-    category !== null &&
-    venue !== null &&
-    title.trim().length >= 3 &&
-    startsValid &&
-    Number.isFinite(durationMinutes) &&
-    durationMinutes >= 15 &&
-    (!capped || (Number.isFinite(capacityValue) && (capacityValue ?? 0) >= 2));
+  /**
+   * What is still missing, in the order the form asks for it.
+   *
+   * A disabled button looks identical to a working one whose request failed,
+   * and `submit()` returns early when the guard is unmet — so pressing it
+   * produced no row, no error and no network request at all. Naming the gap is
+   * the difference between a form somebody can finish and one that appears
+   * broken.
+   */
+  const missing: string[] = [];
+  if (category === null) missing.push('elegí una categoría');
+  if (venue === null) missing.push('elegí un lugar');
+  if (title.trim().length < 3) missing.push('poné un título de al menos 3 letras');
+  if (!startsValid) missing.push('revisá el día y la hora');
+  if (!Number.isFinite(durationMinutes) || durationMinutes < 15) {
+    missing.push('la duración tiene que ser de 15 minutos o más');
+  }
+  if (capped && (!Number.isFinite(capacityValue) || (capacityValue ?? 0) < 2)) {
+    missing.push('el cupo tiene que ser de 2 personas o más');
+  }
+
+  const canSubmit = !busy && missing.length === 0;
 
   const submit = () => {
     if (!canSubmit || !category || !venue || !startsAt) return;
@@ -640,6 +661,12 @@ export function CreateSessionScreen() {
           {busy ? 'Publicando…' : repeats ? 'Crear serie' : 'Publicar sesión'}
         </Text>
       </Pressable>
+
+      {missing.length > 0 && (
+        <Text accessibilityLiveRegion="polite" style={s.missing}>
+          Para publicar falta: {missing.join(' · ')}.
+        </Text>
+      )}
 
       <Link href="/" style={s.link}>
         <Text style={s.linkText}>Volver a Descubrir</Text>
