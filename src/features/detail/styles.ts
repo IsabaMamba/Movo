@@ -123,4 +123,65 @@ export const detailStyles = StyleSheet.create({
   /** Reporting lives on this screen, not in settings — see the design notes. */
   report: { minHeight: size.minTarget, justifyContent: 'center' },
   reportText: { ...type.caption, color: color.text.tertiary, textDecorationLine: 'underline' },
+
+  /**
+   * The report sheet. Danger red on the rail, never on a filled button — a
+   * red button invites a mis-tap, and reporting should feel deliberate rather
+   * than alarming to press.
+   */
+  sheet: {
+    backgroundColor: color.bg.surface,
+    borderLeftColor: color.semantic.danger,
+    borderLeftWidth: stroke.thick,
+    borderRadius: radius.md,
+    gap: space.md,
+    padding: space.lg,
+  },
+  sheetTitle: { ...type.heading, color: color.text.primary },
+  sheetBody: { ...type.bodySmall, color: color.text.secondary },
+  reasonRow: { gap: space.sm },
+  reason: {
+    borderColor: color.border.default,
+    borderRadius: radius.sm,
+    borderWidth: stroke.hair,
+    justifyContent: 'center',
+    minHeight: size.minTarget,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  reasonOn: { borderColor: color.semantic.dangerOnRaised },
+  reasonText: { ...type.bodySmall, color: color.text.secondary },
+  reasonTextOn: { color: color.text.primary },
+  detailsInput: {
+    ...type.bodySmall,
+    backgroundColor: color.bg.raised,
+    borderColor: color.border.default,
+    borderRadius: radius.sm,
+    borderWidth: stroke.hair,
+    color: color.text.primary,
+    minHeight: 72,
+    padding: space.md,
+  },
+  sheetActions: { flexDirection: 'row', gap: space.md },
+  send: {
+    alignItems: 'center',
+    borderColor: color.semantic.danger,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  sendDisabled: { opacity: 0.4 },
+  sendText: { ...type.action, color: color.semantic.dangerOnRaised },
+  cancel: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  cancelText: { ...type.action, color: color.text.primary },
 });

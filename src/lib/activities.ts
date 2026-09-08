@@ -16,6 +16,7 @@ import type {
   Category,
   Community,
   CommunityRole,
+  ReportSubject,
   CategoryId,
   CurrencyCode,
   JsonSchemaObject,
@@ -714,4 +715,56 @@ export async function leaveCommunity(
     .eq('community_id', communityId)
     .eq('user_id', userId);
   if (error) throw toApiError(error);
+}
+
+// ------------------------------------------------------------- reporting
+
+/**
+ * Why somebody is reporting. Free text in the column, a closed list here: a
+ * triage queue full of "otro" cannot be prioritised, and the person reporting
+ * should not have to compose a sentence while they are upset.
+ */
+export const REPORT_REASONS = [
+  { value: 'comportamiento', label: 'Comportamiento de alguien' },
+  { value: 'informacion_falsa', label: 'La información no es real' },
+  { value: 'lugar_inseguro', label: 'El lugar no es seguro o no es público' },
+  { value: 'spam', label: 'Spam o publicidad' },
+  { value: 'otro', label: 'Otra cosa' },
+] as const;
+
+export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
+
+/**
+ * File a report.
+ *
+ * `reports` grants INSERT to authenticated and the policy pins reporter_id to
+ * auth.uid(), so no RPC is needed. Reads are limited to your own reports —
+ * you can see what you sent and how it was resolved, and nobody else's.
+ *
+ * docs/security.md treats in-app reporting as a blocker for the first public
+ * session: this product arranges meetings between strangers, so a report has
+ * to reach a queue rather than reassure the person who sent it.
+ */
+export async function createReport(
+  db: SupabaseClient,
+  reporterId: string,
+  subjectType: ReportSubject,
+  subjectId: string,
+  reason: ReportReason,
+  details?: string,
+): Promise<string> {
+  const { data, error } = await db
+    .from('reports')
+    .insert({
+      reporter_id: reporterId,
+      subject_type: subjectType,
+      subject_id: subjectId,
+      reason,
+      details: details?.trim() || null,
+    })
+    .select('id')
+    .single();
+
+  if (error) throw toApiError(error);
+  return (data as { id: string }).id;
 }
