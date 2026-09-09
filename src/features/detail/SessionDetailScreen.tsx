@@ -88,7 +88,7 @@ export function SessionDetailScreen() {
   const [reporting, setReporting] = useState(false);
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [reportDetails, setReportDetails] = useState('');
-  const [reportSent, setReportSent] = useState(false);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [reportBusy, setReportBusy] = useState(false);
 
   const userId = session?.user.id;
@@ -176,8 +176,11 @@ export function SessionDetailScreen() {
     setReportBusy(true);
     setError(null);
     createReport(supabase, session.user.id, 'activity', activity.id, reason, reportDetails)
-      .then(() => {
-        setReportSent(true);
+      .then((id) => {
+        // The id is what makes "enviado" checkable. A safety report that only
+        // says it was sent is the one confirmation nobody should have to take
+        // on trust.
+        setReportId(id);
         setReporting(false);
         setReason(null);
         setReportDetails('');
@@ -405,10 +408,11 @@ export function SessionDetailScreen() {
       {/* No onPress yet, so the label states what the control is and nothing
           about where it leads — a hint here would describe a flow that does not
           exist. */}
-      {reportSent ? (
+      {reportId ? (
         <View style={s.status}>
           <Text style={s.statusText}>
-            Reporte enviado. Lo revisa una persona del equipo; si hace falta te escribimos.
+            Reporte enviado · {reportId.slice(0, 8)}. Lo revisa una persona del equipo; si hace
+            falta te escribimos. Quien organiza no recibe aviso.
           </Text>
         </View>
       ) : reporting ? (
