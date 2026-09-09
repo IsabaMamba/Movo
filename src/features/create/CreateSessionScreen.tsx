@@ -89,8 +89,18 @@ export function CreateSessionScreen() {
   // Defaults to today rather than empty. An empty required field disables the
   // publish button while rendering nothing, which is indistinguishable from the
   // button being broken — which is exactly how it was read.
+  /**
+   * Defaults to the next 18:00 that has not happened yet.
+   *
+   * Defaulting to today put the first real session in the past: created after
+   * 18:00 local, it was already started, and nearby_activities() filters
+   * `starts_at >= now()` — so it vanished from Descubrir the moment it was
+   * made, while remaining perfectly readable everywhere else.
+   */
   const [date, setDate] = useState(() => {
     const t = new Date();
+    // 18:00 in Costa Rica is 00:00 UTC the next day; compare in local terms.
+    if (t.getHours() >= 18) t.setDate(t.getDate() + 1);
     return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(
       t.getDate(),
     ).padStart(2, '0')}`;
@@ -142,6 +152,10 @@ export function CreateSessionScreen() {
   const startsAt = date && time ? new Date(`${date}T${time}:00${CR_OFFSET}`) : null;
   const startsValid = startsAt !== null && !Number.isNaN(startsAt.getTime());
   const durationMinutes = Number(duration);
+  // A session that has already begun is accepted by the table and hidden by
+  // nearby_activities(), which is the worst of both: it exists and nobody
+  // can find it.
+  const startsInPast = startsValid && startsAt !== null && startsAt.getTime() < Date.now();
   const capacityValue = capped ? Number(capacity) : null;
 
   /**
@@ -158,6 +172,7 @@ export function CreateSessionScreen() {
   if (venue === null) missing.push('elegí un lugar');
   if (title.trim().length < 3) missing.push('poné un título de al menos 3 letras');
   if (!startsValid) missing.push('revisá el día y la hora');
+  else if (startsInPast) missing.push('la sesión no puede empezar en el pasado');
   if (!Number.isFinite(durationMinutes) || durationMinutes < 15) {
     missing.push('la duración tiene que ser de 15 minutos o más');
   }
@@ -394,7 +409,9 @@ export function CreateSessionScreen() {
             <TextInput
               accessibilityLabel="Día"
               accessibilityHint="Formato año-mes-día, por ejemplo 2026-09-08"
-              inputMode="numeric"
+              /* Not `numeric`: a numeric keypad has no hyphen, which makes this
+                 field impossible to fill on a phone. */
+              inputMode="text"
               onChangeText={setDate}
               placeholder="2026-09-08"
               placeholderTextColor={color.text.tertiary}
@@ -407,7 +424,8 @@ export function CreateSessionScreen() {
             <TextInput
               accessibilityLabel="Hora"
               accessibilityHint="Formato de 24 horas, por ejemplo 18:00. Hora de Costa Rica."
-              inputMode="numeric"
+              /* Same reason as the day: no colon on a numeric keypad. */
+              inputMode="text"
               onChangeText={setTime}
               placeholder="18:00"
               placeholderTextColor={color.text.tertiary}
@@ -432,6 +450,11 @@ export function CreateSessionScreen() {
         {date !== '' && !startsValid && (
           <Text accessibilityRole="alert" style={s.error}>
             Usá el formato 2026-09-08 y 18:00.
+          </Text>
+        )}
+        {startsInPast && (
+          <Text accessibilityRole="alert" style={s.error}>
+            Esa hora ya pasó. Una sesión que ya empezó no aparece en Descubrir.
           </Text>
         )}
 
