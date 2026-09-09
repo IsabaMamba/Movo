@@ -25,6 +25,15 @@ if (!url || !anonKey) {
 const isWeb = Platform.OS === 'web';
 
 /**
+ * The project ref this bundle is pointed at, for confirmations to quote.
+ *
+ * A success message that cannot say where the write landed is unfalsifiable —
+ * four days went into "it was created" versus "the table is empty" without
+ * either side being able to prove which database the other was looking at.
+ */
+export const projectRef: string = url.replace(/^https?:\/\//, '').split('.')[0] ?? 'desconocido';
+
+/**
  * The anon key is public by design — row-level security, not secrecy, is what
  * protects the data. The service-role key bypasses RLS entirely and must never
  * reach this bundle.
