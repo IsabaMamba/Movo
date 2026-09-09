@@ -32,7 +32,7 @@ import {
   fetchPublicVenues,
   type ValidationIssue,
 } from '../../lib/activities';
-import { supabase } from '../../lib/supabase';
+import { projectRef, supabase } from '../../lib/supabase';
 import {
   color,
   difficultyLabel,
@@ -195,9 +195,12 @@ export function CreateSessionScreen() {
           session.user.id,
           { ...base, weekday: startsAt.getDay(), localStartTime: time },
           category.attribute_schema,
-        ).then(({ generated }) => ({
+        ).then(({ seriesId, generated }) => ({
           ok: true,
-          message: `Serie creada. Se generaron ${generated} sesiones, todos los ${WEEKDAYS[startsAt.getDay()] ?? ''} a las ${time}.`,
+          message:
+            `Serie creada · ${generated} ${generated === 1 ? 'sesión' : 'sesiones'}, ` +
+            `todos los ${WEEKDAYS[startsAt.getDay()] ?? ''} a las ${time} · ` +
+            `id ${seriesId.slice(0, 8)} · proyecto ${projectRef}`,
         }))
       : createActivity(
           supabase,
@@ -210,9 +213,12 @@ export function CreateSessionScreen() {
             publish: true,
           },
           category.attribute_schema,
-        ).then(() => ({
+        ).then((id) => ({
           ok: true,
-          message: 'Sesión publicada. Ya aparece en Descubrir.',
+          // The id is the evidence. "Ya aparece en Descubrir" was a claim the
+          // screen had no way to back, and it was believed for four days while
+          // the table stayed empty.
+          message: `Sesión publicada · id ${id.slice(0, 8)} · proyecto ${projectRef}`,
         }));
 
     run
@@ -227,7 +233,9 @@ export function CreateSessionScreen() {
         }
         setResult({
           ok: false,
-          message: cause instanceof Error ? cause.message : 'No se pudo crear la sesión.',
+          message:
+            (cause instanceof Error ? cause.message : 'No se pudo crear la sesión.') +
+            ` · proyecto ${projectRef}`,
         });
       })
       .finally(() => {
