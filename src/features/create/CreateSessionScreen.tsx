@@ -43,6 +43,7 @@ import {
 } from '../../theme';
 import type { Category, Location, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
+import { AddVenue } from '../venues/AddVenue';
 import { SchemaFields } from './SchemaFields';
 import { createStyles as s } from './styles';
 
@@ -348,8 +349,7 @@ export function CreateSessionScreen() {
         ) : venues.length === 0 ? (
           <View style={s.banner}>
             <Text style={s.bannerText}>
-              No hay lugares públicos todavía. Agregá uno a la base antes de publicar — crear
-              lugares desde la app está pendiente.
+              No hay lugares públicos todavía. Agregá el primero acá abajo.
             </Text>
           </View>
         ) : (
@@ -386,6 +386,16 @@ export function CreateSessionScreen() {
         <Text style={s.hint}>
           Solo lugares públicos. No se puede publicar una sesión en una dirección privada.
         </Text>
+
+        {/* Inline, because discovering the venue is missing happens halfway
+            through a form that is holding a lot of unsaved answers. */}
+        <AddVenue
+          onCreated={(created) => {
+            setVenues((current) => [...(current ?? []), created]);
+            setVenueId(created.id);
+          }}
+          userId={session.user.id}
+        />
 
         <View style={s.field}>
           <View style={s.labelRow}>
