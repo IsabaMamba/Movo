@@ -70,13 +70,15 @@ export function OrganizerHomeScreen() {
   const now = Date.now();
   // A session that has already started and is not closed is the one thing
   // that needs the organizer today — that is where check-in happens.
-  const needsCloseOut = (activities ?? []).filter(
-    (a) => a.status !== 'completed' && new Date(a.starts_at).getTime() <= now,
+  // Cancelled is excluded from both live groups: a cancelled session that has
+  // passed is not waiting to be closed, and closing it is now refused.
+  const open = (activities ?? []).filter(
+    (a) => a.status !== 'completed' && a.status !== 'cancelled',
   );
-  const upcoming = (activities ?? []).filter(
-    (a) => a.status !== 'completed' && new Date(a.starts_at).getTime() > now,
-  );
+  const needsCloseOut = open.filter((a) => new Date(a.starts_at).getTime() <= now);
+  const upcoming = open.filter((a) => new Date(a.starts_at).getTime() > now);
   const done = (activities ?? []).filter((a) => a.status === 'completed');
+  const called = (activities ?? []).filter((a) => a.status === 'cancelled');
 
   const card = (activity: OrganizedActivity) => {
     const state = stateOf(activity);
@@ -176,6 +178,13 @@ export function OrganizerHomeScreen() {
             <View style={{ gap: 12 }}>
               <Text style={s.sectionTitle}>Cerradas</Text>
               {done.map(card)}
+            </View>
+          )}
+
+          {called.length > 0 && (
+            <View style={{ gap: 12 }}>
+              <Text style={s.sectionTitle}>Canceladas</Text>
+              {called.map(card)}
             </View>
           )}
         </>

@@ -149,6 +149,10 @@ export function SessionDetailScreen() {
   const waiting = mine?.status === 'waitlisted';
   const full =
     activity.max_participants !== null && activity.joined_count >= activity.max_participants;
+  // Only people on the roster and the organizer can still read a cancelled
+  // session (activities_read), so this state is shown to exactly the people
+  // it concerns.
+  const cancelled = activity.status === 'cancelled';
 
   const act = () => {
     if (!session) {
@@ -232,6 +236,21 @@ export function SessionDetailScreen() {
         </View>
         <Text style={s.title}>{activity.title}</Text>
       </View>
+
+      {cancelled && (
+        <View style={s.cancelled}>
+          {/* First thing under the title: everything below still describes a
+              session that is not happening. */}
+          <Text accessibilityRole="alert" style={s.cancelledTitle}>
+            Cancelada — no vayas
+          </Text>
+          <Text style={s.cancelledBody}>
+            {activity.cancel_reason
+              ? `Quien organiza escribió: «${activity.cancel_reason}»`
+              : 'Quien organiza la canceló sin escribir un motivo.'}
+          </Text>
+        </View>
+      )}
 
       {/* Occupancy: the bar and the number are the same variable. */}
       <View style={s.occupancy}>
@@ -372,7 +391,7 @@ export function SessionDetailScreen() {
         )}
       </View>
 
-      {mine && (going || waiting) && (
+      {!cancelled && mine && (going || waiting) && (
         <View style={[s.status, waiting && s.statusWait]}>
           {/* Appears only after the join or leave resolves, so it has to
               announce itself rather than wait to be found. */}
@@ -395,20 +414,26 @@ export function SessionDetailScreen() {
         </Text>
       )}
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={actionLabel}
-        accessibilityHint={actionHint}
-        accessibilityState={{ disabled: busy }}
-        disabled={busy}
-        onPress={act}
-        style={[s.action, (going || waiting) && s.actionSecondary, busy && s.actionDisabled]}
-      >
-        <Text style={[s.actionText, (going || waiting) && s.actionTextSecondary]}>
-          {actionLabel}
-        </Text>
-      </Pressable>
-      <Text style={s.actionNote}>Podés cancelar hasta la hora de salida.</Text>
+      {/* Joining is refused by the database and leaving means nothing, so a
+          cancelled session offers neither. */}
+      {!cancelled && (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={actionLabel}
+            accessibilityHint={actionHint}
+            accessibilityState={{ disabled: busy }}
+            disabled={busy}
+            onPress={act}
+            style={[s.action, (going || waiting) && s.actionSecondary, busy && s.actionDisabled]}
+          >
+            <Text style={[s.actionText, (going || waiting) && s.actionTextSecondary]}>
+              {actionLabel}
+            </Text>
+          </Pressable>
+          <Text style={s.actionNote}>Podés cancelar hasta la hora de salida.</Text>
+        </>
+      )}
 
       {/* No onPress yet, so the label states what the control is and nothing
           about where it leads — a hint here would describe a flow that does not

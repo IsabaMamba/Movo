@@ -147,6 +147,59 @@ export async function closeActivity(db: SupabaseClient, activityId: string): Pro
 }
 
 /**
+ * Cancel a session. Organizer-only.
+ *
+ * Returns how many people were on the roster (joined or waiting). Their rows
+ * are left as they were — the session's status carries the cancellation —
+ * and each gets an inbox notification, which nothing delivers yet. The
+ * screen says so rather than implying anybody was told.
+ */
+export async function cancelActivity(
+  db: SupabaseClient,
+  activityId: string,
+  reason: string,
+): Promise<number> {
+  const { data, error } = await db.rpc('cancel_activity', {
+    p_activity_id: activityId,
+    p_reason: reason.trim() || null,
+  });
+  if (error) throw toApiError(error);
+  return (data as number) ?? 0;
+}
+
+export interface ActivityEdit {
+  activityId: string;
+  title: string;
+  meetingPoint: string;
+  startsAt: Date;
+  durationMinutes: number;
+  locationId: string;
+  maxParticipants: number | null;
+}
+
+/**
+ * Edit a session. Organizer-only, and only before it starts.
+ *
+ * Every field is sent every time — `max_participants: null` means uncapped,
+ * so there is no value left over to mean "unchanged". The function enforces
+ * what the form also shows: once anybody is on the roster the time and the
+ * venue are locked, and capacity cannot drop below the people already going.
+ */
+export async function updateActivity(db: SupabaseClient, edit: ActivityEdit): Promise<Activity> {
+  const { data, error } = await db.rpc('update_activity', {
+    p_activity_id: edit.activityId,
+    p_title: edit.title,
+    p_meeting_point: edit.meetingPoint,
+    p_starts_at: edit.startsAt.toISOString(),
+    p_duration_minutes: edit.durationMinutes,
+    p_location_id: edit.locationId,
+    p_max_participants: edit.maxParticipants,
+  });
+  if (error) throw toApiError(error);
+  return data as Activity;
+}
+
+/**
  * Materialize occurrences of a recurring series up to a horizon.
  * Idempotent — safe to call on every organizer app open.
  */

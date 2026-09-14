@@ -36,6 +36,19 @@ interface Standing {
 }
 
 function standingOf(entry: MyParticipation, past: boolean): Standing {
+  // Checked first: "Vas" on a session that is not happening is the one
+  // label on this screen that would send somebody somewhere for nothing.
+  if (entry.activity.status === 'cancelled') {
+    return {
+      label: 'Cancelada',
+      chip: s.badgeMiss,
+      text: s.badgeMissText,
+      note: entry.activity.cancel_reason
+        ? `Quien organiza escribió: «${entry.activity.cancel_reason}»`
+        : 'Quien organiza la canceló.',
+    };
+  }
+
   if (entry.status === 'waitlisted') {
     return {
       label: entry.waitlist_pos === null ? 'En espera' : `En espera · puesto ${entry.waitlist_pos}`,
