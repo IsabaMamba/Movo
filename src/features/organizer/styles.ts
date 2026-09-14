@@ -126,4 +126,39 @@ export const organizerStyles = StyleSheet.create({
   emptyBody: { ...type.bodySmall, color: color.text.secondary, textAlign: 'center' },
 
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
+
+  input: {
+    ...type.body,
+    backgroundColor: color.bg.sunken,
+    borderColor: color.border.strong,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    color: color.text.primary,
+    minHeight: size.control,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+
+  /** Set apart by a rule, so it is never read as part of close-out. */
+  cancelZone: {
+    borderTopColor: color.border.default,
+    borderTopWidth: stroke.hair,
+    paddingTop: space.lg,
+  },
+  cancelLinkText: {
+    ...type.bodySmall,
+    color: color.semantic.dangerOnRaised,
+    textDecorationLine: 'underline',
+  },
+
+  cancelledBanner: {
+    backgroundColor: color.bg.surface,
+    borderLeftColor: color.semantic.danger,
+    borderLeftWidth: stroke.thick,
+    borderRadius: radius.sm,
+    gap: space.xs,
+    padding: space.md,
+  },
+  cancelledTitle: { ...type.heading, color: color.text.primary },
+  cancelledBody: { ...type.bodySmall, color: color.text.secondary },
 });

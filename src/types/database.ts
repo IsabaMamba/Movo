@@ -133,6 +133,9 @@ export interface Activity {
   attributes: ActivityAttributes;
   visibility: ActivityVisibility;
   status: ActivityStatus;
+  /** Set by cancel_activity(). The reason is shown to everyone on the roster. */
+  cancelled_at: string | null;
+  cancel_reason: string | null;
   source: ActivitySource;
   source_url: string | null;
   claimed_by: string | null;

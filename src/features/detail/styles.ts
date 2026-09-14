@@ -117,6 +117,16 @@ export const detailStyles = StyleSheet.create({
   },
   statusWait: { borderLeftColor: color.accent.cool },
   statusText: { ...type.bodySmall, color: color.text.primary },
+  cancelled: {
+    backgroundColor: color.bg.surface,
+    borderLeftColor: color.semantic.danger,
+    borderLeftWidth: stroke.thick,
+    borderRadius: radius.sm,
+    gap: space.xs,
+    padding: space.md,
+  },
+  cancelledTitle: { ...type.heading, color: color.text.primary },
+  cancelledBody: { ...type.bodySmall, color: color.text.secondary },
   statusLink: {
     ...type.bodySmall,
     color: color.accent.cool,

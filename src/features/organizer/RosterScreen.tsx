@@ -13,9 +13,10 @@
 
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import {
+  cancelActivity,
   checkIn,
   closeActivity,
   fetchActivityDetail,
@@ -25,7 +26,7 @@ import {
   type RosterEntry,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import { hitSlopFor, size } from '../../theme';
+import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
 import { organizerStyles as s } from './styles';
 
@@ -57,6 +58,9 @@ export function RosterScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [reason, setReason] = useState('');
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -98,6 +102,8 @@ export function RosterScreen() {
   // fail with 42501 the moment they were used.
   const isOrganizer = activity.organizer_id === session.user.id;
   const closed = activity.status === 'completed';
+  const cancelled = activity.status === 'cancelled';
+  const started = new Date(activity.starts_at).getTime() <= Date.now();
 
   const attended = roster.filter((p) => p.status === 'attended').length;
   const expected = roster.filter((p) => p.status === 'joined').length;
@@ -134,6 +140,32 @@ export function RosterScreen() {
       });
   };
 
+  const onRoster = expected + waiting + attended;
+
+  const cancel = () => {
+    setCancelBusy(true);
+    setError(null);
+    cancelActivity(supabase, activity.id, reason)
+      .then((count) => {
+        setCancelling(false);
+        setReason('');
+        // Honest about the channel: the inbox row exists, but nothing
+        // delivers it to a phone yet.
+        setNotice(
+          count === 0
+            ? 'Sesión cancelada. No había nadie apuntado.'
+            : `Sesión cancelada. ${count} ${count === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones, pero Movo todavía no manda avisos: escribiles.`,
+        );
+        return load();
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : 'No se pudo cancelar la sesión.');
+      })
+      .finally(() => {
+        setCancelBusy(false);
+      });
+  };
+
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
       <Link href="/organizar" style={s.back}>
@@ -146,6 +178,21 @@ export function RosterScreen() {
           {formatSessionTime(activity.starts_at)} · {activity.location.name}
         </Text>
       </View>
+
+      {cancelled && (
+        <View style={s.cancelledBanner}>
+          <Text style={s.cancelledTitle}>Cancelada</Text>
+          <Text style={s.cancelledBody}>
+            {activity.cancel_reason ? `«${activity.cancel_reason}»` : 'Sin motivo escrito.'}
+          </Text>
+        </View>
+      )}
+
+      {isOrganizer && !closed && !cancelled && !started && (
+        <Link href={{ pathname: '/editar/[id]', params: { id: activity.id } }} style={s.back}>
+          <Text style={s.linkText}>Editar sesión</Text>
+        </Link>
+      )}
 
       {/* A count is a number and its noun; read as two stops they arrive as
           "12" and, later, "llegaron" — which is not a count. */}
@@ -223,7 +270,7 @@ export function RosterScreen() {
                     ? ` · ${person.waitlist_pos}`
                     : ''}
                 </Text>
-                {isOrganizer && !closed && (
+                {isOrganizer && !closed && !cancelled && (
                   <Pressable
                     accessibilityRole="checkbox"
                     accessibilityLabel={done ? `${name} ya llegó` : `Marcar llegada de ${name}`}
@@ -255,7 +302,7 @@ export function RosterScreen() {
         )}
       </View>
 
-      {isOrganizer && !closed && roster.length > 0 && (
+      {isOrganizer && !closed && !cancelled && roster.length > 0 && (
         <>
           {confirming ? (
             <View style={s.confirm}>
@@ -308,6 +355,71 @@ export function RosterScreen() {
             Marcá primero a quien llegó. Cerrar es lo que guarda la asistencia.
           </Text>
         </>
+      )}
+
+      {/* Last on the screen and separate from close-out: the two are both
+          irreversible and mean opposite things — one records who came, the
+          other says nobody should. */}
+      {isOrganizer && !closed && !cancelled && (
+        <View style={s.cancelZone}>
+          {cancelling ? (
+            <View style={s.confirm}>
+              <Text accessibilityRole="alert" style={s.confirmText}>
+                {onRoster === 0
+                  ? 'No hay nadie apuntado. La sesión deja de aparecer en Descubrir.'
+                  : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escribiles vos.`}{' '}
+                No se puede deshacer.
+              </Text>
+              <TextInput
+                accessibilityLabel="Motivo, opcional"
+                accessibilityHint="Lo ve toda la gente apuntada."
+                maxLength={280}
+                onChangeText={setReason}
+                placeholder="Motivo (opcional): llueve, cancha cerrada…"
+                placeholderTextColor={color.text.tertiary}
+                style={s.input}
+                value={reason}
+              />
+              <View style={s.confirmRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={cancelBusy ? 'Cancelando' : 'Cancelar la sesión'}
+                  accessibilityState={{ disabled: cancelBusy }}
+                  disabled={cancelBusy}
+                  onPress={cancel}
+                  style={[s.close, { flex: 1 }]}
+                >
+                  <Text style={s.closeText}>
+                    {cancelBusy ? 'Cancelando…' : 'Cancelar la sesión'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="No, mantenerla"
+                  hitSlop={CHECK_HIT_SLOP}
+                  onPress={() => {
+                    setCancelling(false);
+                  }}
+                  style={[s.checkButton, { flex: 1 }]}
+                >
+                  <Text style={s.checkText}>No, mantenerla</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar esta sesión"
+              accessibilityHint="Pide confirmación y un motivo opcional antes de cancelar."
+              onPress={() => {
+                setCancelling(true);
+              }}
+              style={s.back}
+            >
+              <Text style={s.cancelLinkText}>Cancelar esta sesión</Text>
+            </Pressable>
+          )}
+        </View>
       )}
     </ScrollView>
   );
