@@ -128,6 +128,11 @@ export function DiscoverScreen() {
           {session ? (
             <>
               <Text style={s.accountText}>{session.user.email}</Text>
+              {/* Before Crear and Organizar: most people attend sessions and
+                  organise none, so the one that is theirs comes first. */}
+              <Link href="/mis-sesiones">
+                <Text style={s.linkText}>Mis sesiones</Text>
+              </Link>
               <Link href="/crear">
                 <Text style={s.linkText}>Crear sesión</Text>
               </Link>

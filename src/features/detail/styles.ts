@@ -117,6 +117,12 @@ export const detailStyles = StyleSheet.create({
   },
   statusWait: { borderLeftColor: color.accent.cool },
   statusText: { ...type.bodySmall, color: color.text.primary },
+  statusLink: {
+    ...type.bodySmall,
+    color: color.accent.cool,
+    paddingTop: space.sm,
+    textDecorationLine: 'underline',
+  },
 
   error: { ...type.bodySmall, color: color.semantic.dangerOnRaised },
 

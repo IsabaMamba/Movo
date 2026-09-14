@@ -532,6 +532,55 @@ export async function fetchMyParticipation(
   return (data as ActivityParticipant | null) ?? null;
 }
 
+/** A session the caller is on the roster of, with what it takes to find it again. */
+export type MyParticipation = ActivityParticipant & {
+  activity: Activity & {
+    location: Pick<Location, 'id' | 'name' | 'district'>;
+    organizer: { id: string; display_name: string };
+  };
+};
+
+/**
+ * Every session the caller has joined, in either direction from now.
+ *
+ * Until this existed there was no way back to a session you had joined.
+ * Descubrir only lists what is nearby and still ahead, so a session dropped
+ * out of reach the moment it started — including the one you were on your way
+ * to. Organizar covers the same gap for the person who created it; this is
+ * the same need for everybody else.
+ *
+ * `cancelled` is excluded and `no_show` is not. Leaving a session is a
+ * decision already taken and the row is noise afterwards, but being marked
+ * absent is something that happened TO you, and hiding it would mean the
+ * organizer's record and yours disagree with no way to notice.
+ */
+export async function fetchMyParticipations(
+  db: SupabaseClient,
+  userId: string,
+): Promise<MyParticipation[]> {
+  const { data, error } = await db
+    .from('activity_participants')
+    .select(
+      '*, activity:activities!activity_participants_activity_id_fkey(' +
+        '*, location:locations!activities_location_id_fkey(id, name, district), ' +
+        'organizer:profiles!activities_organizer_id_fkey(id, display_name))',
+    )
+    .eq('user_id', userId)
+    .in('status', ['joined', 'waitlisted', 'attended', 'no_show'])
+    .order('joined_at', { ascending: false });
+
+  if (error) throw toApiError(error);
+
+  // Through unknown: supabase-js infers embeds from the select string, and
+  // its parser gives up on this one because the embed is two levels deep.
+  // The shape is checked against the live API, not by the compiler.
+  const rows = (data ?? []) as unknown as MyParticipation[];
+
+  // Ordered by the session, not by when the row was written: "what is next"
+  // is the question the screen answers, and joined_at answers a different one.
+  return rows.sort((a, b) => (a.activity.starts_at < b.activity.starts_at ? -1 : 1));
+}
+
 // -------------------------------------------------------------- organizer
 
 /** A session the caller organizes, with the venue needed to identify it. */

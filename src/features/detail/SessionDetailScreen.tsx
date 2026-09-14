@@ -381,6 +381,11 @@ export function SessionDetailScreen() {
               ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entrás automáticamente.`
               : 'Vas a esta sesión.'}
           </Text>
+          {/* Descubrir stops showing a session once it starts, so without this
+              the page you just joined has no route back to it. */}
+          <Link href="/mis-sesiones">
+            <Text style={s.statusLink}>Verla después en Mis sesiones</Text>
+          </Link>
         </View>
       )}
 
