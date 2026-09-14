@@ -768,3 +768,120 @@ export async function createReport(
   if (error) throw toApiError(error);
   return (data as { id: string }).id;
 }
+
+// --------------------------------------------------------------- venues
+
+/**
+ * Costa Rica's bounding box, widened by roughly 0.2° on every side.
+ *
+ * This is not a nicety. `locations.geog` is what `nearby_activities()` filters
+ * on, so a wrong coordinate does not fail — it quietly removes the session
+ * from everyone's Descubrir, or worse, sends somebody to the wrong place. The
+ * classic way to get one wrong is to swap the pair: 9.93,-84.08 reversed is
+ * -84.08,9.93, which is a latitude that does not exist. Checking the box
+ * catches that, and catches a decimal comma read as a separator.
+ */
+const CR_BOUNDS = { minLat: 7.9, maxLat: 11.4, minLng: -86.1, maxLng: -82.4 } as const;
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+export type CoordinateParse =
+  | { ok: true; value: Coordinates }
+  /** A shortened link — the coordinates are on the far side of a redirect. */
+  | { ok: false; reason: 'short_link' }
+  /** A pair was read, but it is not in Costa Rica. */
+  | { ok: false; reason: 'out_of_range'; value: Coordinates }
+  | { ok: false; reason: 'no_pair' };
+
+/** `@lat,lng` (Google), `ll=lat,lng` (Waze), `q=lat,lng`, or a bare pair. */
+const COORD_PATTERNS = [
+  /@(-?\d{1,3}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)/,
+  /[?&](?:ll|q|to|daddr)=(?:ll\.)?(-?\d{1,3}(?:\.\d+)?)(?:,|%2C)\s*(-?\d{1,3}(?:\.\d+)?)/i,
+  /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/,
+];
+
+/**
+ * Read a coordinate pair out of whatever somebody pasted.
+ *
+ * There is no map in the product yet, so the coordinate arrives by copy-paste
+ * from Google Maps or Waze — which is what people here actually send each
+ * other. The failure modes are named rather than collapsed into null, because
+ * "ese enlace no trae las coordenadas" and "eso no queda en Costa Rica" need
+ * different things from the person.
+ */
+export function parseCoordinates(input: string): CoordinateParse {
+  const text = input.trim();
+  if (!text) return { ok: false, reason: 'no_pair' };
+
+  // maps.app.goo.gl / goo.gl/maps carry an opaque id; resolving it needs a
+  // network round trip we are not going to make on the user's behalf.
+  if (/goo\.gl|maps\.app|waze\.com\/ul\/h/i.test(text) && !/[@?&]/.test(text.split('?')[0] ?? '')) {
+    if (!COORD_PATTERNS.some((p) => p.test(text))) return { ok: false, reason: 'short_link' };
+  }
+
+  for (const pattern of COORD_PATTERNS) {
+    const match = pattern.exec(text);
+    if (!match) continue;
+
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+    const inside =
+      lat >= CR_BOUNDS.minLat &&
+      lat <= CR_BOUNDS.maxLat &&
+      lng >= CR_BOUNDS.minLng &&
+      lng <= CR_BOUNDS.maxLng;
+
+    return inside
+      ? { ok: true, value: { lat, lng } }
+      : { ok: false, reason: 'out_of_range', value: { lat, lng } };
+  }
+
+  return { ok: false, reason: 'no_pair' };
+}
+
+export interface NewVenueInput extends Coordinates {
+  name: string;
+  district?: string;
+  address?: string;
+}
+
+/**
+ * Add a public venue.
+ *
+ * `locations` grants INSERT to authenticated and the policy pins
+ * `created_by = auth.uid() and is_public_venue`, so this needs no RPC — but it
+ * does mean the row is shared the moment it is written: every other organiser
+ * sees it in their own picker. That is stated in the form, not discovered
+ * afterwards.
+ *
+ * The point is sent as EWKT. PostgREST passes the string through as a
+ * parameter and `geography_in` parses it, which keeps the client from having
+ * to know anything about PostGIS beyond the order of the pair — longitude
+ * first, which is the opposite of how every map app prints it.
+ */
+export async function createVenue(
+  db: SupabaseClient,
+  userId: string,
+  input: NewVenueInput,
+): Promise<Location> {
+  const { data, error } = await db
+    .from('locations')
+    .insert({
+      name: input.name.trim(),
+      district: input.district?.trim() || null,
+      address: input.address?.trim() || null,
+      geog: `SRID=4326;POINT(${input.lng} ${input.lat})`,
+      is_public_venue: true,
+      created_by: userId,
+    })
+    .select('*')
+    .single();
+
+  if (error) throw toApiError(error);
+  return data as Location;
+}
