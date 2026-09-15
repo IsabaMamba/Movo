@@ -21,7 +21,7 @@ import {
 
 import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import type { Category, CategoryId, NearbyActivity } from '../../types/database';
+import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import {
   densityOf,
@@ -50,6 +50,18 @@ const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
  * fixed centre still shows a useful list on first open.
  */
 const GAM_CENTRE = { lat: 9.9281, lng: -84.0907 };
+
+/**
+ * The same words Crear offers when the level is chosen. The card used to print
+ * the enum itself, so every capped session in Descubrir said "advanced" or
+ * "beginner" in the middle of a Spanish screen. `any` is never shown: it is
+ * the absence of a requirement, not a level.
+ */
+const SKILL_LABEL: Record<Exclude<SkillLevel, 'any'>, string> = {
+  beginner: 'Principiante',
+  intermediate: 'Intermedio',
+  advanced: 'Avanzado',
+};
 
 const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
@@ -325,7 +337,9 @@ export function DiscoverScreen() {
                     {occupancyLabel(item.joined_count, item.max_participants)}
                   </Text>
                   <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
-                  {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
+                  {item.skill !== 'any' ? (
+                    <Text style={s.fact}>{SKILL_LABEL[item.skill]}</Text>
+                  ) : null}
                 </View>
               </Pressable>
             );
