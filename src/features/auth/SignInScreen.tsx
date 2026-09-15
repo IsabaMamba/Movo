@@ -32,7 +32,7 @@ export function SignInScreen() {
   return (
     <View style={s.screen}>
       <Text style={s.title}>Iniciar sesión</Text>
-      <Text style={s.subtitle}>Movo — actividades cerca de vos</Text>
+      <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
 
       <Text style={s.label}>Correo</Text>
       <TextInput
@@ -41,7 +41,7 @@ export function SignInScreen() {
         autoComplete="email"
         inputMode="email"
         onChangeText={setEmail}
-        placeholder="vos@ejemplo.cr"
+        placeholder="tu@ejemplo.cr"
         placeholderTextColor={color.text.tertiary}
         style={s.input}
         value={email}
@@ -84,7 +84,7 @@ export function SignInScreen() {
       </Pressable>
 
       <Link href="/sign-up" style={s.link}>
-        <Text style={s.linkText}>¿No tenés cuenta? Registrate</Text>
+        <Text style={s.linkText}>¿No tienes cuenta? Regístrate</Text>
       </Link>
     </View>
   );

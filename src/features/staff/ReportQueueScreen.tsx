@@ -92,7 +92,7 @@ interface Banner {
 }
 
 const CONFIRM_TEXT: Record<Intent, string> = {
-  actioned: `«Actuar» deja registrado que el equipo tomó una decisión sobre esto. Escribí qué se hizo: es lo único que lo va a explicar después. ${RECORD_ONLY} No se puede deshacer.`,
+  actioned: `«Actuar» deja registrado que el equipo tomó una decisión sobre esto. Escribe qué se hizo: es lo único que lo va a explicar después. ${RECORD_ONLY} No se puede deshacer.`,
   dismissed: `«Descartar» deja registrado que no hay nada que hacer acá. La nota es opcional. ${RECORD_ONLY} No se puede deshacer.`,
 };
 
@@ -395,7 +395,7 @@ export function ReportQueueScreen() {
                 accessibilityHint={
                   ready
                     ? `${RECORD_ONLY} No se puede deshacer.`
-                    : 'Escribí primero qué se hizo: sin la nota no queda constancia de nada.'
+                    : 'Escribe primero qué se hizo: sin la nota no queda constancia de nada.'
                 }
                 aria-busy={busy}
                 aria-disabled={!ready || busy}

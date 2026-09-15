@@ -163,7 +163,7 @@ export function RosterScreen() {
         setNotice(
           count === 0
             ? 'Sesión cancelada. No había nadie apuntado.'
-            : `Sesión cancelada. ${count} ${count === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones, pero Movo todavía no manda avisos: escribiles.`,
+            : `Sesión cancelada. ${count} ${count === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones, pero Movo todavía no manda avisos: escríbeles.`,
         );
         return load();
       })
@@ -320,7 +320,7 @@ export function RosterScreen() {
       {isOrganizer && !closed && !cancelled && !started && roster.length > 0 && (
         <Text style={s.hint}>
           {checkInOpen
-            ? 'Ya podés marcar quién llegó. Cerrar la sesión se habilita a la hora de inicio.'
+            ? 'Ya puedes marcar quién llegó. Cerrar la sesión se habilita a la hora de inicio.'
             : `Marcar llegadas se habilita 30 minutos antes de empezar: ${formatSessionTime(checkInOpensAt.toISOString())}.`}
         </Text>
       )}
@@ -375,7 +375,7 @@ export function RosterScreen() {
             </Pressable>
           )}
           <Text style={s.hint}>
-            Marcá primero a quien llegó. Cerrar es lo que guarda la asistencia.
+            Marca primero a quien llegó. Cerrar es lo que guarda la asistencia.
           </Text>
         </>
       )}
@@ -390,7 +390,7 @@ export function RosterScreen() {
               <Text accessibilityRole="alert" style={s.confirmText}>
                 {onRoster === 0
                   ? 'No hay nadie apuntado. La sesión deja de aparecer en Descubrir.'
-                  : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escribiles vos.`}{' '}
+                  : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escríbeles tú.`}{' '}
                 No se puede deshacer.
               </Text>
               <TextInput

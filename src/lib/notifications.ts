@@ -17,26 +17,8 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { ApiError } from './activities';
+import { toApiError } from './errors';
 import type { Notification } from '../types/database';
-
-/**
- * The same SQLSTATE mapping activities.ts uses, which keeps its copy
- * module-private. Worth lifting into a shared module the third time somebody
- * needs it; until then a duplicate is cheaper than a file with one function.
- */
-function toApiError(error: { code?: string; message: string }): ApiError {
-  switch (error.code) {
-    case '42501':
-      return new ApiError('forbidden', error.message, error.code);
-    case 'P0002':
-      return new ApiError('not_found', error.message, error.code);
-    case '22023':
-      return new ApiError('invalid_state', error.message, error.code);
-    default:
-      return new ApiError('unknown', error.message, error.code);
-  }
-}
 
 /**
  * How many rows the inbox asks for.
@@ -191,7 +173,7 @@ export function toInboxItem(row: Notification): InboxItem {
     default:
       return {
         ...base,
-        text: 'Te llegó un aviso que esta versión de Movo todavía no sabe mostrar. Actualizá la app.',
+        text: 'Te llegó un aviso que esta versión de Movo todavía no sabe mostrar. Actualiza la app.',
         activityId: null,
       };
   }
@@ -205,6 +187,6 @@ export function toInboxItem(row: Notification): InboxItem {
  * is also why the badge itself is hidden from assistive technology.
  */
 export function unreadA11yLabel(unread: number): string {
-  if (unread <= 0) return 'Avisos. No tenés avisos sin leer.';
+  if (unread <= 0) return 'Avisos. No tienes avisos sin leer.';
   return `Avisos. ${unread} ${unread === 1 ? 'aviso sin leer' : 'avisos sin leer'}.`;
 }

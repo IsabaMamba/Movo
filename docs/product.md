@@ -148,6 +148,19 @@ find is a dead end.
 regional vocabulary. This costs a little local warmth and buys the ability to launch in
 Panamá or Colombia without a copy rewrite. `locale = 'es-419'` in `src/theme/a11y.ts`.
 
+**Confirmed and applied, 15 September 2026.** The app had drifted to `vos` — not by decision,
+but because each screen matched the one before it and this paragraph was never consulted. It
+reached 39 occurrences across 14 files before anybody counted. All of them are now `tú`.
+
+The reason is unchanged and worth restating, because the pull towards `vos` will come back
+every time somebody writes a screen in San José: _podés_ reads as a foreign app to a user in
+Bogotá or Panama City. Not unintelligible — visibly not theirs. `tú` is neutral everywhere in
+Latin America, and it is the same argument that put a currency code on money from day one.
+
+`vos` in new copy is a defect, not a style choice. It was 23 occurrences on 8 September and 39
+a week later; the cost of leaving it open compounds, and a sweep is only cheap while the
+number is small.
+
 Tone is energetic and direct, and **not gendered**. The "masculine, energetic" line in the
 original roles brief was dropped: the highest trust barrier in this product sits with the
 audience that framing excludes, and they are the users whose safety concerns shape every

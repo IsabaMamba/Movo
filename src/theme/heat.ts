@@ -34,7 +34,22 @@ const GAMMA: Record<HeatMode, number> = {
   heatwave: 0.6,
 };
 
-const clamp01 = (n: number): number => (n < 0 ? 0 : n > 1 ? 1 : n);
+/**
+ * NaN is the case that matters here, not the range.
+ *
+ * `n < 0` and `n > 1` are both false for NaN, so an unguarded clamp passes it
+ * straight through; `Math.floor(NaN)` indexes STOPS as `undefined` and
+ * `heatColor` throws on `.slice`. That throw happens inside a list cell, which
+ * takes down the whole screen rather than one card. No current caller can
+ * produce it — `densityOf` guards its own division — but a colour function is
+ * exactly the kind of thing that gets called from somewhere new, and the fix
+ * is one comparison.
+ *
+ * NaN only. A first version guarded on `Number.isFinite` and sent Infinity to
+ * the cold end — but Infinity *is* above one and belongs at the hot end, which
+ * the plain comparisons below already handle. The test caught it.
+ */
+const clamp01 = (n: number): number => (Number.isNaN(n) ? 0 : n < 0 ? 0 : n > 1 ? 1 : n);
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.slice(1);
@@ -95,6 +110,12 @@ export function densityOf(joined: number, max: number | null): number {
  * and "8 van" is a different sentence from "8 de 12".
  */
 export function occupancyLabel(joined: number, max: number | null): string {
-  if (max === null) return `${joined} ${joined === 1 ? 'va' : 'van'}`;
+  // The condition matches densityOf's exactly. It used to test `max === null`
+  // alone, so a row with max = 0 took the uncapped colour from the ramp and the
+  // capped sentence from here — "5 de 0" beside a bar saying otherwise. The
+  // column is constrained to 2..1000 so no real row reaches it, but two
+  // functions describing the same state differently is a trap regardless of
+  // whether anything currently falls into it.
+  if (max === null || max <= 0) return `${joined} ${joined === 1 ? 'va' : 'van'}`;
   return `${joined} de ${max}`;
 }
