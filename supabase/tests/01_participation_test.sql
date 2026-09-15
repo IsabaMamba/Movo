@@ -102,6 +102,15 @@ end $$;
 
 -- --------------------------------------------- check-in and close-out
 
+-- Since 0010 attendance is only recorded around the session itself: check-in
+-- opens 30 minutes before the start and close-out needs it to have begun.
+-- The capacity checks above needed a future start; this part needs a present
+-- one, so the session is moved to "just started".
+update public.activities
+   set starts_at = now() - interval '5 minutes',
+       ends_at   = now() + interval '55 minutes'
+ where id = 'bbbbbbbb-0000-0000-0000-000000000001';
+
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
 select public.check_in('bbbbbbbb-0000-0000-0000-000000000001',
                        '22222222-2222-2222-2222-222222222222');

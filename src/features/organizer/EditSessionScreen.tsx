@@ -424,8 +424,10 @@ export function EditSessionScreen() {
           </Text>
           {freed > 0 && (
             <Text style={s.hint}>
-              Al guardar, {freed === 1 ? 'la primera persona' : `las primeras ${freed} personas`} de
-              la lista de espera pasan a ir.
+              Al guardar,{' '}
+              {freed === 1
+                ? 'la primera persona de la lista de espera pasa a ir.'
+                : `las primeras ${freed} personas de la lista de espera pasan a ir.`}
             </Text>
           )}
         </View>

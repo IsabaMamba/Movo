@@ -104,6 +104,11 @@ export function RosterScreen() {
   const closed = activity.status === 'completed';
   const cancelled = activity.status === 'cancelled';
   const started = new Date(activity.starts_at).getTime() <= Date.now();
+  // Mirrors check_in() and close_activity() since 0010: marking opens 30
+  // minutes before the start, closing at the start. Attendance written days
+  // ahead is not attendance.
+  const checkInOpensAt = new Date(new Date(activity.starts_at).getTime() - 30 * 60_000);
+  const checkInOpen = checkInOpensAt.getTime() <= Date.now();
 
   const attended = roster.filter((p) => p.status === 'attended').length;
   const expected = roster.filter((p) => p.status === 'joined').length;
@@ -270,7 +275,7 @@ export function RosterScreen() {
                     ? ` · ${person.waitlist_pos}`
                     : ''}
                 </Text>
-                {isOrganizer && !closed && !cancelled && (
+                {isOrganizer && !closed && !cancelled && checkInOpen && (
                   <Pressable
                     accessibilityRole="checkbox"
                     accessibilityLabel={done ? `${name} ya llegó` : `Marcar llegada de ${name}`}
@@ -302,7 +307,17 @@ export function RosterScreen() {
         )}
       </View>
 
-      {isOrganizer && !closed && !cancelled && roster.length > 0 && (
+      {/* Says when the controls arrive, so an organizer opening the roster
+          the night before does not read their absence as a broken screen. */}
+      {isOrganizer && !closed && !cancelled && !started && roster.length > 0 && (
+        <Text style={s.hint}>
+          {checkInOpen
+            ? 'Ya podés marcar quién llegó. Cerrar la sesión se habilita a la hora de inicio.'
+            : `Marcar llegadas se habilita 30 minutos antes de empezar: ${formatSessionTime(checkInOpensAt.toISOString())}.`}
+        </Text>
+      )}
+
+      {isOrganizer && !closed && !cancelled && started && roster.length > 0 && (
         <>
           {confirming ? (
             <View style={s.confirm}>
