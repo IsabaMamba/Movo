@@ -20,6 +20,11 @@ Supabase
 The web build comes free from the same codebase (`expo start --web`), which is how a pilot
 district gets a working product while store review is still ahead of us.
 
+The language per layer — and what is deliberately **not** used — is
+[ADR 0005](adr/0005-the-stack-as-it-is.md). Short version: TypeScript everywhere in the
+client, `src/theme` tokens rather than HTML/CSS, PL/pgSQL for anything carrying a concurrency
+invariant, and no native codebases until one of the triggers in that ADR is met.
+
 ## Data model
 
 Nine concepts. The ones that carry the most weight:
