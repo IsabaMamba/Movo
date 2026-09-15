@@ -243,6 +243,14 @@ export interface NearbyActivity {
   cover_url: string | null;
   organizer_id: string;
   status: ActivityStatus;
+  /**
+   * Added in 0009. Occurrences of one series arrive as a single row — the next
+   * date that matches — so this is null for a one-off session. Optional so a
+   * client talking to a database without 0009 still renders.
+   */
+  series_id?: string | null;
+  /** Matching dates left in the series, including this one. */
+  series_upcoming?: number;
 }
 
 export interface NearbyActivitiesArgs {

@@ -63,6 +63,23 @@ const SKILL_LABEL: Record<Exclude<SkillLevel, 'any'>, string> = {
   advanced: 'Avanzado',
 };
 
+const WEEKDAY = new Intl.DateTimeFormat('es-CR', {
+  weekday: 'long',
+  timeZone: 'America/Costa_Rica',
+});
+
+/**
+ * "Todos los martes · 9 fechas". A series arrives as one row since 0009, and
+ * this line is what keeps the other eight dates from looking like they do
+ * not exist. Sábado and domingo are the only weekdays that change in the
+ * plural.
+ */
+function seriesLine(startsAt: string, upcoming: number): string {
+  const day = WEEKDAY.format(new Date(startsAt));
+  const plural = day.endsWith('o') ? `${day}s` : day;
+  return `Todos los ${plural} · ${upcoming} ${upcoming === 1 ? 'fecha' : 'fechas'}`;
+}
+
 const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
 export function DiscoverScreen() {
@@ -306,6 +323,9 @@ export function DiscoverScreen() {
                 accessibilityLabel={[
                   item.title,
                   formatSessionTime(item.starts_at),
+                  ...(item.series_id
+                    ? [seriesLine(item.starts_at, item.series_upcoming ?? 1)]
+                    : []),
                   item.location_name,
                   formatDistance(item.distance_m),
                   occupancyA11yLabel(item.joined_count, item.max_participants, density),
@@ -328,6 +348,11 @@ export function DiscoverScreen() {
                   />
                 </View>
                 <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
+                {item.series_id ? (
+                  <Text style={s.cardSeries}>
+                    {seriesLine(item.starts_at, item.series_upcoming ?? 1)}
+                  </Text>
+                ) : null}
                 <Text style={s.cardWhere}>
                   {item.location_name}
                   {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
