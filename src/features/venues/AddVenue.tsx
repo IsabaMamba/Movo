@@ -235,7 +235,7 @@ export function AddVenue({ userId, onCreated }: Props) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={locating ? 'Buscando tu ubicación' : 'Usar mi ubicación'}
-            accessibilityState={{ disabled: locating }}
+            aria-disabled={locating}
             disabled={locating}
             onPress={useMyLocation}
             style={s.ghost}
@@ -298,7 +298,7 @@ export function AddVenue({ userId, onCreated }: Props) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={busy ? 'Guardando' : 'Guardar lugar'}
-        accessibilityState={{ disabled: !canSave }}
+        aria-disabled={!canSave}
         disabled={!canSave}
         onPress={save}
         style={[s.save, !canSave && s.saveDisabled]}

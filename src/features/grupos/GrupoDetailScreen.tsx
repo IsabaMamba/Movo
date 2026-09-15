@@ -177,7 +177,7 @@ export function GrupoDetailScreen() {
                   ? 'Dejás de ser parte del grupo y perdés acceso a sus sesiones para miembros.'
                   : undefined
               }
-              accessibilityState={{ disabled: busy }}
+              aria-disabled={busy}
               disabled={busy}
               onPress={toggle}
               style={[isMember ? s.secondary : s.primary, busy && s.primaryDisabled]}

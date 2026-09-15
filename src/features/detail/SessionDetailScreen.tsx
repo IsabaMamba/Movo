@@ -281,11 +281,7 @@ export function SessionDetailScreen() {
           </Text>
           {band && <Text style={s.occupancyWord}>· {difficultyLabel[band]}</Text>}
         </View>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={s.bar}
-        >
+        <View aria-hidden style={s.bar}>
           <View
             style={[
               s.barFill,
@@ -306,11 +302,7 @@ export function SessionDetailScreen() {
       <View style={s.organizer}>
         {/* Initials are a compressed form of the name spelled out beside them,
             so aloud they are two stray letters. */}
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={s.avatar}
-        >
+        <View aria-hidden style={s.avatar}>
           <Text style={s.avatarText}>{initials(activity.organizer.display_name)}</Text>
         </View>
         <View>
@@ -470,7 +462,7 @@ export function SessionDetailScreen() {
             accessibilityRole="button"
             accessibilityLabel={actionLabel}
             accessibilityHint={actionHint}
-            accessibilityState={{ disabled: busy }}
+            aria-disabled={busy}
             disabled={busy}
             onPress={act}
             style={[s.action, (going || waiting) && s.actionSecondary, busy && s.actionDisabled]}
@@ -500,13 +492,21 @@ export function SessionDetailScreen() {
             Contanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
           </Text>
 
-          <View style={s.reasonRow}>
+          {/* One reason from a closed list: a radiogroup. The group carries the
+              label because the options are bare words that mean nothing
+              announced on their own. */}
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Motivo del reporte"
+            style={s.reasonRow}
+          >
             {REPORT_REASONS.map((option) => {
               const on = reason === option.value;
               return (
                 <Pressable
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={option.label}
+                  aria-checked={on}
                   key={option.value}
                   onPress={() => {
                     setReason(option.value);
@@ -534,7 +534,7 @@ export function SessionDetailScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Enviar reporte"
-              accessibilityState={{ disabled: !reason || reportBusy }}
+              aria-disabled={!reason || reportBusy}
               disabled={!reason || reportBusy}
               onPress={sendReport}
               style={[s.send, (!reason || reportBusy) && s.sendDisabled]}

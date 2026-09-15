@@ -171,11 +171,11 @@ export function SoloScreen() {
                    three fragments of the same sentence, and the selected border
                    is the only thing that says which one is chosen. */
                 accessible
-                accessibilityRole="tab"
+                accessibilityRole="radio"
                 accessibilityLabel={[v.name, v.district ?? 'Sin distrito', 'lugar público'].join(
                   '. ',
                 )}
-                accessibilityState={{ selected: on }}
+                aria-checked={on}
                 key={v.id}
                 onPress={() => {
                   setVenueId(v.id);
@@ -193,7 +193,7 @@ export function SoloScreen() {
       <View style={s.field}>
         <Text style={s.label}>¿Cuánto vas a estar?</Text>
         <View
-          accessibilityRole="tablist"
+          accessibilityRole="radiogroup"
           accessibilityLabel="¿Cuánto vas a estar?"
           style={s.chipRow}
         >
@@ -201,9 +201,9 @@ export function SoloScreen() {
             const on = minutes === option;
             return (
               <Pressable
-                accessibilityRole="tab"
+                accessibilityRole="radio"
                 accessibilityLabel={`${option} minutos`}
-                accessibilityState={{ selected: on }}
+                aria-checked={on}
                 hitSlop={CHIP_HIT_SLOP}
                 key={option}
                 onPress={() => {
@@ -272,7 +272,7 @@ export function SoloScreen() {
             /* "Compartir" says nothing about what leaves the device, and the
                message is the whole point of the block. */
             accessibilityHint="Abre el menú del sistema para enviar el mensaje del plan."
-            accessibilityState={{ disabled: !message }}
+            aria-disabled={!message}
             disabled={!message}
             onPress={share}
             style={s.primary}
@@ -283,7 +283,7 @@ export function SoloScreen() {
             accessibilityRole="button"
             accessibilityLabel={copied ? 'Copiado' : 'Copiar'}
             accessibilityHint="Copia el mensaje del plan al portapapeles."
-            accessibilityState={{ disabled: !message }}
+            aria-disabled={!message}
             disabled={!message}
             onPress={copy}
             style={s.secondary}

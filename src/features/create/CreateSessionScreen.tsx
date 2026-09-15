@@ -296,14 +296,14 @@ export function CreateSessionScreen() {
           <Text style={s.sectionNumber}>01</Text>
           <Text style={s.sectionTitle}>¿Qué vas a hacer?</Text>
         </View>
-        <View accessibilityRole="tablist" accessibilityLabel="Categoría" style={s.chipRow}>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Categoría" style={s.chipRow}>
           {categories.map((c) => {
             const on = categoryId === c.id;
             return (
               <Pressable
-                accessibilityRole="tab"
+                accessibilityRole="radio"
                 accessibilityLabel={c.name_es}
-                accessibilityState={{ selected: on }}
+                aria-checked={on}
                 /* Changing category clears section 04 and any errors in it, which
                    nothing on the chip says. */
                 accessibilityHint="Cambia los detalles que pide el formulario"
@@ -360,14 +360,14 @@ export function CreateSessionScreen() {
                 /* Name and meta are one choice, so they are one label — read
                    apart, "Verificado · CRC" belongs to no venue in particular. */
                 accessible
-                accessibilityRole="tab"
+                accessibilityRole="radio"
                 accessibilityLabel={[
                   v.name,
                   v.district ?? 'Sin distrito',
                   v.is_verified ? 'Verificado' : 'Sin verificar',
                   v.currency,
                 ].join('. ')}
-                accessibilityState={{ selected: on }}
+                aria-checked={on}
                 key={v.id}
                 onPress={() => {
                   setVenueId(v.id);
@@ -499,7 +499,7 @@ export function CreateSessionScreen() {
           {/* The chip labels are bare words — "Cualquiera" only means anything
               once the group says what is being chosen. */}
           <View
-            accessibilityRole="tablist"
+            accessibilityRole="radiogroup"
             accessibilityLabel="Nivel de quien viene"
             style={s.chipRow}
           >
@@ -507,9 +507,9 @@ export function CreateSessionScreen() {
               const on = skill === option.value;
               return (
                 <Pressable
-                  accessibilityRole="tab"
+                  accessibilityRole="radio"
                   accessibilityLabel={option.label}
-                  accessibilityState={{ selected: on }}
+                  aria-checked={on}
                   hitSlop={CHIP_HIT_SLOP}
                   key={option.value}
                   onPress={() => {
@@ -530,7 +530,7 @@ export function CreateSessionScreen() {
             <Text style={s.optional}>opcional</Text>
           </View>
           <View
-            accessibilityRole="tablist"
+            accessibilityRole="radiogroup"
             accessibilityLabel="Qué tan dura es, opcional"
             style={s.chipRow}
           >
@@ -538,9 +538,9 @@ export function CreateSessionScreen() {
               const on = band === option;
               return (
                 <Pressable
-                  accessibilityRole="tab"
+                  accessibilityRole="radio"
                   accessibilityLabel={difficultyLabel[option]}
-                  accessibilityState={{ selected: on }}
+                  aria-checked={on}
                   hitSlop={CHIP_HIT_SLOP}
                   key={option}
                   onPress={() => {
@@ -557,11 +557,11 @@ export function CreateSessionScreen() {
 
         <View style={s.field}>
           <Text style={s.label}>Cupo</Text>
-          <View accessibilityRole="tablist" accessibilityLabel="Cupo" style={s.chipRow}>
+          <View accessibilityRole="radiogroup" accessibilityLabel="Cupo" style={s.chipRow}>
             <Pressable
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel="Sin límite"
-              accessibilityState={{ selected: !capped }}
+              aria-checked={!capped}
               hitSlop={CHIP_HIT_SLOP}
               onPress={() => {
                 setCapped(false);
@@ -571,9 +571,9 @@ export function CreateSessionScreen() {
               <Text style={[s.chipText, !capped && s.chipTextOn]}>Sin límite</Text>
             </Pressable>
             <Pressable
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel="Con cupo"
-              accessibilityState={{ selected: capped }}
+              aria-checked={capped}
               /* Choosing this replaces the helper line with a number field. */
               accessibilityHint="Agrega un campo para el número de personas"
               hitSlop={CHIP_HIT_SLOP}
@@ -651,11 +651,11 @@ export function CreateSessionScreen() {
           <Text style={s.sectionNumber}>05</Text>
           <Text style={s.sectionTitle}>¿Quién la ve?</Text>
         </View>
-        <View accessibilityRole="tablist" accessibilityLabel="¿Quién la ve?" style={s.chipRow}>
+        <View accessibilityRole="radiogroup" accessibilityLabel="¿Quién la ve?" style={s.chipRow}>
           <Pressable
-            accessibilityRole="tab"
+            accessibilityRole="radio"
             accessibilityLabel="Pública"
-            accessibilityState={{ selected: !unlisted }}
+            aria-checked={!unlisted}
             accessibilityHint="Aparece en Descubrir para cualquiera dentro del radio"
             hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
@@ -666,9 +666,9 @@ export function CreateSessionScreen() {
             <Text style={[s.chipText, !unlisted && s.chipTextOn]}>Pública</Text>
           </Pressable>
           <Pressable
-            accessibilityRole="tab"
+            accessibilityRole="radio"
             accessibilityLabel="Con enlace"
-            accessibilityState={{ selected: unlisted }}
+            aria-checked={unlisted}
             accessibilityHint="No se lista en Descubrir; solo llega quien tenga el enlace"
             hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
@@ -693,7 +693,8 @@ export function CreateSessionScreen() {
         accessibilityHint={
           repeats ? 'Crea las sesiones de los próximos 60 días, una por semana' : undefined
         }
-        accessibilityState={{ disabled: !canSubmit, busy }}
+        aria-disabled={!canSubmit}
+        aria-busy={busy}
         disabled={!canSubmit}
         onPress={submit}
         style={[s.publish, !canSubmit && s.publishDisabled]}
