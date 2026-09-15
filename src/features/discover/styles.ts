@@ -11,7 +11,12 @@ export const discoverStyles = StyleSheet.create({
   accountText: { ...type.caption, color: color.text.tertiary },
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
 
-  filters: { flexGrow: 0, marginTop: space.lg },
+  /**
+   * flexShrink 0 is the fix, not a detail. The list below is flex: 1, and on
+   * web a horizontal ScrollView shrinks by default — so both chip rows were
+   * squeezed to about half their height and every chip rendered cut in half.
+   */
+  filters: { flexGrow: 0, flexShrink: 0, marginTop: space.lg },
   filterRow: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl },
   chip: {
     alignItems: 'center',
@@ -57,6 +62,8 @@ export const discoverStyles = StyleSheet.create({
   heatDot: { borderRadius: radius.full, height: 10, width: 10 },
   cardWhen: { ...type.body, color: color.text.warm },
   cardWhere: { ...type.bodySmall, color: color.text.secondary },
+  /** Not warm: the rhythm of a series says nothing about how full it is. */
+  cardSeries: { ...type.label, color: color.text.secondary },
   cardFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, paddingTop: space.xs },
   fact: { ...type.caption, color: color.text.tertiary },
 

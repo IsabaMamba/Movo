@@ -21,7 +21,7 @@ import {
 
 import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
-import type { Category, CategoryId, NearbyActivity } from '../../types/database';
+import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import {
   densityOf,
@@ -50,6 +50,35 @@ const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
  * fixed centre still shows a useful list on first open.
  */
 const GAM_CENTRE = { lat: 9.9281, lng: -84.0907 };
+
+/**
+ * The same words Crear offers when the level is chosen. The card used to print
+ * the enum itself, so every capped session in Descubrir said "advanced" or
+ * "beginner" in the middle of a Spanish screen. `any` is never shown: it is
+ * the absence of a requirement, not a level.
+ */
+const SKILL_LABEL: Record<Exclude<SkillLevel, 'any'>, string> = {
+  beginner: 'Principiante',
+  intermediate: 'Intermedio',
+  advanced: 'Avanzado',
+};
+
+const WEEKDAY = new Intl.DateTimeFormat('es-CR', {
+  weekday: 'long',
+  timeZone: 'America/Costa_Rica',
+});
+
+/**
+ * "Todos los martes · 9 fechas". A series arrives as one row since 0009, and
+ * this line is what keeps the other eight dates from looking like they do
+ * not exist. Sábado and domingo are the only weekdays that change in the
+ * plural.
+ */
+function seriesLine(startsAt: string, upcoming: number): string {
+  const day = WEEKDAY.format(new Date(startsAt));
+  const plural = day.endsWith('o') ? `${day}s` : day;
+  return `Todos los ${plural} · ${upcoming} ${upcoming === 1 ? 'fecha' : 'fechas'}`;
+}
 
 const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
@@ -294,6 +323,9 @@ export function DiscoverScreen() {
                 accessibilityLabel={[
                   item.title,
                   formatSessionTime(item.starts_at),
+                  ...(item.series_id
+                    ? [seriesLine(item.starts_at, item.series_upcoming ?? 1)]
+                    : []),
                   item.location_name,
                   formatDistance(item.distance_m),
                   occupancyA11yLabel(item.joined_count, item.max_participants, density),
@@ -316,6 +348,11 @@ export function DiscoverScreen() {
                   />
                 </View>
                 <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
+                {item.series_id ? (
+                  <Text style={s.cardSeries}>
+                    {seriesLine(item.starts_at, item.series_upcoming ?? 1)}
+                  </Text>
+                ) : null}
                 <Text style={s.cardWhere}>
                   {item.location_name}
                   {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
@@ -325,7 +362,9 @@ export function DiscoverScreen() {
                     {occupancyLabel(item.joined_count, item.max_participants)}
                   </Text>
                   <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
-                  {item.skill !== 'any' ? <Text style={s.fact}>{item.skill}</Text> : null}
+                  {item.skill !== 'any' ? (
+                    <Text style={s.fact}>{SKILL_LABEL[item.skill]}</Text>
+                  ) : null}
                 </View>
               </Pressable>
             );
