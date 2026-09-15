@@ -21,28 +21,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { ActivityStatus, Report, ReportStatus, ReportSubject } from '../types/database';
-import { ApiError, REPORT_REASONS } from './activities';
-
-/**
- * The same SQLSTATE mapping activities.ts applies to the participation RPCs.
- *
- * It is written out again rather than imported because that file keeps the
- * function private; the `ApiError` class itself is shared, so a screen still
- * catches one type and reads one `kind`. Hoist both into a single module the
- * day activities.ts is open for editing.
- */
-function toApiError(error: { code?: string; message: string }): ApiError {
-  switch (error.code) {
-    case '42501':
-      return new ApiError('forbidden', error.message, error.code);
-    case 'P0002':
-      return new ApiError('not_found', error.message, error.code);
-    case '22023':
-      return new ApiError('invalid_state', error.message, error.code);
-    default:
-      return new ApiError('unknown', error.message, error.code);
-  }
-}
+import { REPORT_REASONS } from './activities';
+import { toApiError } from './errors';
 
 // ------------------------------------------------------------- vocabulary
 

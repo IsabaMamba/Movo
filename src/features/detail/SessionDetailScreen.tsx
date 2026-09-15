@@ -210,7 +210,7 @@ export function SessionDetailScreen() {
   };
 
   const actionLabel = !session
-    ? 'Iniciá sesión para apuntarte'
+    ? 'Inicia sesión para apuntarte'
     : busy
       ? 'Un momento…'
       : going
@@ -232,7 +232,7 @@ export function SessionDetailScreen() {
     : waiting
       ? 'Salís de la lista de espera y perdés tu puesto.'
       : full
-        ? 'La sesión está llena. Entrás a la lista de espera y ocupás el lugar automáticamente si alguien cancela.'
+        ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
         : undefined;
 
   return (
@@ -426,7 +426,7 @@ export function SessionDetailScreen() {
           <Text style={s.privacyNote}>
             {session
               ? 'La lista es visible para quienes ya van y para quien organiza.'
-              : 'Iniciá sesión para ver quién va.'}
+              : 'Inicia sesión para ver quién va.'}
           </Text>
         )}
       </View>
@@ -437,7 +437,7 @@ export function SessionDetailScreen() {
               announce itself rather than wait to be found. */}
           <Text accessibilityRole="alert" style={s.statusText}>
             {waiting
-              ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entrás automáticamente.`
+              ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entras automáticamente.`
               : 'Vas a esta sesión.'}
           </Text>
           {/* Descubrir stops showing a session once it starts, so without this
@@ -471,7 +471,7 @@ export function SessionDetailScreen() {
               {actionLabel}
             </Text>
           </Pressable>
-          <Text style={s.actionNote}>Podés cancelar hasta la hora de salida.</Text>
+          <Text style={s.actionNote}>Puedes cancelar hasta la hora de salida.</Text>
         </>
       )}
 
@@ -525,7 +525,7 @@ export function SessionDetailScreen() {
             maxLength={2000}
             multiline
             onChangeText={setReportDetails}
-            placeholder="Si querés, agregá lo que viste."
+            placeholder="Si quieres, agrega lo que viste."
             placeholderTextColor={color.text.tertiary}
             style={s.detailsInput}
             value={reportDetails}

@@ -149,7 +149,7 @@ export function SoloScreen() {
       </Link>
 
       <View>
-        <Text style={s.title}>Igual podés ir</Text>
+        <Text style={s.title}>Igual puedes ir</Text>
         <Text style={s.subtitle}>
           Nadie abrió una sesión cerca. Eso no significa quedarse en casa — significa ir por tu
           cuenta, avisando.

@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   quality:
-    name: Format, lint, types
+    name: Format, lint, types, tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,6 +34,11 @@ jobs:
 
       - name: TypeScript
         run: npm run typecheck
+
+      # A separate step rather than folded into `npm run verify`, so a failure
+      # names itself in the checks list instead of hiding behind "quality".
+      - name: Unit tests
+        run: npm run test
 
   database:
     name: Migrations and RLS suite

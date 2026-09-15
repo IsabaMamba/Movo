@@ -194,7 +194,7 @@ export function EditSessionScreen() {
 
   const missing: string[] = [];
   if (title.trim().length < 3) missing.push('poné un título de al menos 3 letras');
-  if (!startsValid) missing.push('revisá el día y la hora');
+  if (!startsValid) missing.push('revisa el día y la hora');
   else if (startsInPast) missing.push('la sesión no puede empezar en el pasado');
   if (!Number.isFinite(durationMinutes) || durationMinutes < 15) {
     missing.push('la duración tiene que ser de 15 minutos o más');
@@ -206,7 +206,7 @@ export function EditSessionScreen() {
         : 'el cupo tiene que ser de 2 personas o más',
     );
   }
-  if (venueId === null) missing.push('elegí un lugar');
+  if (venueId === null) missing.push('elige un lugar');
 
   const canSave = !busy && missing.length === 0;
 

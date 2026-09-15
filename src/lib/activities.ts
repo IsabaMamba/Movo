@@ -25,35 +25,12 @@ import type {
   ParticipationStatus,
   SkillLevel,
 } from '../types/database';
+import { toApiError } from './errors';
 
-/** Maps SQLSTATE codes raised by the RPCs onto something a screen can use. */
-export type ApiErrorKind =
-  'unauthenticated' | 'forbidden' | 'not_found' | 'invalid_state' | 'unknown';
-
-export class ApiError extends Error {
-  readonly kind: ApiErrorKind;
-  readonly code?: string;
-
-  constructor(kind: ApiErrorKind, message: string, code?: string) {
-    super(message);
-    this.name = 'ApiError';
-    this.kind = kind;
-    this.code = code;
-  }
-}
-
-function toApiError(error: { code?: string; message: string }): ApiError {
-  switch (error.code) {
-    case '42501':
-      return new ApiError('forbidden', error.message, error.code);
-    case 'P0002':
-      return new ApiError('not_found', error.message, error.code);
-    case '22023':
-      return new ApiError('invalid_state', error.message, error.code);
-    default:
-      return new ApiError('unknown', error.message, error.code);
-  }
-}
+// The error vocabulary lives in ./errors. Re-exported here because a dozen
+// screens already import ApiError from this module, and breaking those to move
+// one function is not a trade worth making.
+export { ApiError, toApiError, type ApiErrorKind, type PostgresErrorLike } from './errors';
 
 // ------------------------------------------------------------ discovery
 
@@ -931,8 +908,29 @@ export type CoordinateParse =
   | { ok: false; reason: 'out_of_range'; value: Coordinates }
   | { ok: false; reason: 'no_pair' };
 
-/** `@lat,lng` (Google), `ll=lat,lng` (Waze), `q=lat,lng`, or a bare pair. */
+/**
+ * Order matters, and the first pattern is the reason this is a list rather than
+ * one expression.
+ *
+ * A Google Maps *place* URL carries two different coordinate pairs:
+ *
+ *   .../place/Cerro+Pico+Blanco/@9.8900,-84.1300,12z/data=...!3d9.8512!4d-84.0855
+ *                               ^^^^^^^^^^^^^^^^^^^          ^^^^^^^^^^^^^^^^^^^
+ *                               the map viewport             the pin
+ *
+ * `@` is where the camera points and at what zoom; `!3d`/`!4d` is the place
+ * itself. At a wide zoom the viewport is a rounded, city-level point, so two
+ * venues opened at the same zoom in the same area produce URLs whose `@` values
+ * agree to several decimals while the pins are kilometres apart.
+ *
+ * That is not hypothetical: two venues on the live project share a latitude
+ * exactly and sit 17 km apart, which is what sent somebody looking at this
+ * function. Reading `@` was not a typo — it was the right number from the wrong
+ * half of the URL. The pin is tried first now, and `@` is the fallback for a
+ * plain map link that has no pin at all.
+ */
 const COORD_PATTERNS = [
+  /!3d(-?\d{1,3}(?:\.\d+)?)!4d(-?\d{1,3}(?:\.\d+)?)/,
   /@(-?\d{1,3}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)/,
   /[?&](?:ll|q|to|daddr)=(?:ll\.)?(-?\d{1,3}(?:\.\d+)?)(?:,|%2C)\s*(-?\d{1,3}(?:\.\d+)?)/i,
   /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/,

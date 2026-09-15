@@ -357,11 +357,11 @@ export function DiscoverScreen() {
             <View style={s.centred}>
               <Text style={s.emptyTitle}>Todavía no hay sesiones acá</Text>
               <Text style={s.emptyBody}>
-                Probá ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
+                Prueba ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
                 grupos que ya entrenan en la GAM.
               </Text>
               <Link href="/solo">
-                <Text style={s.linkText}>Igual podés ir — modo solo</Text>
+                <Text style={s.linkText}>Igual puedes ir — modo solo</Text>
               </Link>
             </View>
           }

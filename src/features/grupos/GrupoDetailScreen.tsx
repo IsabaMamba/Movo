@@ -159,7 +159,7 @@ export function GrupoDetailScreen() {
           <Text style={s.emptyBody}>
             {session
               ? 'La lista es visible para quienes ya son parte del grupo.'
-              : 'Iniciá sesión para ver quién está.'}
+              : 'Inicia sesión para ver quién está.'}
           </Text>
         )}
       </View>
@@ -197,7 +197,7 @@ export function GrupoDetailScreen() {
         )
       ) : (
         <Link href="/sign-in" style={s.back}>
-          <Text style={s.linkText}>Iniciá sesión para unirte</Text>
+          <Text style={s.linkText}>Inicia sesión para unirte</Text>
         </Link>
       )}
     </ScrollView>

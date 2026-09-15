@@ -26,12 +26,12 @@ export function SignUpScreen() {
   if (confirmationSent) {
     return (
       <View style={s.screen}>
-        <Text style={s.title}>Revisá tu correo</Text>
+        <Text style={s.title}>Revisa tu correo</Text>
         {/* Nothing else marks the transition: the form is replaced in place, so
             this text is the whole outcome of pressing the button. */}
         <Text accessibilityRole="alert" style={s.notice}>
           Te enviamos un enlace de confirmación a {email.trim()}. Abrilo para activar tu cuenta y
-          después iniciá sesión.
+          después inicia sesión.
         </Text>
         <Link href="/sign-in" style={s.link}>
           <Text style={s.linkText}>Volver a iniciar sesión</Text>
@@ -65,7 +65,7 @@ export function SignUpScreen() {
   return (
     <View style={s.screen}>
       <Text style={s.title}>Crear cuenta</Text>
-      <Text style={s.subtitle}>Movo — actividades cerca de vos</Text>
+      <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
 
       <Text style={s.label}>Nombre</Text>
       <TextInput
@@ -89,7 +89,7 @@ export function SignUpScreen() {
         autoComplete="email"
         inputMode="email"
         onChangeText={setEmail}
-        placeholder="vos@ejemplo.cr"
+        placeholder="tu@ejemplo.cr"
         placeholderTextColor={color.text.tertiary}
         style={s.input}
         value={email}
@@ -135,7 +135,7 @@ export function SignUpScreen() {
       </Pressable>
 
       <Link href="/sign-in" style={s.link}>
-        <Text style={s.linkText}>¿Ya tenés cuenta? Iniciá sesión</Text>
+        <Text style={s.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
       </Link>
     </View>
   );

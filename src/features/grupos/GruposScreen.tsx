@@ -74,7 +74,7 @@ export function GruposScreen() {
           cause instanceof Error
             ? // The slug is unique; the constraint message is not a sentence.
               /duplicate|unique/i.test(cause.message)
-              ? 'Ya existe un grupo con ese nombre. Probá otro.'
+              ? 'Ya existe un grupo con ese nombre. Prueba otro.'
               : cause.message
             : 'No se pudo crear el grupo.',
         );
@@ -212,7 +212,7 @@ export function GruposScreen() {
         )
       ) : (
         <Link href="/sign-in" style={s.back}>
-          <Text style={s.linkText}>Iniciá sesión para crear un grupo</Text>
+          <Text style={s.linkText}>Inicia sesión para crear un grupo</Text>
         </Link>
       )}
 
