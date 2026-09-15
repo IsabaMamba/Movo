@@ -136,7 +136,11 @@ export function RosterScreen() {
         setNotice(
           noShows === 0
             ? 'Sesión cerrada. Todos los que se apuntaron llegaron.'
-            : `Sesión cerrada. ${noShows} ${noShows === 1 ? 'persona quedó' : 'personas quedaron'} como no_show.`,
+            : // `no_show` is a column value, not a word anybody says. STATE_LABEL
+              // already translates it; this was the one place the raw enum
+              // reached a person, in the sentence confirming the only
+              // irreversible action in the product.
+              `Sesión cerrada. ${noShows} ${noShows === 1 ? 'persona quedó' : 'personas quedaron'} como ${STATE_LABEL.no_show?.toLowerCase() ?? 'no llegó'}.`,
         );
         return load();
       })

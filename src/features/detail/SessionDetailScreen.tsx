@@ -475,9 +475,10 @@ export function SessionDetailScreen() {
         </>
       )}
 
-      {/* No onPress yet, so the label states what the control is and nothing
-          about where it leads — a hint here would describe a flow that does not
-          exist. */}
+      {/* Reporting works since #29: a closed reason list, one insert, and a
+          confirmation quoting the report id so "enviado" is checkable. The
+          comment that used to sit here said the control had no onPress, which
+          stopped being true and kept being read. */}
       {reportId ? (
         <View style={s.status}>
           <Text style={s.statusText}>
