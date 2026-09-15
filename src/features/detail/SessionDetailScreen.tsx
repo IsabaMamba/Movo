@@ -19,12 +19,14 @@ import {
   fetchActivityDetail,
   fetchMyParticipation,
   fetchRoster,
+  fetchSeriesOccurrences,
   formatSessionTime,
   joinActivity,
   leaveActivity,
   createReport,
   REPORT_REASONS,
   type ActivityDetail,
+  type SeriesOccurrence,
   type ReportReason,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
@@ -34,6 +36,7 @@ import {
   difficultyBand,
   difficultyLabel,
   heatColor,
+  hitSlopFor,
   occupancyA11yLabel,
   occupancyLabel,
   priceLabel,
@@ -90,6 +93,7 @@ export function SessionDetailScreen() {
   const [reportDetails, setReportDetails] = useState('');
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportBusy, setReportBusy] = useState(false);
+  const [otherDates, setOtherDates] = useState<SeriesOccurrence[]>([]);
 
   const userId = session?.user.id;
 
@@ -98,6 +102,14 @@ export function SessionDetailScreen() {
     const detail = await fetchActivityDetail(supabase, id);
     setActivity(detail);
     if (!detail) return;
+
+    // Descubrir shows a series as one card; this is where the other dates
+    // become reachable. Allowed to fail quietly — the session itself is still
+    // the one somebody asked for.
+    const dates = detail.series_id
+      ? await fetchSeriesOccurrences(supabase, detail.series_id).catch((): SeriesOccurrence[] => [])
+      : [];
+    setOtherDates(dates.filter((date) => date.id !== detail.id));
 
     if (userId) {
       // Both are permitted to fail quietly: the roster is organizer- and
@@ -339,6 +351,42 @@ export function SessionDetailScreen() {
           <Text style={s.meetingNote}>{activity.location.district}</Text>
         )}
       </View>
+
+      {otherDates.length > 0 && (
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Otras fechas</Text>
+          {/* Said before the chips, because the obvious assumption — that
+              "Voy" signs you up for every Tuesday — is wrong. */}
+          <Text style={s.privacyNote}>
+            Se repite cada semana. Cada fecha tiene su propia lista: apuntarte a esta no te apunta a
+            las demás.
+          </Text>
+          <View style={s.tagRow}>
+            {otherDates.map((date) => {
+              const dateFull =
+                date.max_participants !== null && date.joined_count >= date.max_participants;
+              return (
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel={`${formatSessionTime(date.starts_at)}${dateFull ? ', llena' : ''}`}
+                  accessibilityHint="Abre esa fecha de la sesión"
+                  hitSlop={hitSlopFor(32)}
+                  key={date.id}
+                  onPress={() => {
+                    router.push({ pathname: '/sesion/[id]', params: { id: date.id } });
+                  }}
+                  style={s.tag}
+                >
+                  <Text style={s.tagText}>
+                    {formatSessionTime(date.starts_at)}
+                    {dateFull ? ' · llena' : ''}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       {tags.length > 0 && (
         <View style={s.section}>

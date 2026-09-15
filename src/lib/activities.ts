@@ -563,6 +563,39 @@ export async function fetchActivityDetail(
   return (data as ActivityDetail | null) ?? null;
 }
 
+/** Just enough of another date in the same series to offer it. */
+export interface SeriesOccurrence {
+  id: string;
+  starts_at: string;
+  joined_count: number;
+  max_participants: number | null;
+}
+
+/**
+ * The next open dates of a series, soonest first.
+ *
+ * Descubrir shows a series as one card, so the detail screen is where the
+ * other Tuesdays have to become reachable. Each date keeps its own roster —
+ * joining one does not join the rest — which the screen says out loud.
+ */
+export async function fetchSeriesOccurrences(
+  db: SupabaseClient,
+  seriesId: string,
+  limit = 8,
+): Promise<SeriesOccurrence[]> {
+  const { data, error } = await db
+    .from('activities')
+    .select('id, starts_at, joined_count, max_participants')
+    .eq('series_id', seriesId)
+    .in('status', ['published', 'full'])
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at')
+    .limit(limit);
+
+  if (error) throw toApiError(error);
+  return (data ?? []) as SeriesOccurrence[];
+}
+
 /**
  * The caller's own participation row, or null.
  *
