@@ -314,11 +314,12 @@ export function EditSessionScreen() {
           return (
             <Pressable
               accessible
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel={[v.name, v.district ?? 'Sin distrito', locked ? 'fijo' : null]
                 .filter((part): part is string => part !== null)
                 .join('. ')}
-              accessibilityState={{ selected: on, disabled: locked }}
+              aria-checked={on}
+              aria-disabled={locked}
               disabled={locked}
               key={v.id}
               onPress={() => {
@@ -340,7 +341,7 @@ export function EditSessionScreen() {
             <TextInput
               accessibilityLabel="Día"
               accessibilityHint="Formato año-mes-día, por ejemplo 2026-09-08"
-              accessibilityState={{ disabled: locked }}
+              aria-disabled={locked}
               editable={!locked}
               /* Not `numeric`: a numeric keypad has no hyphen. */
               inputMode="text"
@@ -354,7 +355,7 @@ export function EditSessionScreen() {
             <TextInput
               accessibilityLabel="Hora"
               accessibilityHint="Formato de 24 horas, por ejemplo 18:00"
-              accessibilityState={{ disabled: locked }}
+              aria-disabled={locked}
               editable={!locked}
               inputMode="text"
               onChangeText={setTime}
@@ -379,11 +380,11 @@ export function EditSessionScreen() {
       <View style={s.section}>
         <View style={s.field}>
           <Text style={s.label}>Cupo</Text>
-          <View accessibilityRole="tablist" accessibilityLabel="Cupo" style={s.chipRow}>
+          <View accessibilityRole="radiogroup" accessibilityLabel="Cupo" style={s.chipRow}>
             <Pressable
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel="Sin límite"
-              accessibilityState={{ selected: !capped }}
+              aria-checked={!capped}
               hitSlop={CHIP_HIT_SLOP}
               onPress={() => {
                 setCapped(false);
@@ -393,9 +394,9 @@ export function EditSessionScreen() {
               <Text style={[s.chipText, !capped && s.chipTextOn]}>Sin límite</Text>
             </Pressable>
             <Pressable
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel="Con cupo"
-              accessibilityState={{ selected: capped }}
+              aria-checked={capped}
               hitSlop={CHIP_HIT_SLOP}
               onPress={() => {
                 setCapped(true);
@@ -456,7 +457,7 @@ export function EditSessionScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={busy ? 'Guardando' : 'Guardar cambios'}
-        accessibilityState={{ disabled: !canSave }}
+        aria-disabled={!canSave}
         disabled={!canSave}
         onPress={save}
         style={[s.publish, !canSave && s.publishDisabled]}

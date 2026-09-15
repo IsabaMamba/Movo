@@ -126,7 +126,7 @@ export function SignUpScreen() {
            the only sign that anything happened. */
         accessibilityRole="button"
         accessibilityLabel={busy ? 'Creando…' : 'Crear cuenta'}
-        accessibilityState={{ disabled: !canSubmit }}
+        aria-disabled={!canSubmit}
         disabled={!canSubmit}
         onPress={submit}
         style={[s.button, !canSubmit && s.buttonDisabled]}

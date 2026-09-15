@@ -266,8 +266,7 @@ export function RosterScreen() {
                 <Text
                   /* Said aloud by the name above; here it is a second reading of
                      the same field. */
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
                   style={s.rowState}
                 >
                   {STATE_LABEL[person.status] ?? person.status}
@@ -277,18 +276,23 @@ export function RosterScreen() {
                 </Text>
                 {isOrganizer && !closed && !cancelled && checkInOpen && (
                   <Pressable
-                    accessibilityRole="checkbox"
+                    /* A button, not a checkbox. It is `disabled` the moment it
+                       is done, so there is no unchecked state to go back to,
+                       and a checkbox that cannot be cleared announces itself
+                       wrongly. The state lives in the label, which flips with
+                       it — and on web that matters twice over, because a
+                       role="checkbox" with no aria-checked reads as
+                       *unchecked*, which is the opposite of the truth for
+                       somebody already marked present. */
+                    accessibilityRole="button"
                     accessibilityLabel={done ? `${name} ya llegó` : `Marcar llegada de ${name}`}
                     /* Check-in is what writes attendance, and this screen offers
                        no way back once it is written. */
                     accessibilityHint={
                       done ? undefined : 'No se puede deshacer desde esta pantalla'
                     }
-                    accessibilityState={{
-                      checked: done,
-                      disabled: done || pending === person.user_id,
-                      busy: pending === person.user_id,
-                    }}
+                    aria-disabled={done || pending === person.user_id}
+                    aria-busy={pending === person.user_id}
                     disabled={done || pending === person.user_id}
                     hitSlop={CHECK_HIT_SLOP}
                     onPress={() => {
@@ -399,7 +403,7 @@ export function RosterScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={cancelBusy ? 'Cancelando' : 'Cancelar la sesión'}
-                  accessibilityState={{ disabled: cancelBusy }}
+                  aria-disabled={cancelBusy}
                   disabled={cancelBusy}
                   onPress={cancel}
                   style={[s.close, { flex: 1 }]}

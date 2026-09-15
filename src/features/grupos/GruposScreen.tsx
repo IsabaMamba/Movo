@@ -134,14 +134,14 @@ export function GruposScreen() {
             <View style={s.field}>
               <Text style={s.label}>Quién puede entrar</Text>
               <View
-                accessibilityRole="tablist"
+                accessibilityRole="radiogroup"
                 accessibilityLabel="Quién puede entrar"
                 style={s.chipRow}
               >
                 <Pressable
-                  accessibilityRole="tab"
+                  accessibilityRole="radio"
                   accessibilityLabel="Cualquiera puede entrar"
-                  accessibilityState={{ selected: isPublic }}
+                  aria-checked={isPublic}
                   hitSlop={CHIP_HIT_SLOP}
                   onPress={() => {
                     setIsPublic(true);
@@ -151,9 +151,9 @@ export function GruposScreen() {
                   <Text style={[s.chipText, isPublic && s.chipTextOn]}>Cualquiera</Text>
                 </Pressable>
                 <Pressable
-                  accessibilityRole="tab"
+                  accessibilityRole="radio"
                   accessibilityLabel="Solo invitados"
-                  accessibilityState={{ selected: !isPublic }}
+                  aria-checked={!isPublic}
                   hitSlop={CHIP_HIT_SLOP}
                   onPress={() => {
                     setIsPublic(false);
@@ -178,7 +178,7 @@ export function GruposScreen() {
               accessibilityHint={
                 canCreate ? undefined : 'Escribe un nombre de al menos dos letras para continuar.'
               }
-              accessibilityState={{ disabled: !canCreate }}
+              aria-disabled={!canCreate}
               disabled={!canCreate}
               onPress={submit}
               style={[s.primary, !canCreate && s.primaryDisabled]}

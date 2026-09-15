@@ -462,7 +462,7 @@ export function ReportQueueScreen() {
         record, and the record has no buttons because the function refuses it.
       */}
       <View
-        accessibilityRole="tablist"
+        accessibilityRole="radiogroup"
         accessibilityLabel="Qué parte de la cola"
         style={s.filterRow}
       >
@@ -470,7 +470,7 @@ export function ReportQueueScreen() {
           const on = view === option;
           return (
             <Pressable
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel={VIEW_LABEL[option]}
               aria-selected={on}
               hitSlop={CONTROL_HIT_SLOP}

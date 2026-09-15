@@ -75,7 +75,7 @@ export function SignInScreen() {
            the only sign that anything happened. */
         accessibilityRole="button"
         accessibilityLabel={busy ? 'Entrando…' : 'Entrar'}
-        accessibilityState={{ disabled: busy || !email || !password }}
+        aria-disabled={busy || !email || !password}
         disabled={busy || !email || !password}
         onPress={submit}
         style={[s.button, (busy || !email || !password) && s.buttonDisabled]}
