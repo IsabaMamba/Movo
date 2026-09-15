@@ -165,6 +165,30 @@ export interface Message {
   deleted_at: string | null;
 }
 
+/**
+ * Types written in the wild: `waitlist_promoted` and `activity_cancelled`
+ * since 0008, `report_resolved` since 0012. Left open on purpose — the column
+ * is plain `text`, a newer server can write a type this build has never heard
+ * of, and the inbox has to render that row rather than fall over on it.
+ */
+export type NotificationType =
+  'waitlist_promoted' | 'activity_cancelled' | 'report_resolved' | (string & {});
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  /** jsonb. Its shape follows `type`; read it through lib/notifications.ts. */
+  payload: Record<string, unknown>;
+  /**
+   * Null until the owner opens it. The only column a client may write: 0011
+   * narrowed the UPDATE grant to this one, so a write touching anything else
+   * fails with 42501.
+   */
+  read_at: string | null;
+  created_at: string;
+}
+
 export interface Community {
   id: string;
   slug: string;
@@ -175,6 +199,46 @@ export interface Community {
   rules: string | null;
   is_public: boolean;
   created_by: string | null;
+}
+
+export interface Report {
+  id: string;
+  reporter_id: string;
+  subject_type: ReportSubject;
+  /**
+   * The reported row. One column points at four different tables depending on
+   * `subject_type`, so it carries no foreign key — nothing can embed it, and
+   * whoever reads the queue joins it themselves.
+   */
+  subject_id: string;
+  /** Free text in the column; one of `REPORT_REASONS` in practice. */
+  reason: string;
+  details: string | null;
+  status: ReportStatus;
+  /**
+   * Stamped by resolve_report() from auth.uid(), never sent by a client: the
+   * record of who looked at a safety report cannot be allowed to name somebody
+   * who did not.
+   */
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  action_taken: string | null;
+  created_at: string;
+}
+
+/**
+ * Added in 0012. Who may read and resolve reports.
+ *
+ * Nothing in the app can read this row: the table has no grants for anon or
+ * authenticated at all, and membership is assigned from the Supabase panel.
+ * The shape is written down here so the schema is described in one place, not
+ * because a screen is ever going to select it.
+ */
+export interface Staff {
+  user_id: string;
+  granted_at: string;
+  granted_by: string | null;
+  note: string | null;
 }
 
 // ------------------------------------------------- category attributes

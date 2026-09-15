@@ -56,16 +56,39 @@ product needs next. P2 can wait for users.
 
 ### P0 — before any stranger uses Movo
 
-**1. Somebody reads the reports.** `a0850abd` has been `open` since the test day and nothing will
-ever change that. A safety button whose reports reach nobody is worse than no button. Minimum: an
-admin role, a queue screen or a documented dashboard routine, and a response time written in
-`docs/security.md`.
+**1. Somebody reads the reports.** _Mostly done — one blank left, and it is not a code blank._
 
-**2. Deliver notifications.** `notifications` now receives real rows — promotions and
-cancellations — and there is no inbox and no push. Two shipped decisions exist only because of
-this: time and venue lock once anyone joins, and every cancellation tells the organizer to write
-to people themselves. Build the inbox first (a read over `notifications` plus `read_at`), push
-second. Loosening the edit lock comes after push, not before.
+`0012` adds a `staff` table with no client grants, `is_staff()`, a `reports_read_staff` policy and
+`resolve_report()`, which stamps the reviewer from `auth.uid()`, refuses to reopen a closed report,
+and tells the reporter it was looked at. `/staff/reportes` is the queue. A scoped policy also lets
+staff open the session a report is about — including a **cancelled** one, which `activities_read`
+does not admit and which is exactly the session most likely to be reported.
+
+What is still missing is the part no migration can supply: **a name and a response time in
+`docs/security.md`.** Both are blanks in that file waiting for Alejandro and Kristopher. Every
+other control on that page is enforced by the database; this one is enforced by somebody
+remembering, which is why it has to be written down.
+
+Also still missing: acting on a report. Resolving records a judgement. Cancelling somebody else's
+session, hiding a profile and blocking an account are three separate powers, each needing its own
+function, test and decision about who holds it. `a0850abd` can be closed through the queue now.
+
+**2. Deliver notifications.** _Inbox done. Delivery outside the app is not._
+
+`/avisos` reads `notifications`, marks `read_at`, and Descubrir carries an unread count. The two
+real rows from the test day — Alejandro Solano's promotion and Aguita's cancellation — are now
+reachable by the people they were written for.
+
+`0011` narrows the UPDATE grant to the `read_at` column. 0003 granted the whole row so the inbox
+could mark things read, and the policy restricts which row, never which column — so a person could
+rewrite the `type` and `payload` of their own notifications. Harmless while nothing read those
+columns; not harmless once a delivery function reads them to decide what to send.
+
+Still missing: anything that reaches a person who has not opened Movo. Email depends on custom SMTP
+(item 3), Web Push on a service worker and VAPID keys, native push on there being compiled apps.
+**`docs/adr/0003` assumes Expo notifications work on web — verify that before relying on it.**
+Loosening the edit lock still comes after delivery, not before, and `07_cancel_edit_test.sql` has
+to change on purpose when it does rather than break.
 
 **3. Email confirmation back on, with custom SMTP.** It is off to unblock testing. Anyone can
 register with an address they do not own.
