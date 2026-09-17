@@ -32,13 +32,11 @@ column is maintained by hand.
 | `0008_cancel_edit`             | Cancel and edit a session; revoke direct `UPDATE` on `activities`                          | yes     |
 | `0009_series_collapse`         | A series is one row in `nearby_activities()`                                               | yes     |
 | `0010_attendance_window`       | Check-in from 30 minutes before the start, close-out from the start                        | yes     |
-| `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | **no**  |
-| `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | **no**  |
-| `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | **no**  |
+| `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | yes     |
+| `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | yes     |
+| `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
 
-`0011`–`0013` ship with the two open PRs and take effect on merge plus a `db push`. **Until
-then the report queue has no `staff` table to read, and `activity_series` is still directly
-writable on the live project.**
+`0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged. **The report queue still has no reader until somebody is added to `staff`** — from the Supabase panel, by hand, on purpose: no client can grant itself that role.
 
 > This section used to be one sentence: "all ten migrations are applied". It stayed that
 > sentence on a branch carrying thirteen — the seventh instance of the defect §B of
