@@ -35,8 +35,9 @@ column is maintained by hand.
 | `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | yes     |
 | `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | yes     |
 | `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
+| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | **no**  |
 
-`0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged. **The report queue still has no reader until somebody is added to `staff`** — from the Supabase panel, by hand, on purpose: no client can grant itself that role.
+`0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged. **`0014` is not applied and carries no data**: it creates the zone schema and the heat read, and the boundaries are loaded separately — see `scripts/load-zones.mjs`. **The report queue still has no reader until somebody is added to `staff`** — from the Supabase panel, by hand, on purpose: no client can grant itself that role.
 
 > This section used to be one sentence: "all ten migrations are applied". It stayed that
 > sentence on a branch carrying thirteen — the seventh instance of the defect §B of
