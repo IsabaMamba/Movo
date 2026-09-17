@@ -85,30 +85,39 @@ revoke all on public.staff from anon, authenticated;
 
 -- ------------------------------------------------------------ is_staff
 
-create or replace function public.is_staff(p_user_id uuid)
+-- No argument, on purpose. A first version took `p_user_id uuid`. A SECURITY
+-- DEFINER function that answers "is this id staff?" for any id is an oracle:
+-- profiles are world-readable (0003), so walking every profile id through it
+-- lists the whole team, which is exactly what keeping `staff` in its own table
+-- is meant to prevent. Asking only about the caller answers the one question a
+-- policy needs, and nothing else.
+create or replace function public.is_staff()
 returns boolean
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select p_user_id is not null
-     and exists (select 1 from public.staff s where s.user_id = p_user_id);
+  select auth.uid() is not null
+     and exists (select 1 from public.staff s where s.user_id = auth.uid());
 $$;
 
-comment on function public.is_staff(uuid) is
-  'SECURITY DEFINER so a policy can call it without recursing through '
-  'staff''s own RLS. Explicitly false for a null argument: auth.uid() is '
-  'null for anon, and `exists` over a null comparison would be false anyway, '
-  'but saying so means the next reader does not have to work that out.';
+comment on function public.is_staff() is
+  'Whether the caller is Movo staff. SECURITY DEFINER so a policy can call it '
+  'without recursing through staff''s own RLS. Takes no argument, so it cannot '
+  'be asked about anybody else. False for anon, where auth.uid() is null.';
 
-grant execute on function public.is_staff(uuid) to authenticated;
+-- New functions are executable by PUBLIC unless revoked: the same trap as the
+-- default table privileges above, one object type over. 0002 revokes from
+-- public for every RPC, and the functions in this file follow it.
+revoke all on function public.is_staff() from public, anon;
+grant execute on function public.is_staff() to authenticated;
 
 -- -------------------------------------------------- read the whole queue
 
 create policy reports_read_staff on public.reports
   for select to authenticated
-  using (public.is_staff(auth.uid()));
+  using (public.is_staff());
 
 -- `reports_read_own` from 0003 stays. Postgres ORs permissive policies, so a
 -- reporter keeps seeing their own report and staff see everything.
@@ -128,7 +137,7 @@ create policy reports_read_staff on public.reports
 create policy activities_read_reported on public.activities
   for select to authenticated
   using (
-    public.is_staff(auth.uid())
+    public.is_staff()
     and exists (
       select 1 from public.reports r
        where r.subject_type = 'activity'
@@ -152,7 +161,7 @@ declare
   v_reporter uuid;
   v_current  public.report_status;
 begin
-  if not public.is_staff(auth.uid()) then
+  if not public.is_staff() then
     raise exception 'solo el equipo de Movo puede resolver reportes'
       using errcode = '42501';
   end if;
@@ -161,7 +170,7 @@ begin
   -- Reopening would erase reviewed_by and reviewed_at, and the audit trail of
   -- who looked at a safety report is the point of having the columns.
   if p_status = 'open' then
-    raise exception 'un reporte no vuelve a open; usá reviewing'
+    raise exception 'un reporte no vuelve a open; usa reviewing'
       using errcode = '22023';
   end if;
 
@@ -208,4 +217,5 @@ comment on function public.resolve_report(uuid, public.report_status, text) is
   'expressible as a row filter. Stamps reviewed_by from auth.uid() rather '
   'than taking it as an argument, so the record cannot name somebody else.';
 
+revoke all on function public.resolve_report(uuid, public.report_status, text) from public, anon;
 grant execute on function public.resolve_report(uuid, public.report_status, text) to authenticated;
