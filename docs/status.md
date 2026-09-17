@@ -1,4 +1,4 @@
-# Status — 15 September 2026
+# Status — 17 September 2026
 
 An honest read of what exists, what has run for real, and what comes next. Update this file when
 the answer changes; a status document that lags is worse than none.
@@ -37,7 +37,12 @@ column is maintained by hand.
 | `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
 | `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | **no**  |
 
-`0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged. **`0014` is not applied and carries no data**: it creates the zone schema and the heat read, and the boundaries are loaded separately — see `scripts/load-zones.mjs`. **The report queue still has no reader until somebody is added to `staff`** — from the Supabase panel, by hand, on purpose: no client can grant itself that role.
+`0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
+**`0014` is not applied and carries no data**: it creates the zone schema and the heat read, and
+the boundaries are loaded separately — see `scripts/load-zones.mjs`.
+
+The report queue got its first readers on 17 September: two rows inserted into `staff` from the
+Supabase panel, by hand, on purpose — no client can grant itself that role.
 
 > This section used to be one sentence: "all ten migrations are applied". It stayed that
 > sentence on a branch carrying thirteen — the seventh instance of the defect §B of
@@ -62,7 +67,7 @@ Lee sin), each checked afterwards in the database rather than on screen.
 | Cancel                         | "Corrida" cancelled with a reason; an `activity_cancelled` notification was written                     |
 | Check-in and close-out         | Futbol 5 en la sabana closed with Chelsy `attended`                                                     |
 | A no-show                      | Canchas de fonseca closed with Vanesa `no_show`                                                         |
-| Report                         | `a0850abd` — Vanesa, Pico blanco, "comportamiento", still `open`                                        |
+| Report                         | `a0850abd` — Vanesa, Pico blanco, "comportamiento"; `dismissed` from `/staff/reportes` on 17 Sep        |
 | Groups                         | Mejengueros — Lee sin `owner`, Aguita `member`                                                          |
 | Recurring series               | 5K al parque de Tibas, 9 Tuesdays generated                                                             |
 
@@ -95,14 +100,23 @@ and tells the reporter it was looked at. `/staff/reportes` is the queue. A scope
 staff open the session a report is about — including a **cancelled** one, which `activities_read`
 does not admit and which is exactly the session most likely to be reported.
 
-What is still missing is the part no migration can supply: **a name and a response time in
-`docs/security.md`.** Both are blanks in that file waiting for Alejandro and Kristopher. Every
-other control on that page is enforced by the database; this one is enforced by somebody
-remembering, which is why it has to be written down.
+The loop has now run once end to end on the live project: Vanesa reported, `Lee sin` dismissed
+`a0850abd` from `/staff/reportes` with a written reason, `reviewed_by` and `reviewed_at` were
+stamped from `auth.uid()`, and a `report_resolved` notification carrying only the report id went
+back to Vanesa. Zero reports are open.
 
-Also still missing: acting on a report. Resolving records a judgement. Cancelling somebody else's
-session, hiding a profile and blocking an account are three separate powers, each needing its own
-function, test and decision about who holds it. `a0850abd` can be closed through the queue now.
+The rota is written down — **Report triage in `docs/security.md`: a named first responder, an
+evening check, and 24 hours as the ceiling**, measured from `created_at` to `reviewed_at` so the
+promise is a query rather than an intention.
+
+Two blanks are left in it, and neither is code:
+
+- **`staff` holds two accounts and both are Kristopher's**, one of them the `Lee sin` test
+  account. Alejandro's own account has to go in, and `Lee sin` has to come out — a test account
+  should not be able to read every safety report.
+- **Acting on a report.** Resolving records a judgement; it does not act on one. Cancelling
+  somebody else's session, hiding a profile and blocking an account are three separate powers,
+  each needing its own function, test and decision about who holds it.
 
 **2. Deliver notifications.** _Inbox done. Delivery outside the app is not._
 
