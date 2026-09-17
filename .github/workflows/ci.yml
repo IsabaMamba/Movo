@@ -40,6 +40,11 @@ jobs:
       - name: Voice
         run: npm run check:voice
 
+      # Every migration must be named in docs/status.md. The same paragraph has
+      # been wrong twice about what is in the database.
+      - name: Migrations are documented
+        run: npm run check:migrations
+
       # A separate step rather than folded into `npm run verify`, so a failure
       # names itself in the checks list instead of hiding behind "quality".
       - name: Unit tests
