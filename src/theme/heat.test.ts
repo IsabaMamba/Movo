@@ -122,9 +122,14 @@ describe('occupancyLabel', () => {
 });
 
 describe('heatStops', () => {
-  it('returns the eight stops a legend needs', () => {
-    expect(heatStops('calma')).toHaveLength(8);
-    expect(heatStops('heatwave')).toHaveLength(8);
+  it('returns the same number of stops in both modes', () => {
+    // Deliberately not a hardcoded count. The ramp went from eight stops to
+    // nine when the mauve crossing was replaced, and a literal here turned a
+    // colour decision into two failing tests that said nothing about colour.
+    // What must hold is that a legend and the ramp agree, whatever the length.
+    const calma = heatStops('calma');
+    expect(calma.length).toBeGreaterThanOrEqual(5);
+    expect(heatStops('heatwave')).toHaveLength(calma.length);
   });
 
   it('returns renderable hex in both modes', () => {
@@ -141,7 +146,39 @@ describe('heatStops', () => {
     for (const mode of ['calma', 'heatwave'] as const) {
       const stops = heatStops(mode);
       expect(stops[0]).toBe(heatColor(0, mode));
-      expect(stops[7]).toBe(heatColor(1, mode));
+      expect(stops[stops.length - 1]).toBe(heatColor(1, mode));
+    }
+  });
+
+  /**
+   * Rule 1 of the ramp, finally checked instead of asserted.
+   *
+   * `heat.ts` has said "lightness rises monotonically" since the first
+   * version. Nothing enforced it. That is how the mauve crossing survived
+   * two audits, and it is why three candidate ramps that kept teal looked
+   * fine in a swatch strip and were wrong: saturated magenta cannot reach
+   * the luminance its slot needs.
+   *
+   * WCAG relative luminance, because it is the one definition already used
+   * everywhere else in this repo for contrast.
+   */
+  it('rises in luminance at every step, in both modes', () => {
+    const channel = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    const luminance = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => channel(parseInt(hex.slice(i, i + 2), 16) / 255));
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+
+    for (const mode of ['calma', 'heatwave'] as const) {
+      const stops = heatStops(mode);
+      for (let i = 1; i < stops.length; i++) {
+        const previous = luminance(stops[i - 1]!);
+        const current = luminance(stops[i]!);
+        expect(
+          current,
+          `${mode}: stop ${i} (${stops[i]}) is not brighter than stop ${i - 1} (${stops[i - 1]})`,
+        ).toBeGreaterThan(previous);
+      }
     }
   });
 
