@@ -13,15 +13,35 @@
 
 export type HeatMode = 'calma' | 'heatwave';
 
-/** Eight stops, cold to hot. Derived in OKLab from the brand anchors. */
+/**
+ * Nine stops, cold to hot. Violet -> magenta -> red -> orange -> pale.
+ *
+ * Teal used to sit at the cold end, and the crossing from teal to red landed
+ * on a muddy mauve (#A86D65) that the 5 September audit flagged and nobody
+ * resolved. It is not a tuning problem. A cool-to-hot ramp whose luminance
+ * only ever rises CANNOT stay saturated across that crossing: saturated
+ * magenta cannot reach the luminance its slot needs, because green carries
+ * 72% of luminance and magenta has none. Three routes that kept teal were
+ * measured; all three break rule 1 below.
+ *
+ * So the ramp takes the path thermal maps take. Mean chroma goes from 0.35
+ * to 0.40, the mud is gone, and luminance still rises at every step:
+ *
+ *   0.005  0.011  0.030  0.069  0.130  0.220  0.398  0.612  0.828
+ *
+ * Teal is not lost — it is `accent.cool` for icons and links, and the map's
+ * resting fill. It stops being HEAT, which clarifies the reading: cool is the
+ * map, warm is activity, and nothing means both.
+ */
 const STOPS: readonly string[] = [
   '#0B0F1F', // vacío — identical to bg.base so an empty cell disappears
-  '#1B334A', // muy bajo
-  '#2A677A', // bajo
-  '#A86D65', // medio
-  '#F36244', // activo
-  '#FF9155', // muy activo
-  '#FECA7D', // lleno
+  '#221450', // muy bajo
+  '#4A1667', // bajo
+  '#83206B', // medio bajo
+  '#B92D5D', // medio
+  '#E44C3D', // activo
+  '#FF8A3F', // muy activo
+  '#FFC276', // lleno
   '#F6E9D7', // pico
 ] as const;
 
