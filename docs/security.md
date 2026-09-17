@@ -56,35 +56,77 @@ What we hold is a map of where specific people will be at specific times.
 The one thing on this page that is a habit rather than a constraint, which is why it is the
 one most likely to quietly stop happening.
 
-**Who reviews:** Alejandro Cortés Rojas. Backup: Kristopher Isaba Jimenez.
+**Who reviews:** Kristopher Isaba Jimenez. Second reviewer: the `Lee sin` test account. Both
+were inserted into `staff` by hand on 17 September 2026 — no client can grant that role, which
+is the point of it.
+
+The account ids stay out of this file on purpose. This repository is public, and `0012` exists
+so that who moderates cannot be enumerated; writing the ids here would hand over exactly what
+the table refuses to serve. The names are here because a rota needs a person; the ids are in
+`staff`, where only `postgres` can read them.
+
+**Both of those are Kristopher.** `Lee sin` is a test account from the 15 September test day,
+not a second person. It holds `staff` because closing report `a0850abd` needed a reviewer who
+was not the reporter, and doing so proved the loop end to end: reported by Vanesa, dismissed by
+`Lee sin`, `report_resolved` written back to Vanesa. What it does not prove is that anybody is
+on call. **This rota contains one human**, and a rota with one human is a schedule of the days
+that person happens to be free.
+
+**First thing for Alejandro:** put his own account into `staff`, put his name on the line
+above, and take `Lee sin` out — a test account should not outlive testing, least of all one
+that can read every safety report. All three are one statement each from the Supabase panel.
 
 **How often:** a check of the open queue **every evening**, plus whenever a report arrives for
-a session starting within 48 hours. Both people hold `staff`, so either can act; naming a
-first responder is what stops both of them assuming the other looked.
+a session starting within 48 hours. Naming a first responder is what stops two people each
+assuming the other looked.
 
 **Escalation:** if the reviewer cannot act within the response time below, they say so to the
 other person the same day. An unactioned report is not allowed to be nobody's.
 
-> These names are a starting point, not a negotiated rota — they were written so that the
-> line would stop being blank, because a blank rota is one nobody notices is empty. **Swapping
-> a name here is a one-line pull request.** What is not negotiable is that a name is present:
-> every other control on this page is enforced by the database, and this one is enforced by a
-> person remembering.
+> **Swapping a name here is a one-line pull request.** What is not negotiable is that a name is
+> present: every other control on this page is enforced by the database, and this one is
+> enforced by a person remembering.
 
 ### Response times
 
 A report is not a support ticket. The clock that matters is the session's start time, not
-the report's age.
+the report's age — but there is a ceiling either way.
 
-| Situation                                             | Response |
-| ----------------------------------------------------- | -------- |
-| Behaviour report about a session in the next 48 hours | Same day |
-| Anything naming a specific person as unsafe           | Same day |
-| Everything else                                       | 72 hours |
+| Situation                                             | Response     |
+| ----------------------------------------------------- | ------------ |
+| Anything naming a specific person as unsafe           | Same day     |
+| Behaviour report about a session in the next 48 hours | Same day     |
+| Everything else                                       | **24 hours** |
 
-A behaviour report about a session happening tomorrow cannot wait a week. If nobody can
-commit to same-day, that is worth knowing before the first public session rather than during
-it.
+A behaviour report about a session happening tomorrow cannot wait until the day after. If
+nobody can commit to same-day, that is worth knowing before the first public session rather
+than during it.
+
+**Twenty-four hours is a ceiling, not a target**, and it is measured from `reports.created_at`
+to `reports.reviewed_at` — from the moment somebody reported to the moment `resolve_report()`
+ran. Reading a report leaves no trace in the database; only resolving one does. That is what
+makes this promise checkable instead of a good intention:
+
+```sql
+-- Past the promise, and by how much.
+select r.id, r.created_at, now() - r.created_at as age
+  from reports r
+ where r.status = 'open'
+   and r.created_at < now() - interval '24 hours'
+ order by r.created_at;
+
+-- How the last thirty days actually went.
+select count(*) filter (where r.reviewed_at - r.created_at <= interval '24 hours') as on_time,
+       count(*) filter (where r.reviewed_at - r.created_at >  interval '24 hours') as late,
+       max(r.reviewed_at - r.created_at)                                           as worst
+  from reports r
+ where r.reviewed_at is not null
+   and r.created_at > now() - interval '30 days';
+```
+
+Nothing runs those on a schedule and nothing alerts on them. Until something does, the 24 hours
+rests entirely on the evening check above — which is the honest description of any rota with no
+pager attached to it.
 
 ### Working the queue
 
