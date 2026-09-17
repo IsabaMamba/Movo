@@ -28,6 +28,13 @@ values
    extensions.st_setsrid(extensions.st_makepoint(-84.1400, 9.9200), 4326)::extensions.geography,
    true, true, 'ff000000-0000-0000-0000-0000000000f1');
 
+-- A venue quoted in dollars, to check a series cannot move into another currency.
+insert into public.locations (id, name, district, geog, is_public_venue, is_verified, created_by, currency)
+values
+  ('ff000000-0000-0000-0000-00000000aa03', 'Cancha en dolares', 'Escazu',
+   extensions.st_setsrid(extensions.st_makepoint(-84.1500, 9.9100), 4326)::extensions.geography,
+   true, true, 'ff000000-0000-0000-0000-0000000000f1', 'USD');
+
 insert into public.activity_series (
   id, organizer_id, category_id, location_id, title,
   frequency, weekday, local_start_time, duration_minutes,
@@ -55,6 +62,37 @@ insert into public.activities (
    'ff000000-0000-0000-0000-00000000bb01', 'ff000000-0000-0000-0000-0000000000f1',
    'running', 'ff000000-0000-0000-0000-00000000aa01', 'Corrida de los martes',
    now() + interval '10 days', now() + interval '10 days 1 hour', 10,
+   'published', 'public', '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb);
+
+-- A second series with nobody on it, whose dates have to move with it: one
+-- starting in two hours (a day earlier puts it in the past) and one five days
+-- out.
+insert into public.activity_series (
+  id, organizer_id, category_id, location_id, title,
+  frequency, weekday, local_start_time, duration_minutes,
+  skill, max_participants, price_minor, currency, attributes
+) values (
+  'ff000000-0000-0000-0000-00000000bb02',
+  'ff000000-0000-0000-0000-0000000000f1', 'running',
+  'ff000000-0000-0000-0000-00000000aa01', 'Corrida temprano',
+  'weekly', 2, '18:00', 60,
+  'any', null, 0, 'CRC',
+  '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb
+);
+
+insert into public.activities (
+  id, series_id, organizer_id, category_id, location_id, title,
+  starts_at, ends_at, status, visibility, attributes
+) values
+  ('ff000000-0000-0000-0000-00000000cc11',
+   'ff000000-0000-0000-0000-00000000bb02', 'ff000000-0000-0000-0000-0000000000f1',
+   'running', 'ff000000-0000-0000-0000-00000000aa01', 'Corrida temprano',
+   now() + interval '2 hours', now() + interval '3 hours',
+   'published', 'public', '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb),
+  ('ff000000-0000-0000-0000-00000000cc12',
+   'ff000000-0000-0000-0000-00000000bb02', 'ff000000-0000-0000-0000-0000000000f1',
+   'running', 'ff000000-0000-0000-0000-00000000aa01', 'Corrida temprano',
+   now() + interval '5 days', now() + interval '5 days 1 hour',
    'published', 'public', '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb);
 
 -- ----------------------------------------------- the grant itself is gone
@@ -92,6 +130,89 @@ insert into public.activity_series (
   'ff000000-0000-0000-0000-00000000aa01', 'Serie nueva',
   'weekly', 3, '07:00', 45, 'any', '{"distance_km": 4, "pace_min_per_km": 6.5}'::jsonb
 );
+
+-- DELETE is revoked as well. activities.series_id is `on delete set null`, so
+-- deleting a template left its future dates published as standalone sessions
+-- with nobody told: cancel_series() without the cancelling.
+do $$
+declare
+  v_sqlstate text;
+begin
+  begin
+    delete from public.activity_series where id = 'ff000000-0000-0000-0000-00000000bb02';
+    raise exception 'FAIL: the organizer deleted a series through a direct DELETE';
+  exception
+    when insufficient_privilege then
+      null; -- expected: the grant is revoked
+    when others then
+      get stacked diagnostics v_sqlstate = returned_sqlstate;
+      if v_sqlstate = 'P0001' then raise; end if;
+      raise exception 'FAIL: direct series DELETE refused with %, expected 42501', v_sqlstate;
+  end;
+end $$;
+
+-- ------------------------------------ moving an empty series moves its dates
+
+-- Not into a venue quoted in another currency: price_minor would be silently
+-- reinterpreted, the rule update_activity() already applies in 0008.
+do $$
+declare
+  v_sqlstate text;
+begin
+  begin
+    perform public.update_series(
+      'ff000000-0000-0000-0000-00000000bb02'::uuid, 'Corrida temprano', null,
+      '18:00'::time, 2::smallint, 60, 'ff000000-0000-0000-0000-00000000aa03'::uuid, null);
+    raise exception 'FAIL: a series moved to a venue in another currency';
+  exception
+    when others then
+      get stacked diagnostics v_sqlstate = returned_sqlstate;
+      if v_sqlstate = 'P0001' then raise; end if;
+      if v_sqlstate <> '22023' then
+        raise exception 'FAIL: currency change refused with %, expected 22023', v_sqlstate;
+      end if;
+  end;
+end $$;
+
+-- Tuesday 18:00 becomes Monday 07:30. If the existing dates stay where they
+-- were, the next generate_series_occurrences() adds a Monday session every
+-- week beside the Tuesday one still standing: its on-conflict key is
+-- (series_id, starts_at), and the two starts differ. Two sessions a week, no
+-- error anywhere.
+select public.update_series(
+  'ff000000-0000-0000-0000-00000000bb02'::uuid, 'Corrida temprano', null,
+  '07:30'::time, 1::smallint, 60, 'ff000000-0000-0000-0000-00000000aa01'::uuid, null);
+
+do $$
+declare
+  v_tz    text := 'America/Costa_Rica';
+  v_soon  activity_status;
+  v_start timestamptz;
+  v_end   timestamptz;
+begin
+  -- Two hours from now, one day earlier, is in the past. Nobody is on it, so it
+  -- is cancelled rather than left standing at the old hour.
+  select status into v_soon
+    from public.activities where id = 'ff000000-0000-0000-0000-00000000cc11';
+  if v_soon <> 'cancelled' then
+    raise exception 'FAIL: a date that would move into the past was left %', v_soon;
+  end if;
+
+  select starts_at, ends_at into v_start, v_end
+    from public.activities where id = 'ff000000-0000-0000-0000-00000000cc12';
+  if (v_start at time zone v_tz)::time <> '07:30'::time then
+    raise exception 'FAIL: the date kept the hour % while the series moved to 07:30',
+      (v_start at time zone v_tz)::time;
+  end if;
+  if (v_start at time zone v_tz)::date
+     <> ((now() + interval '5 days') at time zone v_tz)::date - 1 then
+    raise exception 'FAIL: the date did not move one day earlier with the weekday';
+  end if;
+  if v_end - v_start <> interval '60 minutes' then
+    raise exception 'FAIL: the moved date lost its duration';
+  end if;
+end $$;
+
 
 -- ------------------------------------------- editing with nobody on board
 
@@ -290,5 +411,18 @@ begin
 end $$;
 
 reset role;
+
+-- New functions are executable by PUBLIC unless revoked; 0002 revokes for
+-- every RPC. Checked here with the role reset.
+do $$ begin
+  if has_function_privilege('anon',
+       'public.update_series(uuid, text, text, time, smallint, integer, uuid, integer)',
+       'execute') then
+    raise exception 'FAIL: anon can execute update_series()';
+  end if;
+  if has_function_privilege('anon', 'public.cancel_series(uuid, text)', 'execute') then
+    raise exception 'FAIL: anon can execute cancel_series()';
+  end if;
+end $$;
 
 rollback;
