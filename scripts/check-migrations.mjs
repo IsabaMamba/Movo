@@ -22,6 +22,14 @@
  *
  * This exists because the same paragraph has been wrong twice — a migration
  * count, and before it a table count of nine against a schema with sixteen.
+ *
+ * Rows name the whole file stem, `0012_staff_reports`, not `0012`. The first
+ * version matched four digits, and the table beside them described 0002 as
+ * "RLS policies", 0004 as "Participation RPCs", 0006 as "Groups" and 0007 as
+ * "Reports and blocking": four descriptions of files that are functions, a
+ * category seed, a venue seed and a group-owner trigger. A stem puts what the
+ * file is called beside the prose describing it. The What column is still
+ * prose, and still read by a person.
  */
 
 import { readFileSync, readdirSync } from 'node:fs';
@@ -29,16 +37,16 @@ import { readFileSync, readdirSync } from 'node:fs';
 const STATUS = 'docs/status.md';
 const MIGRATIONS = 'supabase/migrations';
 
-/** `0011_notification_read_grant.sql` → `0011` */
+/** `0011_notification_read_grant.sql` → `0011_notification_read_grant` */
 const files = readdirSync(MIGRATIONS)
   .filter((f) => f.endsWith('.sql'))
-  .map((f) => f.slice(0, 4))
+  .map((f) => f.slice(0, -'.sql'.length))
   .sort();
 
 const text = readFileSync(STATUS, 'utf8');
 
-/** A row names it as `0011` — backticked, so prose mentioning 0011 does not count. */
-const named = new Set(Array.from(text.matchAll(/`(\d{4})`/gu), (m) => m[1]));
+/** A row names it by its full stem, backticked, so prose mentioning 0011 does not count. */
+const named = new Set(Array.from(text.matchAll(/`(\d{4}_[a-z0-9_]+)`/gu), (m) => m[1]));
 
 const missing = files.filter((id) => !named.has(id));
 const phantom = [...named].filter((id) => !files.includes(id));
@@ -51,8 +59,7 @@ if (missing.length === 0 && phantom.length === 0) {
 if (missing.length > 0) {
   console.error(`migrations: ${missing.length} migration(s) missing from ${STATUS}\n`);
   for (const id of missing) {
-    const file = readdirSync(MIGRATIONS).find((f) => f.startsWith(id));
-    console.error(`  ${file}  — add a row to the Migrations table, with whether it is applied`);
+    console.error(`  ${id}.sql  — add a row to the Migrations table, with whether it is applied`);
   }
 }
 

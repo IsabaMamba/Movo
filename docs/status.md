@@ -20,21 +20,21 @@ Every file in `supabase/migrations/` appears here, and `npm run check:migrations
 does not. Applied means applied to the live Supabase project, which no check can verify — that
 column is maintained by hand.
 
-| Migration | What                                   | Applied |
-| --------- | -------------------------------------- | ------- |
-| `0001`    | Schema                                 | yes     |
-| `0002`    | RLS policies                           | yes     |
-| `0003`    | Grants and revokes                     | yes     |
-| `0004`    | Participation RPCs                     | yes     |
-| `0005`    | Currency                               | yes     |
-| `0006`    | Groups                                 | yes     |
-| `0007`    | Reports and blocking                   | yes     |
-| `0008`    | Revoke direct `UPDATE` on `activities` | yes     |
-| `0009`    | Series as one card                     | yes     |
-| `0010`    | Attendance windows                     | yes     |
-| `0011`    | Narrow the notification write grant    | **no**  |
-| `0012`    | `staff` and the report queue           | **no**  |
-| `0013`    | Series mutations                       | **no**  |
+| Migration                      | What                                                                                       | Applied |
+| ------------------------------ | ------------------------------------------------------------------------------------------ | ------- |
+| `0001_schema`                  | Tables, enums and indexes                                                                  | yes     |
+| `0002_functions`               | Policy helpers, the counters trigger, participation and series RPCs, `nearby_activities()` | yes     |
+| `0003_rls`                     | Row-level security on every table, grants and revokes                                      | yes     |
+| `0004_seed_categories`         | Running, hiking and football, with their attribute schemas                                 | yes     |
+| `0005_currency`                | `price_minor` and `currency` on venues, sessions and series                                | yes     |
+| `0006_seed_venue`              | Parque Metropolitano La Sabana                                                             | yes     |
+| `0007_community_owner`         | A group's creator becomes its owner                                                        | yes     |
+| `0008_cancel_edit`             | Cancel and edit a session; revoke direct `UPDATE` on `activities`                          | yes     |
+| `0009_series_collapse`         | A series is one row in `nearby_activities()`                                               | yes     |
+| `0010_attendance_window`       | Check-in from 30 minutes before the start, close-out from the start                        | yes     |
+| `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | **no**  |
+| `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | **no**  |
+| `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | **no**  |
 
 `0011`–`0013` ship with the two open PRs and take effect on merge plus a `db push`. **Until
 then the report queue has no `staff` table to read, and `activity_series` is still directly
