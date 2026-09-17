@@ -42,10 +42,13 @@
 -- the dangerous verb, and `createSeries()` in `src/lib/activities.ts` uses it.
 -- =====================================================================
 
-revoke update on public.activity_series from authenticated;
+revoke update, delete on public.activity_series from authenticated;
 
--- `activity_series_write` is FOR ALL. With UPDATE revoked it still governs
--- INSERT and DELETE, which is what we want, so the policy stays as it is.
+-- DELETE goes too. `activities.series_id` is `on delete set null`, so deleting
+-- a template turned every future date into a standalone session, still
+-- published and nobody told: cancel_series() without the cancelling.
+-- `activity_series_write` is FOR ALL and now governs INSERT alone, which is
+-- what createSeries() uses, so the policy stays as it is.
 
 -- ------------------------------------------------------- update_series
 
@@ -70,6 +73,10 @@ declare
   v_on_list integer;
   v_peak    integer;
   v_result  public.activity_series%rowtype;
+  v_new_cur public.currency_code;
+  v_moved   boolean;
+  v_occ     record;
+  v_start   timestamptz;
 begin
   if v_caller is null then
     raise exception 'authentication required' using errcode = '42501';
@@ -115,6 +122,18 @@ begin
       raise exception
         'time and venue are locked: % people are on upcoming sessions of this series. Cancel and publish a new series, or edit the individual session',
         v_on_list using errcode = '22023';
+    end if;
+  end if;
+
+  -- Same rule update_activity() applies in 0008: price_minor is in the series'
+  -- currency, and a venue quoted in another one would reinterpret it silently.
+  if p_location_id is distinct from v_s.location_id then
+    select currency into v_new_cur from public.locations where id = p_location_id;
+    if v_new_cur is null then
+      raise exception 'location not found' using errcode = 'P0002';
+    end if;
+    if v_new_cur <> v_s.currency then
+      raise exception 'new location uses a different currency' using errcode = '22023';
     end if;
   end if;
 
@@ -167,6 +186,48 @@ begin
      and a.joined_count = 0
      and a.waitlist_count = 0;
 
+  -- The dates themselves have to follow a change of day or hour. The update
+  -- above never touches starts_at, so without this the existing dates stayed
+  -- at the old time and the next generate_series_occurrences() added a second
+  -- session every week at the new one: its on-conflict key is
+  -- (series_id, starts_at), and the two starts differ.
+  --
+  -- Reached only when nobody is on any upcoming date; otherwise the lock above
+  -- already refused. Each date keeps its week, shifting by the weekday
+  -- difference and taking the new local hour. A date that would land in the
+  -- past is cancelled rather than left at the old hour; nobody is on it, so
+  -- nobody is told. Only when the day or hour actually changed, so a rename
+  -- does not snap a date that was moved on its own back to the template.
+  v_moved := p_local_start_time is distinct from v_s.local_start_time
+          or p_weekday is distinct from v_s.weekday;
+
+  if v_moved then
+    for v_occ in
+      select a.id, a.starts_at
+        from public.activities a
+       where a.series_id = p_series_id
+         and a.starts_at > now()
+         and a.status in ('published', 'full')
+         and a.joined_count = 0
+         and a.waitlist_count = 0
+       order by a.starts_at
+    loop
+      v_start := (((v_occ.starts_at at time zone v_result.timezone)::date
+                   + (v_result.weekday - v_s.weekday)::integer)
+                  + v_result.local_start_time) at time zone v_result.timezone;
+
+      if v_start > now() then
+        update public.activities
+           set starts_at = v_start,
+               ends_at   = v_start + make_interval(mins => v_result.duration_minutes)
+         where id = v_occ.id;
+      else
+        perform public.cancel_activity(
+          v_occ.id, 'La serie cambió de horario y esta fecha quedó en el pasado');
+      end if;
+    end loop;
+  end if;
+
   return v_result;
 end;
 $$;
@@ -178,6 +239,9 @@ comment on function public.update_series(uuid, text, text, time, smallint, integ
   'future occupied-by-nobody occurrences so the template and its sessions stop '
   'drifting.';
 
+revoke all on function public.update_series(
+  uuid, text, text, time, smallint, integer, uuid, integer
+) from public, anon;
 grant execute on function public.update_series(
   uuid, text, text, time, smallint, integer, uuid, integer
 ) to authenticated;
@@ -239,6 +303,7 @@ comment on function public.cancel_series(uuid, text) is
   'cancel_activity(), so each notifies its own participants. Past occurrences '
   'are untouched — they happened, and their attendance says so.';
 
+revoke all on function public.cancel_series(uuid, text) from public, anon;
 grant execute on function public.cancel_series(uuid, text) to authenticated;
 
 -- ------------------------------ generate_series_occurrences, with the guard
