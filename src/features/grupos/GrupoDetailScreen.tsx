@@ -174,7 +174,7 @@ export function GrupoDetailScreen() {
               accessibilityLabel={busy ? 'Un momento…' : isMember ? 'Salir del grupo' : 'Unirme'}
               accessibilityHint={
                 isMember
-                  ? 'Dejás de ser parte del grupo y perdés acceso a sus sesiones para miembros.'
+                  ? 'Dejas de ser parte del grupo y pierdes acceso a sus sesiones para miembros.'
                   : undefined
               }
               aria-disabled={busy}
@@ -188,7 +188,7 @@ export function GrupoDetailScreen() {
             </Pressable>
             {mine?.role !== 'member' && isMember && (
               <Text style={s.hint}>
-                Organizás este grupo. Las sesiones que crees pueden ser solo para miembros.
+                Organizas este grupo. Las sesiones que crees pueden ser solo para miembros.
               </Text>
             )}
           </>

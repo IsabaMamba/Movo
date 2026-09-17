@@ -99,9 +99,9 @@ const CONFIRM_TEXT: Record<Intent, string> = {
 const RESULT_TEXT = {
   reviewing: 'Quedó marcado como en revisión. A quien reportó no le llega nada todavía.',
   actioned:
-    'Quedó registrado que el equipo actuó, con tu nota. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encontrás en Resueltos.',
+    'Quedó registrado que el equipo actuó, con tu nota. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encuentras en Resueltos.',
   dismissed:
-    'Quedó descartado. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encontrás en Resueltos.',
+    'Quedó descartado. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encuentras en Resueltos.',
 } as const;
 
 const VIEW_LABEL: Record<QueueView, string> = {

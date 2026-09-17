@@ -228,9 +228,9 @@ export function SessionDetailScreen() {
    * confirmation for both only arrives after the tap.
    */
   const actionHint = going
-    ? 'Dejás la sesión y tu lugar queda libre para otra persona.'
+    ? 'Dejas la sesión y tu lugar queda libre para otra persona.'
     : waiting
-      ? 'Salís de la lista de espera y perdés tu puesto.'
+      ? 'Sales de la lista de espera y pierdes tu puesto.'
       : full
         ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
         : undefined;
@@ -490,7 +490,7 @@ export function SessionDetailScreen() {
         <View style={s.sheet}>
           <Text style={s.sheetTitle}>Reportar esta sesión</Text>
           <Text style={s.sheetBody}>
-            Contanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
+            Cuéntanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
           </Text>
 
           {/* One reason from a closed list: a radiogroup. The group carries the
@@ -562,7 +562,7 @@ export function SessionDetailScreen() {
           accessibilityHint={
             session
               ? 'Abre el formulario para contar qué pasa.'
-              : 'Necesitás iniciar sesión para reportar.'
+              : 'Necesitas iniciar sesión para reportar.'
           }
           onPress={() => {
             if (!session) {

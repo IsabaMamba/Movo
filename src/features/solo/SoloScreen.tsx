@@ -223,11 +223,11 @@ export function SoloScreen() {
           <View style={s.summaryRow}>
             <View style={s.summaryItem}>
               <Text style={s.summaryValue}>{clockAt(now)}</Text>
-              <Text style={s.summaryLabel}>salís</Text>
+              <Text style={s.summaryLabel}>sales</Text>
             </View>
             <View style={s.summaryItem}>
               <Text style={s.summaryValue}>{clockAt(back)}</Text>
-              <Text style={s.summaryLabel}>volvés</Text>
+              <Text style={s.summaryLabel}>vuelves</Text>
             </View>
             <View style={s.summaryItem}>
               <Text style={s.summaryValue}>{minutes} min</Text>
@@ -242,7 +242,7 @@ export function SoloScreen() {
         <Text style={s.tellTitle}>Avisar a alguien</Text>
         <Text style={s.tellWhy}>
           Salir solo o sola, temprano o de noche, es lo más riesgoso que esta app te puede sugerir.
-          Compartí a dónde vas y a qué hora volvés con alguien de confianza.
+          Comparte a dónde vas y a qué hora vuelves con alguien de confianza.
         </Text>
 
         <View style={s.field}>

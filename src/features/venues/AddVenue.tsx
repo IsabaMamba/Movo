@@ -115,7 +115,7 @@ export function AddVenue({ userId, onCreated }: Props) {
   };
 
   const missing: string[] = [];
-  if (name.trim().length < 2) missing.push('poné el nombre del lugar');
+  if (name.trim().length < 2) missing.push('pon el nombre del lugar');
   if (point === null) missing.push('marca dónde queda');
   const canSave = !busy && missing.length === 0;
 
