@@ -58,7 +58,7 @@ function standingOf(entry: MyParticipation, past: boolean): Standing {
       // its own reads as a refusal rather than as a queue that moves.
       note: past
         ? 'No se liberó un campo a tiempo.'
-        : 'Si alguien cancela, entrás automáticamente.',
+        : 'Si alguien cancela, entras automáticamente.',
     };
   }
 
@@ -217,7 +217,7 @@ export function MySessionsScreen() {
               abajo ya pasó" points at nothing. */}
           {upcoming.length === 0 && (
             <View style={s.empty}>
-              <Text style={s.emptyBody}>No tenés nada por delante. Lo de abajo ya pasó.</Text>
+              <Text style={s.emptyBody}>No tienes nada por delante. Lo de abajo ya pasó.</Text>
               <Link href="/" style={s.back}>
                 <Text style={s.linkText}>Ver qué hay cerca</Text>
               </Link>

@@ -16,6 +16,15 @@ export default tseslint.config(
     },
   },
   {
+    // Repo scripts are ES modules run by Node directly, never bundled. They
+    // print to the terminal and set an exit code, which is their whole job.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
       // Unused args are fine when prefixed with _, which keeps signatures honest.

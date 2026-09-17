@@ -136,7 +136,11 @@ export function RosterScreen() {
         setNotice(
           noShows === 0
             ? 'Sesión cerrada. Todos los que se apuntaron llegaron.'
-            : `Sesión cerrada. ${noShows} ${noShows === 1 ? 'persona quedó' : 'personas quedaron'} como no_show.`,
+            : // `no_show` is a column value, not a word anybody says. STATE_LABEL
+              // already translates it; this was the one place the raw enum
+              // reached a person, in the sentence confirming the only
+              // irreversible action in the product.
+              `Sesión cerrada. ${noShows} ${noShows === 1 ? 'persona quedó' : 'personas quedaron'} como ${STATE_LABEL.no_show?.toLowerCase() ?? 'no llegó'}.`,
         );
         return load();
       })
@@ -159,7 +163,7 @@ export function RosterScreen() {
         setNotice(
           count === 0
             ? 'Sesión cancelada. No había nadie apuntado.'
-            : `Sesión cancelada. ${count} ${count === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones, pero Movo todavía no manda avisos: escribiles.`,
+            : `Sesión cancelada. ${count} ${count === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones, pero Movo todavía no manda avisos: escríbeles.`,
         );
         return load();
       })
@@ -266,8 +270,7 @@ export function RosterScreen() {
                 <Text
                   /* Said aloud by the name above; here it is a second reading of
                      the same field. */
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
                   style={s.rowState}
                 >
                   {STATE_LABEL[person.status] ?? person.status}
@@ -277,18 +280,23 @@ export function RosterScreen() {
                 </Text>
                 {isOrganizer && !closed && !cancelled && checkInOpen && (
                   <Pressable
-                    accessibilityRole="checkbox"
+                    /* A button, not a checkbox. It is `disabled` the moment it
+                       is done, so there is no unchecked state to go back to,
+                       and a checkbox that cannot be cleared announces itself
+                       wrongly. The state lives in the label, which flips with
+                       it — and on web that matters twice over, because a
+                       role="checkbox" with no aria-checked reads as
+                       *unchecked*, which is the opposite of the truth for
+                       somebody already marked present. */
+                    accessibilityRole="button"
                     accessibilityLabel={done ? `${name} ya llegó` : `Marcar llegada de ${name}`}
                     /* Check-in is what writes attendance, and this screen offers
                        no way back once it is written. */
                     accessibilityHint={
                       done ? undefined : 'No se puede deshacer desde esta pantalla'
                     }
-                    accessibilityState={{
-                      checked: done,
-                      disabled: done || pending === person.user_id,
-                      busy: pending === person.user_id,
-                    }}
+                    aria-disabled={done || pending === person.user_id}
+                    aria-busy={pending === person.user_id}
                     disabled={done || pending === person.user_id}
                     hitSlop={CHECK_HIT_SLOP}
                     onPress={() => {
@@ -312,7 +320,7 @@ export function RosterScreen() {
       {isOrganizer && !closed && !cancelled && !started && roster.length > 0 && (
         <Text style={s.hint}>
           {checkInOpen
-            ? 'Ya podés marcar quién llegó. Cerrar la sesión se habilita a la hora de inicio.'
+            ? 'Ya puedes marcar quién llegó. Cerrar la sesión se habilita a la hora de inicio.'
             : `Marcar llegadas se habilita 30 minutos antes de empezar: ${formatSessionTime(checkInOpensAt.toISOString())}.`}
         </Text>
       )}
@@ -367,7 +375,7 @@ export function RosterScreen() {
             </Pressable>
           )}
           <Text style={s.hint}>
-            Marcá primero a quien llegó. Cerrar es lo que guarda la asistencia.
+            Marca primero a quien llegó. Cerrar es lo que guarda la asistencia.
           </Text>
         </>
       )}
@@ -382,7 +390,7 @@ export function RosterScreen() {
               <Text accessibilityRole="alert" style={s.confirmText}>
                 {onRoster === 0
                   ? 'No hay nadie apuntado. La sesión deja de aparecer en Descubrir.'
-                  : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escribiles vos.`}{' '}
+                  : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escríbeles tú.`}{' '}
                 No se puede deshacer.
               </Text>
               <TextInput
@@ -399,7 +407,7 @@ export function RosterScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={cancelBusy ? 'Cancelando' : 'Cancelar la sesión'}
-                  accessibilityState={{ disabled: cancelBusy }}
+                  aria-disabled={cancelBusy}
                   disabled={cancelBusy}
                   onPress={cancel}
                   style={[s.close, { flex: 1 }]}

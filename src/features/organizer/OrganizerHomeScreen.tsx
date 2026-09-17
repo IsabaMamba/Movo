@@ -146,9 +146,9 @@ export function OrganizerHomeScreen() {
         <ActivityIndicator />
       ) : activities.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.sectionTitle}>Todavía no organizás nada</Text>
+          <Text style={s.sectionTitle}>Todavía no organizas nada</Text>
           <Text style={s.emptyBody}>
-            Creá una sesión y acá vas a ver quién se apunta y quién llegó.
+            Crea una sesión y aquí vas a ver quién se apunta y quién llegó.
           </Text>
           <Link href="/crear" style={s.back}>
             <Text style={s.linkText}>Crear sesión</Text>
@@ -160,8 +160,8 @@ export function OrganizerHomeScreen() {
             <View style={{ gap: 12 }}>
               <Text style={s.sectionTitle}>Pendientes de cerrar</Text>
               <Text style={s.hint}>
-                Ya empezaron. Marcá quién llegó y cerrá la sesión — es lo que convierte una lista en
-                asistencia.
+                Ya empezaron. Marca quién llegó y cierra la sesión — es lo que convierte una lista
+                en asistencia.
               </Text>
               {needsCloseOut.map(card)}
             </View>

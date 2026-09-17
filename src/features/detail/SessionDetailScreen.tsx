@@ -210,7 +210,7 @@ export function SessionDetailScreen() {
   };
 
   const actionLabel = !session
-    ? 'Iniciá sesión para apuntarte'
+    ? 'Inicia sesión para apuntarte'
     : busy
       ? 'Un momento…'
       : going
@@ -228,11 +228,11 @@ export function SessionDetailScreen() {
    * confirmation for both only arrives after the tap.
    */
   const actionHint = going
-    ? 'Dejás la sesión y tu lugar queda libre para otra persona.'
+    ? 'Dejas la sesión y tu lugar queda libre para otra persona.'
     : waiting
-      ? 'Salís de la lista de espera y perdés tu puesto.'
+      ? 'Sales de la lista de espera y pierdes tu puesto.'
       : full
-        ? 'La sesión está llena. Entrás a la lista de espera y ocupás el lugar automáticamente si alguien cancela.'
+        ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
         : undefined;
 
   return (
@@ -281,11 +281,7 @@ export function SessionDetailScreen() {
           </Text>
           {band && <Text style={s.occupancyWord}>· {difficultyLabel[band]}</Text>}
         </View>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={s.bar}
-        >
+        <View aria-hidden style={s.bar}>
           <View
             style={[
               s.barFill,
@@ -306,11 +302,7 @@ export function SessionDetailScreen() {
       <View style={s.organizer}>
         {/* Initials are a compressed form of the name spelled out beside them,
             so aloud they are two stray letters. */}
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={s.avatar}
-        >
+        <View aria-hidden style={s.avatar}>
           <Text style={s.avatarText}>{initials(activity.organizer.display_name)}</Text>
         </View>
         <View>
@@ -434,7 +426,7 @@ export function SessionDetailScreen() {
           <Text style={s.privacyNote}>
             {session
               ? 'La lista es visible para quienes ya van y para quien organiza.'
-              : 'Iniciá sesión para ver quién va.'}
+              : 'Inicia sesión para ver quién va.'}
           </Text>
         )}
       </View>
@@ -445,7 +437,7 @@ export function SessionDetailScreen() {
               announce itself rather than wait to be found. */}
           <Text accessibilityRole="alert" style={s.statusText}>
             {waiting
-              ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entrás automáticamente.`
+              ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entras automáticamente.`
               : 'Vas a esta sesión.'}
           </Text>
           {/* Descubrir stops showing a session once it starts, so without this
@@ -470,7 +462,7 @@ export function SessionDetailScreen() {
             accessibilityRole="button"
             accessibilityLabel={actionLabel}
             accessibilityHint={actionHint}
-            accessibilityState={{ disabled: busy }}
+            aria-disabled={busy}
             disabled={busy}
             onPress={act}
             style={[s.action, (going || waiting) && s.actionSecondary, busy && s.actionDisabled]}
@@ -479,13 +471,14 @@ export function SessionDetailScreen() {
               {actionLabel}
             </Text>
           </Pressable>
-          <Text style={s.actionNote}>Podés cancelar hasta la hora de salida.</Text>
+          <Text style={s.actionNote}>Puedes cancelar hasta la hora de salida.</Text>
         </>
       )}
 
-      {/* No onPress yet, so the label states what the control is and nothing
-          about where it leads — a hint here would describe a flow that does not
-          exist. */}
+      {/* Reporting works since #29: a closed reason list, one insert, and a
+          confirmation quoting the report id so "enviado" is checkable. The
+          comment that used to sit here said the control had no onPress, which
+          stopped being true and kept being read. */}
       {reportId ? (
         <View style={s.status}>
           <Text style={s.statusText}>
@@ -497,16 +490,24 @@ export function SessionDetailScreen() {
         <View style={s.sheet}>
           <Text style={s.sheetTitle}>Reportar esta sesión</Text>
           <Text style={s.sheetBody}>
-            Contanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
+            Cuéntanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
           </Text>
 
-          <View style={s.reasonRow}>
+          {/* One reason from a closed list: a radiogroup. The group carries the
+              label because the options are bare words that mean nothing
+              announced on their own. */}
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Motivo del reporte"
+            style={s.reasonRow}
+          >
             {REPORT_REASONS.map((option) => {
               const on = reason === option.value;
               return (
                 <Pressable
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={option.label}
+                  aria-checked={on}
                   key={option.value}
                   onPress={() => {
                     setReason(option.value);
@@ -524,7 +525,7 @@ export function SessionDetailScreen() {
             maxLength={2000}
             multiline
             onChangeText={setReportDetails}
-            placeholder="Si querés, agregá lo que viste."
+            placeholder="Si quieres, agrega lo que viste."
             placeholderTextColor={color.text.tertiary}
             style={s.detailsInput}
             value={reportDetails}
@@ -534,7 +535,7 @@ export function SessionDetailScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Enviar reporte"
-              accessibilityState={{ disabled: !reason || reportBusy }}
+              aria-disabled={!reason || reportBusy}
               disabled={!reason || reportBusy}
               onPress={sendReport}
               style={[s.send, (!reason || reportBusy) && s.sendDisabled]}
@@ -561,7 +562,7 @@ export function SessionDetailScreen() {
           accessibilityHint={
             session
               ? 'Abre el formulario para contar qué pasa.'
-              : 'Necesitás iniciar sesión para reportar.'
+              : 'Necesitas iniciar sesión para reportar.'
           }
           onPress={() => {
             if (!session) {

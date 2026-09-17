@@ -14,7 +14,39 @@ the answer changes; a status document that lags is worse than none.
 | #40 | A recurring session is one card in Descubrir (`0009`), "Otras fechas" in Detalle, filter chips no longer cut in half on phones    |
 | #41 | Attendance only around the session (`0010`): check-in from 30 min before start, close-out from the start, re-join clears check-in |
 
-All ten migrations are applied to the live project.
+### Migrations
+
+Every file in `supabase/migrations/` appears here, and `npm run check:migrations` fails if one
+does not. Applied means applied to the live Supabase project, which no check can verify — that
+column is maintained by hand.
+
+| Migration                      | What                                                                                       | Applied |
+| ------------------------------ | ------------------------------------------------------------------------------------------ | ------- |
+| `0001_schema`                  | Tables, enums and indexes                                                                  | yes     |
+| `0002_functions`               | Policy helpers, the counters trigger, participation and series RPCs, `nearby_activities()` | yes     |
+| `0003_rls`                     | Row-level security on every table, grants and revokes                                      | yes     |
+| `0004_seed_categories`         | Running, hiking and football, with their attribute schemas                                 | yes     |
+| `0005_currency`                | `price_minor` and `currency` on venues, sessions and series                                | yes     |
+| `0006_seed_venue`              | Parque Metropolitano La Sabana                                                             | yes     |
+| `0007_community_owner`         | A group's creator becomes its owner                                                        | yes     |
+| `0008_cancel_edit`             | Cancel and edit a session; revoke direct `UPDATE` on `activities`                          | yes     |
+| `0009_series_collapse`         | A series is one row in `nearby_activities()`                                               | yes     |
+| `0010_attendance_window`       | Check-in from 30 minutes before the start, close-out from the start                        | yes     |
+| `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | **no**  |
+| `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | **no**  |
+| `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | **no**  |
+
+`0011`–`0013` ship with the two open PRs and take effect on merge plus a `db push`. **Until
+then the report queue has no `staff` table to read, and `activity_series` is still directly
+writable on the live project.**
+
+> This section used to be one sentence: "all ten migrations are applied". It stayed that
+> sentence on a branch carrying thirteen — the seventh instance of the defect §B of
+> `audit-2026-09-15.md` names. The first attempt at a fix was a script that counted the number
+> word in the prose, and it failed the corrected sentence too, because _"ten migrations are
+> applied"_ is a true statement about deployment and a false-looking one about the directory.
+> A checker cannot read intent. So the count came out of the prose entirely: the table names
+> every file, and names are checkable.
 
 ## Verified against live data
 

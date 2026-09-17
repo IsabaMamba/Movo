@@ -196,7 +196,7 @@ export function InboxScreen() {
         <View style={s.empty}>
           <Text style={s.sectionTitle}>Acá te vamos a avisar</Text>
           <Text style={s.emptyBody}>
-            Cuando se libere un lugar y entrés desde la lista de espera, y cuando alguien cancele
+            Cuando se libere un lugar y entres desde la lista de espera, y cuando alguien cancele
             una sesión a la que ibas. Nada más — no vas a recibir avisos de cosas que no te tocan.
           </Text>
           <Link href="/mis-sesiones" style={s.back}>

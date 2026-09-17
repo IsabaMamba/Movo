@@ -32,7 +32,7 @@ export function SignInScreen() {
   return (
     <View style={s.screen}>
       <Text style={s.title}>Iniciar sesión</Text>
-      <Text style={s.subtitle}>Movo — actividades cerca de vos</Text>
+      <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
 
       <Text style={s.label}>Correo</Text>
       <TextInput
@@ -41,7 +41,7 @@ export function SignInScreen() {
         autoComplete="email"
         inputMode="email"
         onChangeText={setEmail}
-        placeholder="vos@ejemplo.cr"
+        placeholder="tu@ejemplo.cr"
         placeholderTextColor={color.text.tertiary}
         style={s.input}
         value={email}
@@ -75,7 +75,7 @@ export function SignInScreen() {
            the only sign that anything happened. */
         accessibilityRole="button"
         accessibilityLabel={busy ? 'Entrando…' : 'Entrar'}
-        accessibilityState={{ disabled: busy || !email || !password }}
+        aria-disabled={busy || !email || !password}
         disabled={busy || !email || !password}
         onPress={submit}
         style={[s.button, (busy || !email || !password) && s.buttonDisabled]}
@@ -84,7 +84,7 @@ export function SignInScreen() {
       </Pressable>
 
       <Link href="/sign-up" style={s.link}>
-        <Text style={s.linkText}>¿No tenés cuenta? Registrate</Text>
+        <Text style={s.linkText}>¿No tienes cuenta? Regístrate</Text>
       </Link>
     </View>
   );

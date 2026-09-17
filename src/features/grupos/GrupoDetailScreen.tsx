@@ -159,7 +159,7 @@ export function GrupoDetailScreen() {
           <Text style={s.emptyBody}>
             {session
               ? 'La lista es visible para quienes ya son parte del grupo.'
-              : 'Iniciá sesión para ver quién está.'}
+              : 'Inicia sesión para ver quién está.'}
           </Text>
         )}
       </View>
@@ -174,10 +174,10 @@ export function GrupoDetailScreen() {
               accessibilityLabel={busy ? 'Un momento…' : isMember ? 'Salir del grupo' : 'Unirme'}
               accessibilityHint={
                 isMember
-                  ? 'Dejás de ser parte del grupo y perdés acceso a sus sesiones para miembros.'
+                  ? 'Dejas de ser parte del grupo y pierdes acceso a sus sesiones para miembros.'
                   : undefined
               }
-              accessibilityState={{ disabled: busy }}
+              aria-disabled={busy}
               disabled={busy}
               onPress={toggle}
               style={[isMember ? s.secondary : s.primary, busy && s.primaryDisabled]}
@@ -188,7 +188,7 @@ export function GrupoDetailScreen() {
             </Pressable>
             {mine?.role !== 'member' && isMember && (
               <Text style={s.hint}>
-                Organizás este grupo. Las sesiones que crees pueden ser solo para miembros.
+                Organizas este grupo. Las sesiones que crees pueden ser solo para miembros.
               </Text>
             )}
           </>
@@ -197,7 +197,7 @@ export function GrupoDetailScreen() {
         )
       ) : (
         <Link href="/sign-in" style={s.back}>
-          <Text style={s.linkText}>Iniciá sesión para unirte</Text>
+          <Text style={s.linkText}>Inicia sesión para unirte</Text>
         </Link>
       )}
     </ScrollView>

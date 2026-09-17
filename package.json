@@ -2,7 +2,7 @@
   "name": "movo",
   "version": "0.1.0",
   "private": true,
-  "description": "Movo — group activity discovery for Costa Rica",
+  "description": "Movo \u2014 group activity discovery for Costa Rica",
   "main": "expo-router/entry",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
@@ -21,7 +21,11 @@
     "db:reset": "supabase db reset",
     "db:push": "supabase db push",
     "db:test": "./scripts/db-test.sh",
-    "verify": "npm run format:check && npm run lint && npm run typecheck"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run check:voice && npm run check:migrations && npm run test",
+    "check:voice": "node scripts/check-voice.mjs",
+    "check:migrations": "node scripts/check-migrations.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -30,7 +34,8 @@
     "eslint": "^10.10.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^3.2.7"
   },
   "dependencies": {
     "@expo-google-fonts/barlow": "^0.4.1",

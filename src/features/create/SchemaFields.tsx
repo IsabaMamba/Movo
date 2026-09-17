@@ -101,14 +101,14 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                 value={values[key] === true}
               />
             ) : property.enum ? (
-              <View accessibilityRole="tablist" accessibilityLabel={a11yLabel} style={s.chipRow}>
+              <View accessibilityRole="radiogroup" accessibilityLabel={a11yLabel} style={s.chipRow}>
                 {property.enum.map((option) => {
                   const on = values[key] === option;
                   return (
                     <Pressable
-                      accessibilityRole="tab"
+                      accessibilityRole="radio"
                       accessibilityLabel={option}
-                      accessibilityState={{ selected: on }}
+                      aria-checked={on}
                       hitSlop={CHIP_HIT_SLOP}
                       key={option}
                       onPress={() => {
@@ -134,7 +134,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                     <Pressable
                       accessibilityRole="checkbox"
                       accessibilityLabel={`${label}: ${option}`}
-                      accessibilityState={{ checked: on }}
+                      aria-checked={on}
                       hitSlop={CHIP_HIT_SLOP}
                       key={option}
                       onPress={() => {

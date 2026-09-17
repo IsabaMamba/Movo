@@ -249,7 +249,7 @@ export function DiscoverScreen() {
       </View>
 
       <ScrollView
-        accessibilityRole="tablist"
+        accessibilityRole="radiogroup"
         accessibilityLabel="Filtrar por categoría"
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -257,9 +257,9 @@ export function DiscoverScreen() {
       >
         <View style={s.filterRow}>
           <Pressable
-            accessibilityRole="tab"
+            accessibilityRole="radio"
             accessibilityLabel="Todas las categorías"
-            accessibilityState={{ selected: selected === null }}
+            aria-checked={selected === null}
             hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
               setSelected(null);
@@ -272,9 +272,9 @@ export function DiscoverScreen() {
             const on = selected === category.id;
             return (
               <Pressable
-                accessibilityRole="tab"
+                accessibilityRole="radio"
                 accessibilityLabel={category.name_es}
-                accessibilityState={{ selected: on }}
+                aria-checked={on}
                 hitSlop={CHIP_HIT_SLOP}
                 key={category.id}
                 onPress={() => {
@@ -290,7 +290,7 @@ export function DiscoverScreen() {
       </ScrollView>
 
       <ScrollView
-        accessibilityRole="tablist"
+        accessibilityRole="radiogroup"
         accessibilityLabel="Radio de búsqueda"
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -301,9 +301,9 @@ export function DiscoverScreen() {
             const on = radiusM === metres;
             return (
               <Pressable
-                accessibilityRole="tab"
+                accessibilityRole="radio"
                 accessibilityLabel={`Buscar en ${metres / 1000} kilómetros a la redonda`}
-                accessibilityState={{ selected: on }}
+                aria-checked={on}
                 hitSlop={CHIP_HIT_SLOP}
                 key={metres}
                 onPress={() => {
@@ -357,11 +357,11 @@ export function DiscoverScreen() {
             <View style={s.centred}>
               <Text style={s.emptyTitle}>Todavía no hay sesiones acá</Text>
               <Text style={s.emptyBody}>
-                Probá ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
+                Prueba ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
                 grupos que ya entrenan en la GAM.
               </Text>
               <Link href="/solo">
-                <Text style={s.linkText}>Igual podés ir — modo solo</Text>
+                <Text style={s.linkText}>Igual puedes ir — modo solo</Text>
               </Link>
             </View>
           }
@@ -395,11 +395,7 @@ export function DiscoverScreen() {
                   <Text style={s.cardTitle}>{item.title}</Text>
                   {/* The dot and the occupancy line encode the same variable, so
                       to a screen reader the dot is decoration. */}
-                  <View
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    style={[s.heatDot, { backgroundColor: heatColor(density) }]}
-                  />
+                  <View aria-hidden style={[s.heatDot, { backgroundColor: heatColor(density) }]} />
                 </View>
                 <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
                 {item.series_id ? (

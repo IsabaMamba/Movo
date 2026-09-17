@@ -92,16 +92,16 @@ interface Banner {
 }
 
 const CONFIRM_TEXT: Record<Intent, string> = {
-  actioned: `«Actuar» deja registrado que el equipo tomó una decisión sobre esto. Escribí qué se hizo: es lo único que lo va a explicar después. ${RECORD_ONLY} No se puede deshacer.`,
+  actioned: `«Actuar» deja registrado que el equipo tomó una decisión sobre esto. Escribe qué se hizo: es lo único que lo va a explicar después. ${RECORD_ONLY} No se puede deshacer.`,
   dismissed: `«Descartar» deja registrado que no hay nada que hacer acá. La nota es opcional. ${RECORD_ONLY} No se puede deshacer.`,
 };
 
 const RESULT_TEXT = {
   reviewing: 'Quedó marcado como en revisión. A quien reportó no le llega nada todavía.',
   actioned:
-    'Quedó registrado que el equipo actuó, con tu nota. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encontrás en Resueltos.',
+    'Quedó registrado que el equipo actuó, con tu nota. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encuentras en Resueltos.',
   dismissed:
-    'Quedó descartado. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encontrás en Resueltos.',
+    'Quedó descartado. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encuentras en Resueltos.',
 } as const;
 
 const VIEW_LABEL: Record<QueueView, string> = {
@@ -395,7 +395,7 @@ export function ReportQueueScreen() {
                 accessibilityHint={
                   ready
                     ? `${RECORD_ONLY} No se puede deshacer.`
-                    : 'Escribí primero qué se hizo: sin la nota no queda constancia de nada.'
+                    : 'Escribe primero qué se hizo: sin la nota no queda constancia de nada.'
                 }
                 aria-busy={busy}
                 aria-disabled={!ready || busy}
@@ -462,7 +462,7 @@ export function ReportQueueScreen() {
         record, and the record has no buttons because the function refuses it.
       */}
       <View
-        accessibilityRole="tablist"
+        accessibilityRole="radiogroup"
         accessibilityLabel="Qué parte de la cola"
         style={s.filterRow}
       >
@@ -470,7 +470,7 @@ export function ReportQueueScreen() {
           const on = view === option;
           return (
             <Pressable
-              accessibilityRole="tab"
+              accessibilityRole="radio"
               accessibilityLabel={VIEW_LABEL[option]}
               aria-selected={on}
               hitSlop={CONTROL_HIT_SLOP}
