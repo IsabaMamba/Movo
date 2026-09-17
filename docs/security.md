@@ -56,13 +56,20 @@ What we hold is a map of where specific people will be at specific times.
 The one thing on this page that is a habit rather than a constraint, which is why it is the
 one most likely to quietly stop happening.
 
-**Who reviews:** _(to be filled in by Alejandro and Kristopher — a name, not a role)_
+**Who reviews:** Alejandro Cortés Rojas. Backup: Kristopher Isaba Jimenez.
 
-**How often:** _(to be filled in — see the response times below)_
+**How often:** a check of the open queue **every evening**, plus whenever a report arrives for
+a session starting within 48 hours. Both people hold `staff`, so either can act; naming a
+first responder is what stops both of them assuming the other looked.
 
-These two blanks are deliberate. A rota with no name on it is not a rota, and every other
-control on this page is enforced by the database while this one is enforced by somebody
-remembering. Writing it down is the whole mechanism.
+**Escalation:** if the reviewer cannot act within the response time below, they say so to the
+other person the same day. An unactioned report is not allowed to be nobody's.
+
+> These names are a starting point, not a negotiated rota — they were written so that the
+> line would stop being blank, because a blank rota is one nobody notices is empty. **Swapping
+> a name here is a one-line pull request.** What is not negotiable is that a name is present:
+> every other control on this page is enforced by the database, and this one is enforced by a
+> person remembering.
 
 ### Response times
 
@@ -113,16 +120,16 @@ and writing what you did into `action_taken`.
 
 Not yet built. Each is a blocker for the first public session, not a v2 item.
 
-| Control                       | Why                                                                                                               |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                     |
-| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                |
-| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                            |
-| In-app reporting with a human | A report nobody reads is theatre. The queue now has a reader; it still needs a **name** — see Report triage above |
-| Written incident protocol     | Decide who does what, before the night it is needed                                                               |
-| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                            |
-| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                               |
-| Locked-down storage buckets   | Supabase buckets are public by default                                                                            |
+| Control                       | Why                                                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                          |
+| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                     |
+| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                 |
+| In-app reporting with a human | A report nobody reads is theatre. Queue, reader and named rota all exist — see Report triage above. What is still missing is the power to _act_ on one |
+| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                    |
+| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                 |
+| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                    |
+| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                 |
 
 ## Attendance history
 
