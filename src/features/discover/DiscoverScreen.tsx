@@ -7,7 +7,7 @@
  * the cold-start argument in docs/architecture.md.
  */
 
-import { Link, useRouter } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,9 +20,11 @@ import {
 } from 'react-native';
 
 import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../../lib/activities';
+import { countUnreadNotifications, unreadA11yLabel } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
+import { unreadLinkStyles as u } from '../notifications/styles';
 import {
   densityOf,
   heatColor,
@@ -91,6 +93,36 @@ export function DiscoverScreen() {
   const [activities, setActivities] = useState<NearbyActivity[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [unread, setUnread] = useState(0);
+
+  const userId = session?.user.id;
+
+  /**
+   * On focus, not on mount. Descubrir stays mounted underneath /avisos, so a
+   * count read once would still say 2 after both avisos had been read — and a
+   * badge that outlives what it counts teaches people to ignore it.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) {
+        setUnread(0);
+        return;
+      }
+      let cancelled = false;
+
+      countUnreadNotifications(supabase, userId)
+        .then((count) => {
+          if (!cancelled) setUnread(count);
+        })
+        .catch(() => {
+          // A failed count must not blank the sessions below it.
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [userId]),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +189,28 @@ export function DiscoverScreen() {
           {session ? (
             <>
               <Text style={s.accountText}>{session.user.email}</Text>
+              {/* Before Mis sesiones: an aviso is something that happened to a
+                  plan you already made, and a list of plans can wait. */}
+              <Link href="/avisos" asChild>
+                <Pressable
+                  /* The word and the number are one thing to say, not a label
+                     followed by a loose digit — hence one composed label, and
+                     hence the badge itself hidden from assistive technology. */
+                  accessible
+                  accessibilityRole="link"
+                  accessibilityLabel={unreadA11yLabel(unread)}
+                  aria-live="polite"
+                  hitSlop={hitSlopFor(size.controlSm)}
+                  style={u.link}
+                >
+                  <Text style={s.linkText}>Avisos</Text>
+                  {unread > 0 && (
+                    <View aria-hidden style={u.badge}>
+                      <Text style={u.badgeText}>{unread > 99 ? '99+' : unread}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              </Link>
               {/* Before Crear and Organizar: most people attend sessions and
                   organise none, so the one that is theirs comes first. */}
               <Link href="/mis-sesiones">
