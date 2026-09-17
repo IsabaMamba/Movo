@@ -148,18 +148,32 @@ find is a dead end.
 regional vocabulary. This costs a little local warmth and buys the ability to launch in
 Panamá or Colombia without a copy rewrite. `locale = 'es-419'` in `src/theme/a11y.ts`.
 
-**Confirmed and applied, 15 September 2026.** The app had drifted to `vos` — not by decision,
-but because each screen matched the one before it and this paragraph was never consulted. It
-reached 39 occurrences across 14 files before anybody counted. All of them are now `tú`.
+**Confirmed and applied, 15–17 September 2026.** The app had drifted to `vos` — not by
+decision, but because each screen matched the one before it and this paragraph was never
+consulted. It reached 39 occurrences across 14 files before anybody counted.
 
-The reason is unchanged and worth restating, because the pull towards `vos` will come back
-every time somebody writes a screen in San José: _podés_ reads as a foreign app to a user in
-Bogotá or Panama City. Not unintelligible — visibly not theirs. `tú` is neutral everywhere in
-Latin America, and it is the same argument that put a currency code on money from day one.
+Those 39 were converted, and the audit then recorded "zero voseo in `src/`". **That was wrong
+by 19.** The sweep had been run against a hand-written list of verb forms, so it found what it
+already knew to look for and missed `perdés`, `volvés`, `encontrás`, `poné`, `Contanos` and a
+dozen more — three of them written that same day, in the same pass that declared the job
+finished.
 
-`vos` in new copy is a defect, not a style choice. It was 23 occurrences on 8 September and 39
-a week later; the cost of leaving it open compounds, and a sweep is only cheap while the
-number is small.
+The fix is not a longer list. `scripts/check-voice.mjs` matches the _shape_ — a stressed
+`-ás` / `-és` / `-ís` ending, with ordinary Spanish (`más`, `después`, `país`) allow-listed by
+name — and it runs in `npm run verify` and as its own CI step. Allow-listing words that are
+fine is safe to extend; deny-listing words that are wrong is what failed. The script's own
+comment is honest about the half that is still a list: a voseo imperative (`dejá`, `poné`)
+has the same shape as `día` and `café`, so that half enumerates and will miss a verb nobody
+has added yet.
+
+The reason for `tú` is unchanged and worth restating, because the pull towards `vos` will come
+back every time somebody writes a screen in San José: _podés_ reads as a foreign app to a user
+in Bogotá or Panama City. Not unintelligible — visibly not theirs. `tú` is neutral everywhere
+in Latin America, and it is the same argument that put a currency code on money from day one.
+
+`vos` in new copy is a defect, not a style choice. It was 23 occurrences on 8 September, 39 a
+week later, and 19 more behind a sweep that reported none. The cost of leaving it open
+compounds, which is the whole argument for spending a CI step on it.
 
 Tone is energetic and direct, and **not gendered**. The "masculine, energetic" line in the
 original roles brief was dropped: the highest trust barrier in this product sits with the

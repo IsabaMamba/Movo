@@ -146,7 +146,7 @@ export function OrganizerHomeScreen() {
         <ActivityIndicator />
       ) : activities.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.sectionTitle}>Todavía no organizás nada</Text>
+          <Text style={s.sectionTitle}>Todavía no organizas nada</Text>
           <Text style={s.emptyBody}>
             Crea una sesión y aquí vas a ver quién se apunta y quién llegó.
           </Text>

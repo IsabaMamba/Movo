@@ -193,7 +193,7 @@ export function EditSessionScreen() {
   const capacityFloor = Math.max(2, activity.joined_count);
 
   const missing: string[] = [];
-  if (title.trim().length < 3) missing.push('poné un título de al menos 3 letras');
+  if (title.trim().length < 3) missing.push('pon un título de al menos 3 letras');
   if (!startsValid) missing.push('revisa el día y la hora');
   else if (startsInPast) missing.push('la sesión no puede empezar en el pasado');
   if (!Number.isFinite(durationMinutes) || durationMinutes < 15) {
