@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   quality:
-    name: Format, lint, types, tests
+    name: Format, lint, types
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
