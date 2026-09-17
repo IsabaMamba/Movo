@@ -56,6 +56,32 @@ insert into public.reports (id, reporter_id, subject_type, subject_id, reason, d
    'bb000000-0000-0000-0000-0000000000b2', 'activity',
    '22222222-2222-2222-2222-222222222222', 'spam', 'Otro reporte');
 
+-- ------------------------------------------- who is staff cannot be asked
+
+-- is_staff() answers only about the caller. An overload that takes an id is an
+-- oracle: profiles are world-readable, so walking every profile id through it
+-- lists the whole team, which is what keeping `staff` in its own table prevents.
+do $$ begin
+  if exists (
+    select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public' and p.proname = 'is_staff' and p.pronargs > 0
+  ) then
+    raise exception 'FAIL: is_staff() can be asked about somebody other than the caller';
+  end if;
+
+  -- New functions are executable by PUBLIC unless revoked, the same trap as
+  -- the default table privileges, one object type over.
+  if has_function_privilege('anon', 'public.is_staff()', 'execute') then
+    raise exception 'FAIL: anon can execute is_staff()';
+  end if;
+  if has_function_privilege(
+       'anon', 'public.resolve_report(uuid, public.report_status, text)', 'execute') then
+    raise exception 'FAIL: anon can execute resolve_report()';
+  end if;
+end $$;
+
 -- ------------------------------------------- a user with no role assigned
 
 select set_config('request.jwt.claim.sub', 'bb000000-0000-0000-0000-0000000000b1', true);
@@ -69,6 +95,12 @@ begin
   if v_count <> 1 then
     raise exception
       'FAIL: a user without the staff role reads % reports, expected only their own', v_count;
+  end if;
+end $$;
+
+do $$ begin
+  if public.is_staff() then
+    raise exception 'FAIL: a user without the role is treated as staff';
   end if;
 end $$;
 
@@ -123,6 +155,12 @@ begin
   select count(*) into v_count from public.reports;
   if v_count <> 2 then
     raise exception 'FAIL: staff reads % reports, expected the whole queue of 2', v_count;
+  end if;
+end $$;
+
+do $$ begin
+  if not public.is_staff() then
+    raise exception 'FAIL: a staff member is not recognised as staff';
   end if;
 end $$;
 
