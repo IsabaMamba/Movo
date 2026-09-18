@@ -73,7 +73,7 @@ function standingOf(entry: MyParticipation, past: boolean): Standing {
       text: s.badgeMissText,
       // Somebody else wrote this about you. Saying who, and that it can be
       // disputed, is the difference between a record and an accusation.
-      note: 'Lo marcó quien organiza al cerrar la sesión. Si no es así, escribile.',
+      note: 'Lo marcó quien organiza al cerrar la sesión. Si no es así, escríbele.',
     };
   }
 
