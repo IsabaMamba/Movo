@@ -27,6 +27,21 @@
  *      so this half enumerates. **If you add copy with an imperative this
  *      list does not carry, nothing will complain.** Add it when you notice.
  *
+ *   3. ENCLITIC — derived from rule 2, so it inherits the list's reach and
+ *      nothing more. A pronoun attached to a voseo imperative takes the
+ *      stress without an accent: `agregá` + `lo` is `agregalo`, `escribí` +
+ *      `me` is `escribime`. The `tú` form of the same word is always
+ *      different — accented (`agrégalo`, `escríbeme`) or a different stem
+ *      (`dime`, `hazlo`) — so an imperative from the list with its accent
+ *      removed and a pronoun after it is voseo and nothing else. Every
+ *      accented entry in rule 2 gets this for free.
+ *
+ * On 18 September this file reported "clean" over fifteen occurrences in
+ * seven files: eight from four imperatives the list did not carry, and seven
+ * enclitic forms no rule covered. A search by hand the same morning found
+ * fourteen and missed `escribile`; rule 3 found it on its first run. The
+ * list grew, and rule 3 exists, because of that.
+ *
  * Run by `npm run verify` and by CI.
  */
 
@@ -56,14 +71,90 @@ const ALLOWED = new Set([
   'mes',
   'país',
   'estás', // `tú estás` — the same word in both voices
+  // Rule 3 reads identifiers too, and English collides with it: `creá` + `te`
+  // is `create`, as in `StyleSheet.create`.
+  'create',
 ]);
 
 /**
- * Rule 2: the imperatives, plus the pronouns and the two irregulars that
- * carry no accent at all. Enumerated, for the reason given above.
+ * Rule 2: the imperatives. Enumerated, for the reason given above.
  */
-const LISTED =
-  /(?<![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])(vos|sos|vení|andá|mirá|dejá|poné|tené|hacé|decí|salí|entrá|escribí|compartí|elegí|guardá|creá|buscá|probá|contá|contame|contanos|avisá|avisanos|apuntate|unite|revisá|esperá|volvé|mandá|fijate|acordate|sentate|quedate|llevá|traé|pedí|abrí|cerrá|marcá|tocá|cambiá|agregá|borrá|subí|bajá)(?![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])/giu;
+const IMPERATIVES = [
+  'vení',
+  'andá',
+  'mirá',
+  'dejá',
+  'poné',
+  'tené',
+  'hacé',
+  'decí',
+  'salí',
+  'entrá',
+  'escribí',
+  'compartí',
+  'elegí',
+  'guardá',
+  'creá',
+  'buscá',
+  'probá',
+  'contá',
+  'avisá',
+  'revisá',
+  'esperá',
+  'volvé',
+  'mandá',
+  'llevá',
+  'traé',
+  'pedí',
+  'abrí',
+  'cerrá',
+  'marcá',
+  'tocá',
+  'cambiá',
+  'agregá',
+  'borrá',
+  'subí',
+  'bajá',
+  // Added 18 September, found in copy the check had passed.
+  'cancelá',
+  'publicá',
+  'pegá',
+  'copiá',
+];
+
+/**
+ * The pronouns, and enclitic forms whose imperative is not in the list
+ * above — rule 3 derives the rest.
+ */
+const OTHER = [
+  'vos',
+  'sos',
+  'contame',
+  'contanos',
+  'avisanos',
+  'apuntate',
+  'unite',
+  'fijate',
+  'acordate',
+  'sentate',
+  'quedate',
+];
+
+const LISTED = new RegExp(
+  `(?<!${LETTER})(?:${[...IMPERATIVES, ...OTHER].join('|')})(?!${LETTER})`,
+  'giu',
+);
+
+/** Rule 3: `agregá` → `agregalo`. Strip the accent, allow a pronoun after it. */
+const stripAccent = (word) =>
+  word
+    .normalize('NFD')
+    .replace(/\u0301/g, '')
+    .normalize('NFC');
+const ENCLITIC = new RegExp(
+  `(?<!${LETTER})(?:${IMPERATIVES.map(stripAccent).join('|')})(?:lo|la|los|las|le|les|me|nos|te)(?!${LETTER})`,
+  'giu',
+);
 
 function walk(dir) {
   const out = [];
@@ -89,6 +180,10 @@ for (const file of walk(ROOT)) {
       findings.push({ file, line: i + 1, word: match[0], text: trimmed });
     }
     for (const match of line.matchAll(LISTED)) {
+      findings.push({ file, line: i + 1, word: match[0], text: trimmed });
+    }
+    for (const match of line.matchAll(ENCLITIC)) {
+      if (ALLOWED.has(match[0].toLowerCase())) continue;
       findings.push({ file, line: i + 1, word: match[0], text: trimmed });
     }
   });
