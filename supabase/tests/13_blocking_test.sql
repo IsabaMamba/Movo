@@ -11,6 +11,11 @@
 -- the predicate is the only thing standing between a person who blocked
 -- somebody and that person's sessions appearing in their feed.
 --
+-- A ninth call site lives in `zone_heat()` and is checked in
+-- `14_zones_test.sql`, next to the zone fixture it needs. It was missing when
+-- `0014` landed: an aggregate is a read path like any other, and a count in a
+-- small district answers "is that person organizing this week".
+--
 -- Symmetry is the part most likely to be quietly wrong, because it is the
 -- part that looks redundant. The function ORs both orderings:
 --
