@@ -37,7 +37,7 @@
  *      accented entry in rule 2 gets this for free.
  *
  * On 18 September this file reported "clean" over fifteen occurrences in
- * seven files: eight from four imperatives the list did not carry, and seven
+ * six files: eight from four imperatives the list did not carry, and seven
  * enclitic forms no rule covered. A search by hand the same morning found
  * fourteen and missed `escribile`; rule 3 found it on its first run. The
  * list grew, and rule 3 exists, because of that.
