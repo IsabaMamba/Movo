@@ -202,6 +202,83 @@ begin
   end if;
 end $$;
 
+-- ------------------------------------------ a venue that predates the grid
+-- The zones arrive after the app has been running: every venue created before
+-- the loader ran resolved against an empty table and carries no code. The
+-- loader documents a backfill for exactly this, and the backfill has to work,
+-- because zone_heat() drops an unresolved venue silently — the district comes
+-- back as terrain, which reads as "nothing happens here" rather than as "this
+-- venue was never placed".
+insert into public.locations (id, name, geog, is_public_venue)
+values ('aaaa0000-0000-0000-0000-000000000004', 'Predecesora',
+        extensions.st_setsrid(extensions.st_makepoint(-87.075, 10.05), 4326)::extensions.geography,
+        true);
+
+-- Put it back the way the loader finds it: inserted before any zone existed.
+update public.locations
+   set district_code = null
+ where id = 'aaaa0000-0000-0000-0000-000000000004';
+
+-- The recipe printed by scripts/load-zones.mjs, verbatim.
+update public.locations
+   set geog = geog
+ where district_code is null;
+
+do $$
+begin
+  if (select district_code from public.locations
+       where id = 'aaaa0000-0000-0000-0000-000000000004') is distinct from '90101' then
+    raise exception
+      'the documented backfill left a venue that predates the grid without a zone';
+  end if;
+end $$;
+
+-- ----------------------------------------- blocking reaches the aggregate
+-- Every other read path filters is_blocked(): the activities_read policy,
+-- nearby_activities() in 0002 and 0005, the series collapse in 0009.
+-- 13_blocking_test.sql owns that claim. zone_heat() is a read path too, and
+-- being SECURITY DEFINER it does not get the policy for free — the filter has
+-- to be written into the query. A count is a channel: in a district with few
+-- sessions, "is that person organizing this week" is answerable from it.
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('bbbb0000-0000-0000-0000-000000000002', 'mirona@test.cr',  '{"display_name":"Mirona"}'),
+  ('bbbb0000-0000-0000-0000-000000000003', 'tercera@test.cr', '{"display_name":"Tercera"}');
+
+insert into public.blocks (blocker_id, blocked_id)
+values ('bbbb0000-0000-0000-0000-000000000001', 'bbbb0000-0000-0000-0000-000000000002');
+
+do $$
+declare
+  v_control integer;
+  v_blocked integer;
+begin
+  -- Tercera is uninvolved, and is the control: without her the test would
+  -- pass just as well if zone_heat returned nothing to anybody.
+  perform set_config('request.jwt.claim.sub', 'bbbb0000-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  select coalesce(sum(sessions), 0) into v_control
+    from public.zone_heat('provincia', now(), now() + interval '7 days')
+   where code = '9';
+  reset role;
+
+  perform set_config('request.jwt.claim.sub', 'bbbb0000-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select coalesce(sum(sessions), 0) into v_blocked
+    from public.zone_heat('provincia', now(), now() + interval '7 days')
+   where code = '9';
+  reset role;
+
+  perform set_config('request.jwt.claim.sub', '', true);
+
+  if v_control <> 3 then
+    raise exception 'the control saw % sessions in provincia 9, expected 3', v_control;
+  end if;
+  if v_blocked <> 0 then
+    raise exception
+      'zone_heat counted % sessions from an organizer who blocked the caller', v_blocked;
+  end if;
+end $$;
+
 -- ------------------------------------------------------------- grants
 -- zones carries public geography, but no client writes it, and the boundary
 -- polygons are not a column a client needs.
