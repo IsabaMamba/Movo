@@ -75,7 +75,7 @@ function explain(cause: unknown): string {
     return 'La sesión ya empezó y no se puede editar.';
   }
   if (message.includes('different currency')) {
-    return 'Ese lugar cobra en otra moneda. Cancelá y publicá la sesión de nuevo.';
+    return 'Ese lugar cobra en otra moneda. Cancela y publica la sesión de nuevo.';
   }
   return message || 'No se pudieron guardar los cambios.';
 }
@@ -303,8 +303,8 @@ export function EditSessionScreen() {
             <Text style={s.bannerText}>
               Ya {onRoster === 1 ? 'hay 1 persona apuntada' : `hay ${onRoster} personas apuntadas`}.
               La hora y el lugar quedan fijos: Movo todavía no manda avisos, así que moverlos las
-              mandaría al lugar o a la hora equivocada sin enterarse. Si tiene que cambiar, cancelá
-              esta sesión y publicá otra.
+              mandaría al lugar o a la hora equivocada sin enterarse. Si tiene que cambiar, cancela
+              esta sesión y publica otra.
             </Text>
           </View>
         )}

@@ -122,7 +122,7 @@ export function SoloScreen() {
     ? `Voy a ${venue.name}${venue.district ? ` (${venue.district})` : ''}. ` +
       `Salgo ${clockAt(now)} y calculo volver ${clockAt(back)}.` +
       (note.trim() ? ` ${note.trim()}` : '') +
-      ' Si no te aviso para esa hora, escribime.'
+      ' Si no te aviso para esa hora, escríbeme.'
     : '';
 
   const share = () => {

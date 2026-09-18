@@ -39,7 +39,7 @@ function geolocation(): Geolocation | null {
   return navigator.geolocation ?? null;
 }
 
-const PASTE_HINT = 'Pegá el enlace de Google Maps o Waze, o las coordenadas: 9.9358, -84.1050';
+const PASTE_HINT = 'Pega el enlace de Google Maps o Waze, o las coordenadas: 9.9358, -84.1050';
 
 export function AddVenue({ userId, onCreated }: Props) {
   const [open, setOpen] = useState(false);
@@ -75,7 +75,7 @@ export function AddVenue({ userId, onCreated }: Props) {
     switch (parsed.reason) {
       case 'short_link':
         setCoordError(
-          'Ese enlace corto no trae las coordenadas. Abrilo en el mapa y copiá la dirección completa de la barra, o las coordenadas.',
+          'Ese enlace corto no trae las coordenadas. Ábrelo en el mapa y copia la dirección completa de la barra, o las coordenadas.',
         );
         break;
       case 'out_of_range':
@@ -91,7 +91,7 @@ export function AddVenue({ userId, onCreated }: Props) {
   const useMyLocation = () => {
     const geo = geolocation();
     if (!geo) {
-      setCoordError('Este dispositivo no comparte ubicación desde el navegador. Pegá el enlace.');
+      setCoordError('Este dispositivo no comparte ubicación desde el navegador. Pega el enlace.');
       return;
     }
 
@@ -107,7 +107,7 @@ export function AddVenue({ userId, onCreated }: Props) {
       () => {
         setLocating(false);
         setCoordError(
-          'No pudimos leer tu ubicación. Puede que el navegador la tenga bloqueada — pegá el enlace.',
+          'No pudimos leer tu ubicación. Puede que el navegador la tenga bloqueada — pega el enlace.',
         );
       },
       { enableHighAccuracy: true, timeout: 10_000 },
@@ -167,7 +167,7 @@ export function AddVenue({ userId, onCreated }: Props) {
           }}
           style={s.toggle}
         >
-          <Text style={s.toggleText}>¿No está el lugar? Agregalo</Text>
+          <Text style={s.toggleText}>¿No está el lugar? Agrégalo</Text>
         </Pressable>
       </View>
     );

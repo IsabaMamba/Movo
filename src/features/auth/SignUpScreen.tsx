@@ -30,7 +30,7 @@ export function SignUpScreen() {
         {/* Nothing else marks the transition: the form is replaced in place, so
             this text is the whole outcome of pressing the button. */}
         <Text accessibilityRole="alert" style={s.notice}>
-          Te enviamos un enlace de confirmación a {email.trim()}. Abrilo para activar tu cuenta y
+          Te enviamos un enlace de confirmación a {email.trim()}. Ábrelo para activar tu cuenta y
           después inicia sesión.
         </Text>
         <Link href="/sign-in" style={s.link}>

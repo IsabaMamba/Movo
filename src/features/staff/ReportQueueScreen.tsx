@@ -264,7 +264,7 @@ export function ReportQueueScreen() {
                 <Text style={s.subjectMissing}>
                   No podemos abrir la sesión reportada ({report.subject_id.slice(0, 8)}). Puede que
                   la hayan cancelado o que sea de un grupo privado: la política de lectura de
-                  sesiones todavía no incluye al equipo. Buscala en el panel.
+                  sesiones todavía no incluye al equipo. Búscala en el panel.
                 </Text>
               )}
             </View>
@@ -272,7 +272,7 @@ export function ReportQueueScreen() {
             <View style={s.subject}>
               <Text style={s.subjectMissing}>
                 Movo todavía no muestra acá lo que se reportó cuando no es una sesión (
-                {report.subject_id.slice(0, 8)}). Buscalo en el panel.
+                {report.subject_id.slice(0, 8)}). Búscalo en el panel.
               </Text>
             </View>
           )}
