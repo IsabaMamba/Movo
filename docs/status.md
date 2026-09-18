@@ -36,6 +36,7 @@ column is maintained by hand.
 | `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | yes     |
 | `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
 | `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | **no**  |
+| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | **no**  |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 **`0014` is not applied and carries no data**: it creates the zone schema and the heat read, and
