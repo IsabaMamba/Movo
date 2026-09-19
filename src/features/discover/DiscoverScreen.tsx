@@ -36,6 +36,7 @@ import {
   size,
 } from '../../theme';
 import { formatDistance } from './format';
+import { HeatBand } from './HeatBand';
 import { discoverStyles as s } from './styles';
 
 /**
@@ -247,6 +248,10 @@ export function DiscoverScreen() {
           )}
         </View>
       </View>
+
+      {/* Above the filters, as designed: it summarises the week before the
+          chips narrow it. Signed-in only — zone_heat() is not granted to anon. */}
+      {session ? <HeatBand centre={GAM_CENTRE} radiusM={radiusM} /> : null}
 
       <ScrollView
         accessibilityRole="radiogroup"
