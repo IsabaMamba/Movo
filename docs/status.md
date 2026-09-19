@@ -35,12 +35,28 @@ column is maintained by hand.
 | `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | yes     |
 | `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | yes     |
 | `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
-| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | **no**  |
-| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | **no**  |
+| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | yes     |
+| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
-**`0014` is not applied and carries no data**: it creates the zone schema and the heat read, and
-the boundaries are loaded separately — see `scripts/load-zones.mjs`.
+`0014` and `0015` were applied on 19 September and **carry no data**: `zones` is empty, so every
+venue has a null `district_code` and `zone_heat()` returns nothing. Verified as `anon` afterwards:
+`zone_heat`, `resolve_zone` and `zones` all refuse with `42501`, and `locations` still reads.
+
+**The heat map is blocked on two things, and the first is not code.**
+
+- **Licence.** The authoritative source exists and is current — layer
+  `IGN_5_CO:limitedistrital_5k` on `https://geos.snitcr.go.cr/be/IGN_5_CO/wfs`, edition
+  2026-04-10, exactly 494 / 84 / 7, every code five digits. But the
+  [SNIT conditions of use](https://www.snitcr.go.cr/snit_condiciones) say commercial use of the
+  geographic information, _direct or derived_, "no está autorizado bajo ninguna condición".
+  Whether Movo is commercial use is a question for the IGN or for counsel — add it to the
+  Ley 8968 review — not one to settle by assumption. Nothing has been downloaded or stored.
+- **The loader is not implemented.** `scripts/load-zones.mjs` reads and validates a file, then
+  exits with "Not implemented past this point". Which way it should load depends on the
+  licence: a seed migration puts the geometry in this public repository, which is
+  redistribution; a direct connection with `PGURI` keeps it out of git but needs the database
+  password on whoever runs it.
 
 The report queue got its first readers on 17 September: two rows inserted into `staff` from the
 Supabase panel, by hand, on purpose — no client can grant itself that role.
