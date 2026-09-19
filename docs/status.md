@@ -37,7 +37,7 @@ column is maintained by hand.
 | `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
 | `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | yes     |
 | `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | yes     |
-| `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed      | **no**  |
+| `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed      | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -63,6 +63,12 @@ Three consequences to keep:
   were traced from it, and the OSM wiki records no permission from the IGN. Whether licensed
   OSM data carries the upstream restriction is a question for counsel — the same question as the
   IGN one, so ask it once.
+
+`0016` was applied on 19 September; its own check confirmed 7 / 84 / 494 before finishing.
+All seven venues now carry a `district_code`, `zones` and `zone_heat` still refuse `anon`, and
+`zone_heat()` read with the service role returns heat for the next 30 days — in exactly two
+zones, which are the two suspect coordinates below. On today's data the map would light up
+Heredia and Mora for sessions meant to be in Tibás and Escazú.
 
 Three venues resolve to a different district than the one typed for them — Pico Blanco (Colón,
 Mora, typed Escazú), Canchas de Fonseca (San Juan, Tibás, typed Moravia) and Parque de la
