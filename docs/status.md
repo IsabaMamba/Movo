@@ -35,12 +35,39 @@ column is maintained by hand.
 | `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                         | yes     |
 | `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                             | yes     |
 | `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series               | yes     |
-| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | **no**  |
-| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | **no**  |
+| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | yes     |
+| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | yes     |
+| `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed      | **no**  |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
-**`0014` is not applied and carries no data**: it creates the zone schema and the heat read, and
-the boundaries are loaded separately — see `scripts/load-zones.mjs`.
+`0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
+`resolve_zone` and `zones` all refuse with `42501`, and `locations` still reads.
+
+**`0016` seeds the zones from OpenStreetMap, not the IGN.** The IGN layer
+(`IGN_5_CO:limitedistrital_5k`, edition 2026-04-10) is authoritative, but the
+[SNIT conditions of use](https://www.snitcr.go.cr/snit_condiciones) do not authorise commercial
+use of the information, direct or derived. OpenStreetMap is ODbL, which does, with attribution.
+Against the IGN: 494 of 494 codes after three corrections, country area within 0.04 %, every
+cantón within 1 %; twelve districts differ by more than 5 %, borders moved between neighbours of
+one cantón. The detail is in the header of `scripts/fetch-osm-zones.mjs`.
+
+Three consequences to keep:
+
+- **Attribution is a condition, not a courtesy.** The heat-map screen must show "© colaboradores
+  de OpenStreetMap" wherever it draws the zones. It does not exist yet; this is the line to
+  remember when it does.
+- **`0016` is ODbL, not under `LICENSE`.** `NOTICE.md` says so. `LICENSE` still claims every file
+  in the repository; changing that sentence is a decision for Kristopher, not a side effect of a
+  migration.
+- **Provenance is not settled.** OSM's lines match the IGN's almost exactly, which suggests they
+  were traced from it, and the OSM wiki records no permission from the IGN. Whether licensed
+  OSM data carries the upstream restriction is a question for counsel — the same question as the
+  IGN one, so ask it once.
+
+Three venues resolve to a different district than the one typed for them — Pico Blanco (Colón,
+Mora, typed Escazú), Canchas de Fonseca (San Juan, Tibás, typed Moravia) and Parque de la
+democracia (Ulloa, Heredia, typed Tibás). Pico Blanco's coordinate was already suspected wrong;
+the other two need somebody who knows the places.
 
 The report queue got its first readers on 17 September: two rows inserted into `staff` from the
 Supabase panel, by hand, on purpose — no client can grant itself that role.

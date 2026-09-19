@@ -89,3 +89,18 @@ written.
 Teal keeps its other jobs: `accent.cool` for icons and links, and the map's resting fill.
 It stops being heat, which clarifies the reading — cool is the map, warm is activity, and
 nothing means both.
+
+## Addendum, 19 September 2026 — the boundaries come from OpenStreetMap
+
+The decision above assumed the IGN division. The IGN layer exists and is current, but the SNIT
+conditions of use do not authorise commercial use of the information, direct or derived, so
+`0016_seed_zones` loads OpenStreetMap's boundaries instead, under the ODbL.
+
+Nothing in the design changes: same codes, same 494 / 84 / 7, same prefix rollup. What changes
+is what the product owes. The ODbL requires attribution wherever the zones are displayed, so the
+map carries "© colaboradores de OpenStreetMap"; and the seed migration is a Derivative Database,
+licensed under the ODbL rather than under `LICENSE`.
+
+The warning above about open mirrors — 83 cantones, 472 districts — does not describe OSM as of
+this date: it has all 84 and 494, once Colorado's code is corrected, Cabagra is given its code,
+and Conte Burica, which OSM carves out of Pavón, is rejoined to it.
