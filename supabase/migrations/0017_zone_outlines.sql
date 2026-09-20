@@ -52,7 +52,10 @@ as $$
          )::jsonb
     from public.zones z
    where z.kind = p_kind
-     and z.boundary::extensions.geometry && extensions.st_makeenvelope(
+     -- OPERATOR(extensions.&&) rather than &&: `search_path = ''` is what
+     -- makes this function safe to run as its owner, and an operator does
+     -- not fall back to a schema the way an unqualified function would.
+     and z.boundary::extensions.geometry OPERATOR(extensions.&&) extensions.st_makeenvelope(
            least(p_west, p_east), least(p_south, p_north),
            greatest(p_west, p_east), greatest(p_south, p_north), 4326)
 $$;
