@@ -8,9 +8,11 @@ import {
   layoutBlobs,
   MIN_BLOB_PX,
   PEOPLE_AT_PEAK,
+  MIN_SPAN_KM,
   pixelsPerKm,
   project,
   SESSION_FLOOR,
+  viewportFor,
   type Viewport,
   type ZoneHeat,
 } from './heatmap';
@@ -21,12 +23,8 @@ import {
  * "quiet" the same as "nothing". The rows below are the live ones from 19
  * September 2026, which is why they are Ulloa and Colón.
  */
-const GAM: Viewport = {
-  centre: { lat: 9.9281, lng: -84.0907 },
-  radiusKm: 15,
-  width: 360,
-  height: 132,
-};
+const CENTRE = { lat: 9.9281, lng: -84.0907 };
+const GAM: Viewport = { centre: CENTRE, spanKm: 15, width: 360, height: 132 };
 
 const ULLOA: ZoneHeat = {
   code: '40104',
@@ -47,6 +45,20 @@ const COLON: ZoneHeat = {
   sessions: 1,
   joined: 3,
 };
+
+describe('viewportFor', () => {
+  it('never looks closer than the minimum span, so a 5 km list still has surroundings', () => {
+    expect(viewportFor(5, 360, 132, CENTRE).spanKm).toBe(MIN_SPAN_KM);
+    expect(viewportFor(50, 360, 132, CENTRE).spanKm).toBe(50);
+  });
+
+  it('shows Ulloa at a 5 km radius, where the list has a session 4.9 km away', () => {
+    // The band filtered to 5 km used to say "nothing scheduled" over a list
+    // with one session: the zone anchor is 7.4 km out, the venue is not.
+    const codes = layoutBlobs([ULLOA], viewportFor(5, 360, 132, CENTRE)).map((b) => b.code);
+    expect(codes).toEqual(['40104']);
+  });
+});
 
 describe('kindForRadius', () => {
   it('draws distritos for the local radii and cantones for the regional one', () => {
@@ -82,7 +94,7 @@ describe('project', () => {
     expect(project(GAM.centre, GAM)).toEqual({ x: 180, y: 66 });
   });
 
-  it('fits the search radius into half the band height', () => {
+  it('fits the span into half the band height', () => {
     // 15 km north of the centre is the top edge.
     const north = project({ lat: GAM.centre.lat + 15 / 110.574, lng: GAM.centre.lng }, GAM);
     expect(north.y).toBeCloseTo(0, 5);
@@ -110,9 +122,17 @@ describe('blobRadius', () => {
 describe('layoutBlobs', () => {
   it('keeps a zone whose glow reaches the band and drops one far outside it', () => {
     const far: ZoneHeat = { ...COLON, code: '70101', name: 'Limón', lat: 9.99, lng: -83.03 };
-    const codes = layoutBlobs([ULLOA, COLON, far], GAM).map((b) => b.code);
+    const codes = layoutBlobs([ULLOA, far], GAM).map((b) => b.code);
     expect(codes).toContain('40104');
     expect(codes).not.toContain('70101');
+  });
+
+  it('keeps a zone the list excludes, because the band is the surroundings', () => {
+    // Colón's anchor is ~19 km west: outside a 5 km list, on the band anyway,
+    // and the component draws the ring that says which it is.
+    expect(layoutBlobs([COLON], viewportFor(5, 360, 132, CENTRE)).map((b) => b.code)).toEqual([
+      '10701',
+    ]);
   });
 
   it('paints the hottest zone last, so it sits on top', () => {
@@ -133,16 +153,16 @@ describe('layoutBlobs', () => {
 
 describe('heatSummary', () => {
   it('reads hottest zone first, in words', () => {
-    const blobs = layoutBlobs([ULLOA, COLON], { ...GAM, radiusKm: 50 });
-    expect(heatSummary(blobs, 50)).toBe(
-      'Mapa de calor de los próximos 7 días a 50 kilómetros: ' +
+    const blobs = layoutBlobs([ULLOA, COLON], { ...GAM, spanKm: 50 });
+    expect(heatSummary(blobs)).toBe(
+      'Mapa de calor de los próximos 7 días alrededor del centro de búsqueda: ' +
         'Ulloa, 4 sesiones y 0 personas apuntadas; Colón, 1 sesión y 3 personas apuntadas.',
     );
   });
 
   it('says so when there is nothing, rather than describing an empty picture', () => {
-    expect(heatSummary([], 5)).toBe(
-      'Mapa de calor: nada programado a 5 kilómetros en los próximos 7 días.',
+    expect(heatSummary([])).toBe(
+      'Mapa de calor: nada programado alrededor del centro de búsqueda en los próximos 7 días.',
     );
   });
 });

@@ -103,14 +103,41 @@ const KM_PER_DEG_LNG_AT_EQUATOR = 111.32;
 
 export interface Viewport {
   centre: LatLng;
-  radiusKm: number;
+  /** Half the band's height, in kilometres. See `viewportFor`. */
+  spanKm: number;
   width: number;
   height: number;
 }
 
-/** Pixels per kilometre: the search radius spans half the band's height. */
+/**
+ * How far the band looks, given the radius the list is filtered to.
+ *
+ * The two do not measure the same thing and must not pretend to. The list
+ * filters by distance to the VENUE; the band only ever knows the distance to
+ * the ZONE's anchor, because that is all `zone_heat()` returns — by design.
+ * Ulloa's anchor is 7.4 km from the centre while the session inside it is
+ * 4.9 km away, so a band filtered to 5 km would say "nothing scheduled" over
+ * a list showing a session, and one filtered to the rectangle would light a
+ * zone the list excludes.
+ *
+ * So the band is the surroundings, not the filter: it never looks closer than
+ * MIN_SPAN_KM, and the component draws the search radius as a ring inside it.
+ * What is yours and what is merely nearby stays visible, and neither lies.
+ */
+export const MIN_SPAN_KM = 15;
+
+export function viewportFor(
+  radiusKm: number,
+  width: number,
+  height: number,
+  centre: LatLng,
+): Viewport {
+  return { centre, spanKm: Math.max(radiusKm, MIN_SPAN_KM), width, height };
+}
+
+/** Pixels per kilometre: `spanKm` reaches from the centre to the band's edge. */
 export function pixelsPerKm(vp: Viewport): number {
-  return vp.height / (2 * vp.radiusKm);
+  return vp.height / (2 * vp.spanKm);
 }
 
 /**
@@ -190,8 +217,8 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
  * this sentence, not the other way round: hottest zone first, because that is
  * where a sighted eye goes.
  */
-export function heatSummary(blobs: readonly Blob[], radiusKm: number): string {
-  const where = `a ${radiusKm} kilómetros`;
+export function heatSummary(blobs: readonly Blob[]): string {
+  const where = 'alrededor del centro de búsqueda';
   if (blobs.length === 0) {
     return `Mapa de calor: nada programado ${where} en los próximos ${HEAT_WINDOW_DAYS} días.`;
   }

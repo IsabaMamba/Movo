@@ -27,6 +27,8 @@ import {
   kindForRadius,
   layoutBlobs,
   PEOPLE_AT_PEAK,
+  pixelsPerKm,
+  viewportFor,
   type LatLng,
   type ZoneHeat,
 } from '../../lib/heatmap';
@@ -77,15 +79,16 @@ export function HeatBand({ centre, radiusM }: Props) {
     setWidth(Math.round(event.nativeEvent.layout.width));
   };
 
-  const viewport = { centre, radiusKm, width, height: BAND_HEIGHT };
+  const viewport = viewportFor(radiusKm, width, BAND_HEIGHT, centre);
   const blobs = zones && width > 0 ? layoutBlobs(zones, viewport) : [];
+  const ringPx = radiusKm * pixelsPerKm(viewport);
   const empty = zones !== null && blobs.length === 0;
 
   const label = failed
     ? 'Mapa de calor no disponible.'
     : zones === null
       ? 'Cargando el mapa de calor.'
-      : heatSummary(blobs, radiusKm);
+      : heatSummary(blobs);
 
   return (
     <View style={s.bandWrap}>
@@ -138,6 +141,20 @@ export function HeatBand({ centre, radiusM }: Props) {
               />
             ))}
 
+            {/* The radius the LIST is filtered to. The band deliberately looks
+              further (see viewportFor), so without this ring a blob outside
+              the filter reads as a session missing from the list. */}
+            <Circle
+              cx={width / 2}
+              cy={BAND_HEIGHT / 2}
+              fill="none"
+              r={ringPx}
+              stroke={color.text.secondary}
+              strokeDasharray="4 4"
+              strokeOpacity={0.55}
+              strokeWidth={1}
+            />
+
             {/* Where the search is centred. Not the viewer's position: Descubrir
               searches from a fixed point in San José until device location
               lands (roadmap P1 · 12). */}
@@ -163,14 +180,14 @@ export function HeatBand({ centre, radiusM }: Props) {
         )}
 
         <Text aria-hidden style={s.bandCaption}>
-          Próximos {HEAT_WINDOW_DAYS} días · todas las actividades
+          Próximos {HEAT_WINDOW_DAYS} días · alrededor
         </Text>
         {(empty || failed) && (
           <View aria-hidden style={s.bandMessage}>
             <Text style={s.bandMessageText}>
               {failed
                 ? 'No se pudo cargar el mapa de calor.'
-                : `Nada programado a ${radiusKm} km esta semana.`}
+                : 'Nada programado por acá esta semana.'}
             </Text>
           </View>
         )}
