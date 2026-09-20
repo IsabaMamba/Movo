@@ -170,10 +170,10 @@ export function HeatBand({ centre, radiusM }: Props) {
               cy={BAND_HEIGHT / 2}
               fill="none"
               r={ringPx}
-              stroke={color.text.secondary}
-              strokeDasharray="4 4"
-              strokeOpacity={0.55}
-              strokeWidth={1}
+              stroke={color.text.primary}
+              strokeDasharray="5 4"
+              strokeOpacity={0.45}
+              strokeWidth={1.2}
             />
 
             {/* Where the search is centred. Not the viewer's position: Descubrir
