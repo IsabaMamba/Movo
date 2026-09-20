@@ -48,6 +48,50 @@ export const discoverStyles = StyleSheet.create({
   legendRamp: { borderRadius: radius.sm, flexDirection: 'row', overflow: 'hidden' },
   legendStop: { height: 6, width: 14 },
 
+  /** The heat band. Height is set by the component, which owns the geometry. */
+  bandWrap: { flexShrink: 0, marginHorizontal: space.xl, marginTop: space.lg },
+  band: {
+    backgroundColor: color.bg.sunken,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  bandCanvas: { left: 0, position: 'absolute', top: 0 },
+  bandCaption: {
+    ...type.caption,
+    color: color.text.secondary,
+    left: space.md,
+    position: 'absolute',
+    top: space.sm,
+  },
+  bandMessage: {
+    alignItems: 'center',
+    bottom: space.xxl,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: space.xxl,
+  },
+  bandMessageText: { ...type.caption, color: color.text.secondary, textAlign: 'center' },
+  bandLegend: {
+    alignItems: 'center',
+    bottom: space.sm,
+    flexDirection: 'row',
+    gap: space.sm,
+    left: space.md,
+    position: 'absolute',
+    right: space.md,
+  },
+  bandScale: { ...type.caption, color: color.text.primary, fontVariant: ['tabular-nums'] },
+  bandRamp: { borderRadius: 2, flex: 1, flexDirection: 'row', height: 6, overflow: 'hidden' },
+  bandStop: { flex: 1 },
+  bandCredit: {
+    ...type.caption,
+    color: color.text.tertiary,
+    marginTop: space.xs,
+    textAlign: 'right',
+  },
+
   list: { paddingBottom: space.huge, paddingHorizontal: space.xl, paddingTop: space.lg },
   card: {
     backgroundColor: color.bg.surface,

@@ -2,7 +2,7 @@
   "name": "movo",
   "version": "0.1.0",
   "private": true,
-  "description": "Movo \u2014 group activity discovery for Costa Rica",
+  "description": "Movo — group activity discovery for Costa Rica",
   "main": "expo-router/entry",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
@@ -54,6 +54,7 @@
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2"
   }
 }
