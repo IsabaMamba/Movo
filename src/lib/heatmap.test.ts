@@ -8,7 +8,9 @@ import {
   layoutBlobs,
   MIN_BLOB_PX,
   PEOPLE_AT_PEAK,
+  boundsFor,
   MIN_SPAN_KM,
+  pathFor,
   pixelsPerKm,
   project,
   SESSION_FLOOR,
@@ -164,5 +166,66 @@ describe('heatSummary', () => {
     expect(heatSummary([])).toBe(
       'Mapa de calor: nada programado alrededor del centro de búsqueda en los próximos 7 días.',
     );
+  });
+});
+
+describe('boundsFor', () => {
+  it('covers the band and a margin, wider than tall because the band is', () => {
+    const b = boundsFor(GAM);
+    expect(b.west).toBeLessThan(GAM.centre.lng);
+    expect(b.east).toBeGreaterThan(GAM.centre.lng);
+    expect(b.south).toBeLessThan(GAM.centre.lat);
+    expect(b.north).toBeGreaterThan(GAM.centre.lat);
+    expect(b.east - b.west).toBeGreaterThan(b.north - b.south);
+  });
+
+  it('asks for more than the band shows, so a shape entering the frame is there', () => {
+    const tight = boundsFor(GAM, 0);
+    const padded = boundsFor(GAM, 40);
+    expect(padded.north).toBeGreaterThan(tight.north);
+    expect(padded.west).toBeLessThan(tight.west);
+  });
+});
+
+describe('pathFor', () => {
+  const square = {
+    type: 'Polygon' as const,
+    coordinates: [
+      [
+        [-84.0907, 9.9281],
+        [-84.0807, 9.9281],
+        [-84.0807, 9.9381],
+        [-84.0907, 9.9381],
+        [-84.0907, 9.9281],
+      ],
+    ],
+  };
+
+  it('closes every ring, starting at the projected first point', () => {
+    const d = pathFor(square, GAM);
+    expect(d.startsWith('M180,66')).toBe(true);
+    expect(d.endsWith('Z')).toBe(true);
+    expect(d.match(/M/g)).toHaveLength(1);
+  });
+
+  it('keeps an island as its own subpath rather than joining it to the mainland', () => {
+    const withIsland = {
+      type: 'MultiPolygon' as const,
+      coordinates: [square.coordinates, square.coordinates],
+    };
+    expect(pathFor(withIsland, GAM).match(/M/g)).toHaveLength(2);
+  });
+
+  it('drops a ring that is not an area instead of drawing a line', () => {
+    const degenerate = {
+      type: 'Polygon' as const,
+      coordinates: [
+        [
+          [-84.09, 9.92],
+          [-84.08, 9.93],
+        ],
+      ],
+    };
+    expect(pathFor(degenerate, GAM)).toBe('');
   });
 });
