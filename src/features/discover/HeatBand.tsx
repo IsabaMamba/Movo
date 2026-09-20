@@ -18,19 +18,23 @@
 
 import { useEffect, useState } from 'react';
 import { Text, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Circle, Defs, Line, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import {
+  boundsFor,
   fetchZoneHeat,
+  fetchZoneOutlines,
   HEAT_WINDOW_DAYS,
   heatSummary,
   kindForRadius,
   layoutBlobs,
   PEOPLE_AT_PEAK,
+  pathFor,
   pixelsPerKm,
   viewportFor,
   type LatLng,
   type ZoneHeat,
+  type ZoneOutline,
 } from '../../lib/heatmap';
 import { supabase } from '../../lib/supabase';
 import { color, heatColor, heatStops } from '../../theme';
@@ -38,9 +42,6 @@ import { discoverStyles as s } from './styles';
 
 /** The design's band height. The search radius spans half of it. */
 export const BAND_HEIGHT = 132;
-
-/** Grid pitch, from the design. It is a ruler, not geography. */
-const GRID = 22;
 
 interface Props {
   centre: LatLng;
@@ -50,6 +51,7 @@ interface Props {
 export function HeatBand({ centre, radiusM }: Props) {
   const [width, setWidth] = useState(0);
   const [zones, setZones] = useState<ZoneHeat[] | null>(null);
+  const [outlines, setOutlines] = useState<ZoneOutline[]>([]);
   const [failed, setFailed] = useState(false);
 
   const radiusKm = radiusM / 1000;
@@ -74,6 +76,31 @@ export function HeatBand({ centre, radiusM }: Props) {
       cancelled = true;
     };
   }, [kind]);
+
+  /**
+   * The map under the heat: the zones themselves, drawn from their own
+   * shapes. Refetched when the frame changes — a new radius or a new width
+   * — and not on every render.
+   */
+  useEffect(() => {
+    if (width === 0) return;
+    let cancelled = false;
+
+    fetchZoneOutlines(supabase, kind, boundsFor(viewportFor(radiusKm, width, BAND_HEIGHT, centre)))
+      .then((rows) => {
+        if (!cancelled) setOutlines(rows);
+      })
+      .catch(() => {
+        // Without the map the heat still reads. Lose the map, keep the heat.
+        if (!cancelled) setOutlines([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // `centre` is a module constant in Descubrir; its parts are listed rather
+    // than the object so a caller passing a fresh literal cannot loop.
+  }, [kind, radiusKm, width, centre.lat, centre.lng]);
 
   const onLayout = (event: LayoutChangeEvent) => {
     setWidth(Math.round(event.nativeEvent.layout.width));
@@ -114,31 +141,25 @@ export function HeatBand({ centre, radiusM }: Props) {
               })}
             </Defs>
 
-            {blobs.map((b) => (
-              <Circle cx={b.x} cy={b.y} fill={`url(#heat-${b.code})`} key={b.code} r={b.r} />
+            {/* The land. Where it stops, the sea shows through, so the coast
+              draws itself — and every district border is a real border
+              rather than the ruled grid this replaced. `evenodd` keeps a
+              hole a hole. */}
+            {outlines.map((zone) => (
+              <Path
+                d={pathFor(zone.outline, viewport)}
+                fill={color.accent.deep}
+                fillOpacity={0.22}
+                fillRule="evenodd"
+                key={zone.code}
+                stroke={color.accent.deep}
+                strokeOpacity={0.55}
+                strokeWidth={0.6}
+              />
             ))}
 
-            {Array.from({ length: Math.ceil(width / GRID) }, (_, i) => (
-              <Line
-                key={`v${i}`}
-                stroke={color.text.primary}
-                strokeOpacity={0.1}
-                x1={i * GRID}
-                x2={i * GRID}
-                y1={0}
-                y2={BAND_HEIGHT}
-              />
-            ))}
-            {Array.from({ length: Math.ceil(BAND_HEIGHT / GRID) }, (_, i) => (
-              <Line
-                key={`h${i}`}
-                stroke={color.text.primary}
-                strokeOpacity={0.1}
-                x1={0}
-                x2={width}
-                y1={i * GRID}
-                y2={i * GRID}
-              />
+            {blobs.map((b) => (
+              <Circle cx={b.x} cy={b.y} fill={`url(#heat-${b.code})`} key={b.code} r={b.r} />
             ))}
 
             {/* The radius the LIST is filtered to. The band deliberately looks
@@ -149,10 +170,10 @@ export function HeatBand({ centre, radiusM }: Props) {
               cy={BAND_HEIGHT / 2}
               fill="none"
               r={ringPx}
-              stroke={color.text.secondary}
-              strokeDasharray="4 4"
-              strokeOpacity={0.55}
-              strokeWidth={1}
+              stroke={color.text.primary}
+              strokeDasharray="5 4"
+              strokeOpacity={0.45}
+              strokeWidth={1.2}
             />
 
             {/* Where the search is centred. Not the viewer's position: Descubrir

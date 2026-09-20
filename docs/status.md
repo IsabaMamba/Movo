@@ -38,6 +38,7 @@ column is maintained by hand.
 | `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                         | yes     |
 | `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | yes     |
 | `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed      | yes     |
+| `0017_zone_outlines`           | `zone_outlines()` — simplified zone shapes for one viewport, so a client can draw the map  | **no**  |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,

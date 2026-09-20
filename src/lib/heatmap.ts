@@ -96,6 +96,47 @@ export function heatLevel(zone: Pick<ZoneHeat, 'sessions' | 'joined'>): number {
   return Math.max(SESSION_FLOOR, Math.min(1, people / PEOPLE_AT_PEAK));
 }
 
+/**
+ * One zone's shape, simplified by the database to what a band can draw.
+ * GeoJSON Polygon or MultiPolygon, in WGS84 like everything else here.
+ */
+export interface ZoneOutline {
+  code: string;
+  name: string;
+  outline: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] };
+}
+
+/**
+ * Metres of positional error the band can afford. At its widest the band
+ * draws about 760 m per pixel and at its tightest about 230, so 150 m is
+ * under a pixel everywhere — and a tenth of the bytes of the full geometry.
+ */
+export const OUTLINE_TOLERANCE_M = 150;
+
+export interface Bounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
+export async function fetchZoneOutlines(
+  db: SupabaseClient,
+  kind: ZoneKind,
+  bounds: Bounds,
+): Promise<ZoneOutline[]> {
+  const { data, error } = await db.rpc('zone_outlines', {
+    p_kind: kind,
+    p_west: bounds.west,
+    p_south: bounds.south,
+    p_east: bounds.east,
+    p_north: bounds.north,
+    p_tolerance_m: OUTLINE_TOLERANCE_M,
+  });
+  if (error) throw toApiError(error);
+  return (data ?? []) as ZoneOutline[];
+}
+
 // ------------------------------------------------------------ projection
 
 const KM_PER_DEG_LAT = 110.574;
@@ -230,4 +271,50 @@ export function heatSummary(blobs: readonly Blob[]): string {
         `${plural(b.joined, 'persona apuntada', 'personas apuntadas')}`,
     );
   return `Mapa de calor de los próximos ${HEAT_WINDOW_DAYS} días ${where}: ${zones.join('; ')}.`;
+}
+
+// ----------------------------------------------------------- the map
+
+/**
+ * What the band can see, in degrees, with a margin so a zone whose shape
+ * enters the frame is fetched even when its bounding box only just misses.
+ */
+export function boundsFor(vp: Viewport, marginPx = 40): Bounds {
+  const scale = pixelsPerKm(vp);
+  const halfHeightKm = (vp.height / 2 + marginPx) / scale;
+  const halfWidthKm = (vp.width / 2 + marginPx) / scale;
+  const cosLat = Math.cos((vp.centre.lat * Math.PI) / 180);
+  return {
+    west: vp.centre.lng - halfWidthKm / (KM_PER_DEG_LNG_AT_EQUATOR * cosLat),
+    east: vp.centre.lng + halfWidthKm / (KM_PER_DEG_LNG_AT_EQUATOR * cosLat),
+    south: vp.centre.lat - halfHeightKm / KM_PER_DEG_LAT,
+    north: vp.centre.lat + halfHeightKm / KM_PER_DEG_LAT,
+  };
+}
+
+const ringsOf = (outline: ZoneOutline['outline']): number[][][] =>
+  outline.type === 'Polygon'
+    ? (outline.coordinates as number[][][])
+    : (outline.coordinates as number[][][][]).flat();
+
+/**
+ * An SVG path for one zone, projected into the band.
+ *
+ * Every ring of every polygon becomes one closed subpath, so a district with
+ * an island keeps the island and a hole stays a hole under the even-odd
+ * rule. Coordinates are rounded to a tenth of a pixel: the string is what
+ * gets handed to the renderer, and full float precision doubles it for a
+ * difference nothing can see.
+ */
+export function pathFor(outline: ZoneOutline['outline'], vp: Viewport): string {
+  const parts: string[] = [];
+  for (const ring of ringsOf(outline)) {
+    if (ring.length < 3) continue;
+    const points = ring.map(([lng, lat]) => {
+      const { x, y } = project({ lat: lat as number, lng: lng as number }, vp);
+      return `${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`;
+    });
+    parts.push(`M${points.join('L')}Z`);
+  }
+  return parts.join('');
 }
