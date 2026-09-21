@@ -39,6 +39,7 @@ column is maintained by hand.
 | `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue            | yes     |
 | `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed      | yes     |
 | `0017_zone_outlines`           | `zone_outlines()` — simplified zone shapes for one viewport, so a client can draw the map  | yes     |
+| `0018_pico_blanco_venue`      | Data fix: moves the Pico Blanco venue from Colón, Mora to the trailhead in San Antonio de Escazú | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -73,8 +74,8 @@ Heredia and Mora for sessions meant to be in Tibás and Escazú.
 
 Three venues resolve to a different district than the one typed for them — Pico Blanco (Colón,
 Mora, typed Escazú), Canchas de Fonseca (San Juan, Tibás, typed Moravia) and Parque de la
-democracia (Ulloa, Heredia, typed Tibás). Pico Blanco's coordinate was already suspected wrong;
-the other two need somebody who knows the places.
+democracia (Ulloa, Heredia, typed Tibás). Pico Blanco was fixed on 21 September by `0018`: it now sits at the trailhead on Calle del Llano
+and resolves to 10202 San Antonio, Escazú. The other two need somebody who knows the places.
 
 The report queue got its first readers on 17 September: two rows inserted into `staff` from the
 Supabase panel, by hand, on purpose — no client can grant itself that role.
