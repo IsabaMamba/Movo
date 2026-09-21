@@ -257,9 +257,11 @@ export function SessionDetailScreen() {
             Cancelada — no vayas
           </Text>
           <Text style={s.cancelledBody}>
-            {activity.cancel_reason
-              ? `Quien organiza escribió: «${activity.cancel_reason}»`
-              : 'Quien organiza la canceló sin escribir un motivo.'}
+            {activity.cancelled_by_staff
+              ? 'La canceló el equipo de Movo.'
+              : activity.cancel_reason
+                ? `Quien organiza escribió: «${activity.cancel_reason}»`
+                : 'Quien organiza la canceló sin escribir un motivo.'}
           </Text>
         </View>
       )}

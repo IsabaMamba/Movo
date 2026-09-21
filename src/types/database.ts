@@ -136,6 +136,11 @@ export interface Activity {
   /** Set by cancel_activity(). The reason is shown to everyone on the roster. */
   cancelled_at: string | null;
   cancel_reason: string | null;
+  /**
+   * True when the Movo team cancelled it from a report (0019). Says who, never
+   * why: cancel_reason stays null, and the team's note lives in reports.
+   */
+  cancelled_by_staff: boolean;
   source: ActivitySource;
   source_url: string | null;
   claimed_by: string | null;
@@ -167,12 +172,17 @@ export interface Message {
 
 /**
  * Types written in the wild: `waitlist_promoted` and `activity_cancelled`
- * since 0008, `report_resolved` since 0012. Left open on purpose — the column
+ * since 0008, `report_resolved` since 0012, `activity_cancelled_by_movo`
+ * (to the organizer) since 0019. Left open on purpose — the column
  * is plain `text`, a newer server can write a type this build has never heard
  * of, and the inbox has to render that row rather than fall over on it.
  */
 export type NotificationType =
-  'waitlist_promoted' | 'activity_cancelled' | 'report_resolved' | (string & {});
+  | 'waitlist_promoted'
+  | 'activity_cancelled'
+  | 'activity_cancelled_by_movo'
+  | 'report_resolved'
+  | (string & {});
 
 export interface Notification {
   id: string;

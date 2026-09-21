@@ -40,6 +40,7 @@ column is maintained by hand.
 | `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed            | yes     |
 | `0017_zone_outlines`           | `zone_outlines()` — simplified zone shapes for one viewport, so a client can draw the map        | yes     |
 | `0018_pico_blanco_venue`       | Data fix: moves the Pico Blanco venue from Colón, Mora to the trailhead in San Antonio de Escazú | yes     |
+| `0019_moderate_cancel`         | `moderate_cancel_activity()` — staff cancel a reported session; `activities.cancelled_by_staff`  | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,

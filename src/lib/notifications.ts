@@ -150,6 +150,12 @@ export function toInboxItem(row: Notification): InboxItem {
       return { ...base, text: `Se liberó un lugar: ya vas a ${title}.`, activityId };
 
     case 'activity_cancelled': {
+      // Written by moderate_cancel_activity() (0019). Deliberately no reason:
+      // what the team decided, and that anybody reported, is not the roster's
+      // to receive — in a small session it would name the reporter.
+      if (text(payload, 'by') === 'movo') {
+        return { ...base, text: `El equipo de Movo canceló ${title}.`, activityId };
+      }
       const reason = text(payload, 'reason');
       return {
         ...base,
@@ -163,6 +169,15 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId,
       };
     }
+
+    case 'activity_cancelled_by_movo':
+      // To the organizer. Says the rule, not the report: who reported is
+      // exactly what this sentence must not let them work out.
+      return {
+        ...base,
+        text: `El equipo de Movo canceló ${title} por no cumplir las normas de la comunidad.`,
+        activityId,
+      };
 
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes

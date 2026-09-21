@@ -134,6 +134,42 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('the Movo team cancelled a session', () => {
+    it('tells the roster who cancelled, and nothing about why', () => {
+      // In a session of four, any hint of a report names the reporter.
+      const item = toInboxItem(
+        row({
+          type: 'activity_cancelled',
+          payload: { title: 'Mejenga', activity_id: 'a5', by: 'movo', reason: 'no debería estar' },
+        }),
+      );
+      expect(item.text).toBe('El equipo de Movo canceló Mejenga.');
+      expect(item.text).not.toContain('no debería estar');
+      expect(item.activityId).toBe('a5');
+    });
+
+    it('treats any other `by` as the organiser cancelling', () => {
+      const item = toInboxItem(
+        row({ type: 'activity_cancelled', payload: { title: 'Mejenga', by: 'alguien' } }),
+      );
+      expect(item.text).toBe('Mejenga se canceló. Sin motivo escrito.');
+    });
+
+    it('tells the organiser it broke the rules, without the report', () => {
+      const item = toInboxItem(
+        row({
+          type: 'activity_cancelled_by_movo',
+          payload: { title: 'Mejenga', activity_id: 'a5' },
+        }),
+      );
+      expect(item.text).toBe(
+        'El equipo de Movo canceló Mejenga por no cumplir las normas de la comunidad.',
+      );
+      expect(item.text).not.toMatch(/report/i);
+      expect(item.activityId).toBe('a5');
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.
