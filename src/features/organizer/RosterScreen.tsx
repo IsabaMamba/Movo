@@ -192,7 +192,11 @@ export function RosterScreen() {
         <View style={s.cancelledBanner}>
           <Text style={s.cancelledTitle}>Cancelada</Text>
           <Text style={s.cancelledBody}>
-            {activity.cancel_reason ? `«${activity.cancel_reason}»` : 'Sin motivo escrito.'}
+            {activity.cancelled_by_staff
+              ? 'La canceló el equipo de Movo por no cumplir las normas de la comunidad.'
+              : activity.cancel_reason
+                ? `«${activity.cancel_reason}»`
+                : 'Sin motivo escrito.'}
           </Text>
         </View>
       )}
