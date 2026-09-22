@@ -6,10 +6,11 @@
  *
  *   * Title, meeting point, duration and capacity can change — somebody who
  *     joined still finds the session where and when they expected it.
- *   * Time and venue lock as soon as anybody joins. Movo sends no push
- *     notifications yet, so moving the session would send them to the wrong
- *     place with no way to find out. The screen says that, and points at
- *     cancelling instead.
+ *   * Time and venue lock as soon as anybody joins. Notices only reach the
+ *     in-app inbox (/avisos) — nothing is pushed to a phone or an email yet —
+ *     so moving the session would send people who do not open the app to the
+ *     wrong place. The screen says that, and points at cancelling instead,
+ *     which does leave a notice for everyone on the roster.
  *   * Price and category are never editable here: a price change after people
  *     joined is a bait-and-switch, and a category change reshapes the
  *     attributes the session was published with.
@@ -302,9 +303,10 @@ export function EditSessionScreen() {
                 that decides whether the organizer edits or cancels. */}
             <Text style={s.bannerText}>
               Ya {onRoster === 1 ? 'hay 1 persona apuntada' : `hay ${onRoster} personas apuntadas`}.
-              La hora y el lugar quedan fijos: Movo todavía no manda avisos, así que moverlos las
-              mandaría al lugar o a la hora equivocada sin enterarse. Si tiene que cambiar, cancela
-              esta sesión y publica otra.
+              La hora y el lugar quedan fijos: los avisos de Movo solo se ven dentro de la app, no
+              llegan al teléfono ni al correo, así que alguien podría llegar al lugar o a la hora
+              equivocada sin enterarse. Si tiene que cambiar, cancela esta sesión (cada persona
+              apuntada recibe un aviso) y publica otra.
             </Text>
           </View>
         )}

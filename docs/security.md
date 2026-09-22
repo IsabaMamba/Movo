@@ -152,26 +152,65 @@ does none of those, and the reporter hears nothing.
 
 ### What resolving does and does not do
 
-Resolving records a judgement. It does not act on one. There is no way yet to cancel somebody
-else's session, hide a profile, or block an account from the queue — each is a different
-power with a different blast radius, and each needs its own function, its own test, and its
-own decision about who holds it. Until those exist, acting on a report means doing it by hand
-and writing what you did into `action_taken`.
+Resolving records a judgement. It does not act on one. Acting is a separate power per blast
+radius, each with its own function, its own test, and its own decision about who holds it.
+
+**Cancel the reported session — exists (`0019`).** «Cancelar la sesión» in the queue calls
+`moderate_cancel_activity(report, note)`, staff only, for an unresolved report about a session
+that is still on. In one transaction it cancels the session, tells everybody joined or waiting
+that _the Movo team_ cancelled it, tells the organizer the team cancelled it for not following
+the community rules, marks the report `actioned` with the note, and tells the reporter it was
+reviewed. **Nothing the organizer or the roster receives names the report, its reason or the
+note** — in a session of four, "there was a report" names the reporter. The note stays in
+`reports.action_taken`. `activities.cancelled_by_staff` lets the app say who cancelled without
+putting the team's words in `cancel_reason`, which it shows as the organizer's. One occurrence
+of a series only; the rest of the series is untouched.
+
+**Suspend an account — exists (`0020`).** «Suspender cuenta» in the queue calls
+`suspend_account(report, note, ends_at)`, staff only, for an unresolved report about a person, a
+session (→ its organizer) or a message (→ its author). A group report points at nobody and is
+refused, as is a staff account (take it out of `staff` first) and one already suspended. The
+reviewer picks 7 days, 30 days or no end; a suspension with an end simply stops applying.
+
+While it is in force the account **cannot create a session or series, join one, write in a
+chat, open or join a group, or add or edit a venue** — refused by a `BEFORE` trigger on each of
+those tables, which also catches the `SECURITY DEFINER` paths that bypass RLS. **Nobody but the
+person and staff sees their profile or their messages** (restrictive policies). They can still
+sign in, leave, block, read their notices and **report**: a suspended person can still be the
+one in danger. The app shows them a suspension screen with the end date and nothing else.
+
+Suspending also clears their calendar in the same transaction: their future sessions are
+cancelled as `0019` cancels one, their series stop, and their places in other people's sessions
+are given up with the waitlist promoted. The person is told the account is suspended and until
+when — never why, never that there was a report. The note is in `suspensions.note` and
+`reports.action_taken`, both staff-only.
+
+`/staff/suspensiones` lists what is in force and lifts it with a note. **Lifting restores the
+account, not the calendar.** `is_suspended_id()` is executable by no client role, so nobody can
+ask whether an arbitrary account is suspended; hiding a profile does, inherently, tell people who
+could see it that it is gone.
+
+Neither power touches sign-in: a suspended account keeps its session and its tokens. Banning at
+the auth layer (`auth.users.banned_until`) would need the service key from a server, which Movo
+does not have.
+
+The organizer notice cites "las normas de la comunidad", and **no such rules are written down
+yet**. They need to exist, publicly, before the first session is cancelled this way.
 
 ## Required before strangers meet strangers
 
 Not yet built. Each is a blocker for the first public session, not a v2 item.
 
-| Control                       | Why                                                                                                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                          |
-| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                     |
-| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                 |
-| In-app reporting with a human | A report nobody reads is theatre. Queue, reader and named rota all exist — see Report triage above. What is still missing is the power to _act_ on one |
-| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                    |
-| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                 |
-| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                    |
-| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                 |
+| Control                       | Why                                                                                                                                                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                                                                                         |
+| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                                                                                    |
+| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                                                                                |
+| In-app reporting with a human | A report nobody reads is theatre. Queue, reader, named rota, cancelling a reported session and suspending an account exist — see Report triage above. What is missing is the written community rules the notices cite |
+| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                                                                                   |
+| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                                                                                |
+| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                                                                                   |
+| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                                                                                |
 
 ## Attendance history
 

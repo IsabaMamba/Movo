@@ -212,6 +212,55 @@ export async function resolveReport(
   if (error) throw toApiError(error);
 }
 
+/**
+ * Cancel the session a report is about, and record it — one call, one
+ * transaction (moderate_cancel_activity, 0019).
+ *
+ * Staff only. The roster and the organizer are told the team cancelled it and
+ * nothing more; the note goes into `action_taken`, prefixed with what was
+ * done, and the report becomes `actioned`. Refused with 22023 when the note
+ * is blank, the report is resolved or not about a session, or the session is
+ * already cancelled or over. Returns how many people on the roster were told.
+ */
+export async function moderateCancelActivity(
+  db: SupabaseClient,
+  reportId: string,
+  note: string,
+): Promise<number> {
+  const { data, error } = await db.rpc('moderate_cancel_activity', {
+    p_report_id: reportId,
+    p_note: note.trim(),
+  });
+  if (error) throw toApiError(error);
+  return (data as number | null) ?? 0;
+}
+
+/**
+ * Whether the team can still cancel this report's session from the queue:
+ * the report is about a session, the reviewer can read it, and it is neither
+ * cancelled nor over. Mirrors the function's refusals so the button is not
+ * offered for a call that would only throw.
+ */
+export function canModerateCancel(report: QueuedReport): boolean {
+  if (isResolved(report.status) || report.subject_type !== 'activity') return false;
+  const status = report.activity?.status;
+  return status === 'published' || status === 'full' || status === 'draft';
+}
+
+/**
+ * Whether the queue can offer «Suspender cuenta» for this report: it is not
+ * resolved and it points at a person — the user, the session's organizer, or
+ * the message's author. A report about a group points at nobody.
+ */
+export function canSuspend(report: QueuedReport): boolean {
+  if (isResolved(report.status)) return false;
+  return (
+    report.subject_type === 'user' ||
+    report.subject_type === 'activity' ||
+    report.subject_type === 'message'
+  );
+}
+
 // ---------------------------------------------------------------- waiting
 
 const MS_PER_DAY = 86_400_000;
