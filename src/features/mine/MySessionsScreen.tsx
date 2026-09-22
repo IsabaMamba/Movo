@@ -43,9 +43,11 @@ function standingOf(entry: MyParticipation, past: boolean): Standing {
       label: 'Cancelada',
       chip: s.badgeMiss,
       text: s.badgeMissText,
-      note: entry.activity.cancel_reason
-        ? `Quien organiza escribió: «${entry.activity.cancel_reason}»`
-        : 'Quien organiza la canceló.',
+      note: entry.activity.cancelled_by_staff
+        ? 'La canceló el equipo de Movo.'
+        : entry.activity.cancel_reason
+          ? `Quien organiza escribió: «${entry.activity.cancel_reason}»`
+          : 'Quien organiza la canceló.',
     };
   }
 
