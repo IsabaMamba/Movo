@@ -187,6 +187,12 @@ export function MySessionsScreen() {
         <Text style={s.subtitle}>A lo que te apuntaste, antes y después de que pase.</Text>
       </View>
 
+      {/* Next to the sessions, because it is made of them: the history is
+          where the attended ones leave a trace, if the person asked for one. */}
+      <Link href="/historial" style={s.back}>
+        <Text style={s.linkText}>Mi historial de asistencia</Text>
+      </Link>
+
       {error !== null && (
         <Text accessibilityRole="alert" style={s.error}>
           {error}

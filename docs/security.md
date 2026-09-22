@@ -238,6 +238,23 @@ optional:
   admin screen, no export, and no "users who go to X also go to Y" surface computed over a
   district small enough that Y identifies somebody.
 
+**As built in `0021`:**
+
+- Consent is a row in `attendance_history_consent`, with the version of the notice shown on
+  `/historial`. No row, no history; nothing is backfilled from before it.
+- A row is written by a trigger when `check_in()` marks somebody `attended` — never for a
+  `no_show`, and never for a venue that resolves to no distrito. It holds `district_code`,
+  `category_id`, `is_weekend`, a `time_band` (madrugada / mañana / tarde / noche, Costa Rica
+  time) and `week_of`, the Monday of the session's week. No activity id: it would lead back to
+  the venue and the minute. The week is the only date, because the delete job needs one.
+- `purge_attendance_history()` deletes rows whose week began more than 90 days ago — up to six
+  days early, never late — nightly on pg_cron (03:17 Costa Rica). The read policy applies the
+  same window, so a missed night never shows more than was promised.
+- `clear_attendance_history()` empties it and leaves it on; `set_attendance_history(false)`
+  empties it and turns it off. The screen asks once before either — the only departure from
+  "one tap", because both are irreversible. No derived weights exist yet; when they do, both
+  functions must clear them.
+
 The threat model at the top of this document is a stalker with an account. Attendance
 history is the single dataset in Movo that would help one, so it is the dataset with the
 lowest resolution, the shortest life, and the loudest off switch. If a future feature wants
