@@ -18,6 +18,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { toApiError } from './errors';
+import { suspensionUntilLabel } from './suspensions';
 import type { Notification } from '../types/database';
 
 /**
@@ -177,6 +178,24 @@ export function toInboxItem(row: Notification): InboxItem {
         ...base,
         text: `El equipo de Movo canceló ${title} por no cumplir las normas de la comunidad.`,
         activityId,
+      };
+
+    case 'account_suspended': {
+      // Until when, and what it means. Never why, and never that somebody
+      // reported: suspend_account() writes only the end date.
+      const endsAt = text(payload, 'ends_at');
+      return {
+        ...base,
+        text: `El equipo de Movo suspendió tu cuenta ${suspensionUntilLabel(endsAt)}. Mientras dure no puedes crear sesiones, unirte a una ni escribir en los chats, y tus sesiones futuras se cancelaron.`,
+        activityId: null,
+      };
+    }
+
+    case 'account_restored':
+      return {
+        ...base,
+        text: 'El equipo de Movo levantó la suspensión de tu cuenta. Ya puedes volver a usar Movo.',
+        activityId: null,
       };
 
     case 'report_resolved':

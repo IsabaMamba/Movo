@@ -166,8 +166,33 @@ note** — in a session of four, "there was a report" names the reporter. The no
 putting the team's words in `cancel_reason`, which it shows as the organizer's. One occurrence
 of a series only; the rest of the series is untouched.
 
-**Hide a profile, suspend an account — do not exist yet.** Until they do, acting on a report
-about a person means doing it by hand and writing what you did into `action_taken`.
+**Suspend an account — exists (`0020`).** «Suspender cuenta» in the queue calls
+`suspend_account(report, note, ends_at)`, staff only, for an unresolved report about a person, a
+session (→ its organizer) or a message (→ its author). A group report points at nobody and is
+refused, as is a staff account (take it out of `staff` first) and one already suspended. The
+reviewer picks 7 days, 30 days or no end; a suspension with an end simply stops applying.
+
+While it is in force the account **cannot create a session or series, join one, write in a
+chat, open or join a group, or add or edit a venue** — refused by a `BEFORE` trigger on each of
+those tables, which also catches the `SECURITY DEFINER` paths that bypass RLS. **Nobody but the
+person and staff sees their profile or their messages** (restrictive policies). They can still
+sign in, leave, block, read their notices and **report**: a suspended person can still be the
+one in danger. The app shows them a suspension screen with the end date and nothing else.
+
+Suspending also clears their calendar in the same transaction: their future sessions are
+cancelled as `0019` cancels one, their series stop, and their places in other people's sessions
+are given up with the waitlist promoted. The person is told the account is suspended and until
+when — never why, never that there was a report. The note is in `suspensions.note` and
+`reports.action_taken`, both staff-only.
+
+`/staff/suspensiones` lists what is in force and lifts it with a note. **Lifting restores the
+account, not the calendar.** `is_suspended_id()` is executable by no client role, so nobody can
+ask whether an arbitrary account is suspended; hiding a profile does, inherently, tell people who
+could see it that it is gone.
+
+Neither power touches sign-in: a suspended account keeps its session and its tokens. Banning at
+the auth layer (`auth.users.banned_until`) would need the service key from a server, which Movo
+does not have.
 
 The organizer notice cites "las normas de la comunidad", and **no such rules are written down
 yet**. They need to exist, publicly, before the first session is cancelled this way.
@@ -176,16 +201,16 @@ yet**. They need to exist, publicly, before the first session is cancelled this 
 
 Not yet built. Each is a blocker for the first public session, not a v2 item.
 
-| Control                       | Why                                                                                                                                                                              |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                                                    |
-| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                                               |
-| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                                           |
-| In-app reporting with a human | A report nobody reads is theatre. Queue, reader, named rota and cancelling a reported session exist — see Report triage above. Hiding a profile and suspending an account do not |
-| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                                              |
-| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                                           |
-| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                                              |
-| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                                           |
+| Control                       | Why                                                                                                                                                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                                                                                         |
+| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                                                                                    |
+| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                                                                                |
+| In-app reporting with a human | A report nobody reads is theatre. Queue, reader, named rota, cancelling a reported session and suspending an account exist — see Report triage above. What is missing is the written community rules the notices cite |
+| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                                                                                   |
+| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                                                                                |
+| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                                                                                   |
+| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                                                                                |
 
 ## Attendance history
 

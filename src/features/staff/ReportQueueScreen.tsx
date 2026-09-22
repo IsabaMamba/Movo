@@ -11,8 +11,10 @@
  * decided it, when, and a note. One power acts: «Cancelar la sesión» calls
  * `moderate_cancel_activity()` (0019), which cancels the reported session,
  * tells its roster and organizer without naming the report, and records the
- * report as actioned in the same transaction. Hiding a profile and suspending
- * an account do not exist yet. Every control says which kind it is, because a
+ * report as actioned in the same transaction. «Suspender cuenta» calls
+ * `suspend_account()` (0020) on the person the report points at, which also
+ * clears their calendar; suspensions in force are listed and lifted at
+ * /staff/suspensiones. Every control says which kind it is, because a
  * moderation tool that looks like it removed something is worse than one that
  * admits it did not.
  *
@@ -31,6 +33,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 
 import { formatSessionTime } from '../../lib/activities';
 import {
   canModerateCancel,
+  canSuspend,
   fetchReportQueue,
   isResolved,
   moderateCancelActivity,
@@ -43,6 +46,13 @@ import {
   type QueueView,
 } from '../../lib/reports';
 import { supabase } from '../../lib/supabase';
+import {
+  endsAtFor,
+  SUSPENSION_LENGTHS,
+  suspendAccount,
+  suspensionUntilLabel,
+  type SuspensionLength,
+} from '../../lib/suspensions';
 import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
 import { staffStyles as s } from './styles';
@@ -85,7 +95,18 @@ const NOTE_OPTIONAL_FOR = 'dismissed' as const;
  */
 const NOTE_LIMIT = 280;
 
-type Intent = 'actioned' | 'dismissed' | 'cancel_session';
+type Intent = 'actioned' | 'dismissed' | 'cancel_session' | 'suspend';
+
+/** Who a suspension from this report lands on, in the reviewer's words. */
+const SUSPEND_TARGET: Record<string, string> = {
+  user: 'la persona reportada',
+  activity: 'quien organiza la sesión',
+  message: 'quien escribió el mensaje',
+};
+
+/** What suspending does, said before it is pressed. */
+const SUSPENDS =
+  'Suspende la cuenta: no puede crear sesiones, unirse ni escribir, y nadie más ve su perfil ni sus mensajes. Se cancelan sus sesiones futuras y sale de las de otras personas. A esa persona le llega que su cuenta está suspendida y hasta cuándo, sin el motivo ni el reporte. El reporte queda como «actuado» con tu nota.';
 
 interface Composing {
   reportId: string;
@@ -103,12 +124,14 @@ const CONFIRM_TEXT: Record<Intent, string> = {
   actioned: `«Actuar» deja registrado que el equipo tomó una decisión sobre esto. Escribe qué se hizo: es lo único que lo va a explicar después. ${RECORD_ONLY} No se puede deshacer.`,
   dismissed: `«Descartar» deja registrado que no hay nada que hacer acá. La nota es opcional. ${RECORD_ONLY} No se puede deshacer.`,
   cancel_session: `${CANCELS} Escribe por qué: la nota solo la ve el equipo. No se puede deshacer.`,
+  suspend: `${SUSPENDS} Elige cuánto dura y escribe por qué: la nota solo la ve el equipo. Se puede levantar después, pero las sesiones canceladas no vuelven.`,
 };
 
 const CONFIRM_BUTTON: Record<Intent, string> = {
   actioned: 'Registrar que se actuó',
   dismissed: 'Registrar descartado',
   cancel_session: 'Cancelar la sesión',
+  suspend: 'Suspender la cuenta',
 };
 
 const RESULT_TEXT = {
@@ -117,6 +140,8 @@ const RESULT_TEXT = {
     'Quedó registrado que el equipo actuó, con tu nota. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encuentras en Resueltos.',
   dismissed:
     'Quedó descartado. A quien reportó le llega que su reporte fue revisado, sin el detalle. Lo encuentras en Resueltos.',
+  suspend:
+    'Se suspendió la cuenta. Le llegó un aviso a esa persona, y a quien reportó, que su reporte fue revisado. La encuentras en Suspensiones.',
   cancel_session:
     'Se canceló la sesión. Les llegó un aviso a quienes iban y a quien organiza; a quien reportó, que su reporte fue revisado. Lo encuentras en Resueltos.',
 } as const;
@@ -134,6 +159,7 @@ export function ReportQueueScreen() {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [composing, setComposing] = useState<Composing | null>(null);
   const [note, setNote] = useState('');
+  const [length, setLength] = useState<SuspensionLength>('7d');
   const [pending, setPending] = useState<string | null>(null);
 
   const userId = session?.user.id;
@@ -169,10 +195,12 @@ export function ReportQueueScreen() {
     setPending(reportId);
     setBanner(null);
 
-    const call =
+    const call: Promise<unknown> =
       status === 'cancel_session'
         ? moderateCancelActivity(supabase, reportId, text ?? '')
-        : resolveReport(supabase, reportId, status, text);
+        : status === 'suspend'
+          ? suspendAccount(supabase, reportId, text ?? '', endsAtFor(length))
+          : resolveReport(supabase, reportId, status, text);
 
     call
       .then(() => {
@@ -209,6 +237,7 @@ export function ReportQueueScreen() {
     const composer = composing?.reportId === report.id ? composing : null;
     const needsNote = composer !== null && composer.intent !== NOTE_OPTIONAL_FOR;
     const cancellable = canModerateCancel(report);
+    const suspendable = canSuspend(report);
     const ready = !needsNote || note.trim().length > 0;
 
     const badgeStyle = done ? s.badgeDone : reviewing ? s.badgeReviewing : s.badgeOpen;
@@ -402,6 +431,27 @@ export function ReportQueueScreen() {
                 </Text>
               </Pressable>
             )}
+
+            {suspendable && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Suspender la cuenta de ${SUSPEND_TARGET[report.subject_type] ?? 'la persona reportada'}`}
+                accessibilityHint={`Pide duración, una nota obligatoria y confirmación. ${SUSPENDS}`}
+                aria-disabled={busy}
+                disabled={busy}
+                hitSlop={CONTROL_HIT_SLOP}
+                onPress={() => {
+                  setComposing({ reportId: report.id, intent: 'suspend' });
+                  setNote('');
+                  setLength('7d');
+                }}
+                style={[s.action, busy ? s.actionDisabled : s.actionGrave]}
+              >
+                <Text style={[s.actionText, busy ? s.actionDisabledText : s.actionGraveText]}>
+                  Suspender cuenta
+                </Text>
+              </Pressable>
+            )}
           </View>
         )}
 
@@ -413,13 +463,48 @@ export function ReportQueueScreen() {
               {CONFIRM_TEXT[composer.intent]}
             </Text>
 
+            {composer.intent === 'suspend' && (
+              <>
+                <Text style={s.meta}>
+                  Se suspende a {SUSPEND_TARGET[report.subject_type] ?? 'la persona reportada'},{' '}
+                  {suspensionUntilLabel(endsAtFor(length))}.
+                </Text>
+                <View
+                  accessibilityRole="radiogroup"
+                  accessibilityLabel="Cuánto dura la suspensión"
+                  style={s.filterRow}
+                >
+                  {SUSPENSION_LENGTHS.map((option) => {
+                    const on = length === option.key;
+                    return (
+                      <Pressable
+                        accessibilityRole="radio"
+                        accessibilityLabel={option.label}
+                        aria-selected={on}
+                        hitSlop={CONTROL_HIT_SLOP}
+                        key={option.key}
+                        onPress={() => {
+                          setLength(option.key);
+                        }}
+                        style={[s.chip, on && s.chipOn]}
+                      >
+                        <Text style={[s.chipText, on && s.chipTextOn]}>{option.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
             <TextInput
               accessibilityLabel={
                 composer.intent === 'cancel_session'
                   ? 'Por qué se cancela'
-                  : needsNote
-                    ? 'Qué se hizo'
-                    : 'Nota, opcional'
+                  : composer.intent === 'suspend'
+                    ? 'Por qué se suspende'
+                    : needsNote
+                      ? 'Qué se hizo'
+                      : 'Nota, opcional'
               }
               accessibilityHint="Queda guardada en el reporte. No la ven ni quien reportó ni quien organiza."
               maxLength={NOTE_LIMIT}
@@ -428,9 +513,11 @@ export function ReportQueueScreen() {
               placeholder={
                 composer.intent === 'cancel_session'
                   ? 'Por qué el equipo cancela esta sesión'
-                  : needsNote
-                    ? 'Qué hizo el equipo con esto'
-                    : 'Por qué no hay nada que hacer (opcional)'
+                  : composer.intent === 'suspend'
+                    ? 'Por qué el equipo suspende esta cuenta'
+                    : needsNote
+                      ? 'Qué hizo el equipo con esto'
+                      : 'Por qué no hay nada que hacer (opcional)'
               }
               placeholderTextColor={color.text.tertiary}
               style={s.input}
@@ -446,7 +533,7 @@ export function ReportQueueScreen() {
                 accessibilityLabel={CONFIRM_BUTTON[composer.intent]}
                 accessibilityHint={
                   ready
-                    ? `${composer.intent === 'cancel_session' ? CANCELS : RECORD_ONLY} No se puede deshacer.`
+                    ? `${composer.intent === 'cancel_session' ? CANCELS : composer.intent === 'suspend' ? SUSPENDS : RECORD_ONLY} No se puede deshacer.`
                     : 'Escribe primero qué se hizo: sin la nota no queda constancia de nada.'
                 }
                 aria-busy={busy}
@@ -497,9 +584,13 @@ export function ReportQueueScreen() {
       </View>
 
       <Text style={s.hint}>
-        «Actuar» y «Descartar» solo dejan constancia. «Cancelar la sesión» sí la cancela y avisa a
-        quienes iban. Ocultar un perfil o suspender una cuenta todavía no se puede desde acá.
+        «Actuar» y «Descartar» solo dejan constancia. «Cancelar la sesión» y «Suspender cuenta» sí
+        actúan, y avisan a quienes corresponde sin mencionar el reporte.
       </Text>
+
+      <Link href="/staff/suspensiones" style={s.back}>
+        <Text style={s.linkText}>Ver suspensiones vigentes</Text>
+      </Link>
 
       {/*
         Two views rather than one list.
