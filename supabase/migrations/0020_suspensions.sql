@@ -155,10 +155,16 @@ begin
   -- Participation: only becoming part of a session is refused. Leaving,
   -- being cancelled, and a waitlisted place turning into a joined one all
   -- pass — suspend_account() itself writes the first of those.
+  -- Nested rather than one OR: plpgsql resolves `old.status` even when
+  -- tg_op = 'INSERT', and OLD has no fields there (42703).
   if tg_table_name = 'activity_participants' then
-    if new.status not in ('interested', 'joined', 'waitlisted')
-       or (tg_op = 'UPDATE' and old.status in ('joined', 'waitlisted')) then
+    if new.status not in ('interested', 'joined', 'waitlisted') then
       return new;
+    end if;
+    if tg_op = 'UPDATE' then
+      if old.status in ('joined', 'waitlisted') then
+        return new;
+      end if;
     end if;
   end if;
 
