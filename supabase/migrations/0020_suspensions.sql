@@ -155,8 +155,9 @@ begin
   -- Participation: only becoming part of a session is refused. Leaving,
   -- being cancelled, and a waitlisted place turning into a joined one all
   -- pass — suspend_account() itself writes the first of those.
-  -- Nested rather than one OR: plpgsql resolves `old.status` even when
-  -- tg_op = 'INSERT', and OLD has no fields there (42703).
+  -- Nested rather than one boolean expression: plpgsql resolves every field
+  -- an expression names, whichever branch would short-circuit, and a field
+  -- the row does not have is 42703. OLD has none at all on INSERT.
   if tg_table_name = 'activity_participants' then
     if new.status not in ('interested', 'joined', 'waitlisted') then
       return new;
@@ -170,8 +171,11 @@ begin
 
   -- Series: switching one off is allowed (suspend_account() does it); any
   -- other change, including switching it back on, is not.
-  if tg_table_name = 'activity_series' and tg_op = 'UPDATE' and not new.is_active then
-    return new;
+  -- Nested for the same reason: on any other table NEW has no is_active.
+  if tg_table_name = 'activity_series' and tg_op = 'UPDATE' then
+    if not new.is_active then
+      return new;
+    end if;
   end if;
 
   raise exception 'tu cuenta está suspendida' using errcode = '42501';
