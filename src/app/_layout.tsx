@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 
 import { AuthProvider } from '../features/auth/AuthProvider';
+import { SuspensionGate } from '../features/auth/SuspensionGate';
 import { color } from '../theme';
 
 export default function RootLayout() {
@@ -32,12 +33,14 @@ export default function RootLayout() {
     <AuthProvider>
       {/* Without an explicit content background the navigator flashes white
           between screens, which on a dark ground reads as a broken render. */}
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: color.bg.base },
-        }}
-      />
+      <SuspensionGate>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: color.bg.base },
+          }}
+        />
+      </SuspensionGate>
       <StatusBar style="light" />
     </AuthProvider>
   );

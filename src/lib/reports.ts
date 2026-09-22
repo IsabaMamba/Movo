@@ -247,6 +247,20 @@ export function canModerateCancel(report: QueuedReport): boolean {
   return status === 'published' || status === 'full' || status === 'draft';
 }
 
+/**
+ * Whether the queue can offer «Suspender cuenta» for this report: it is not
+ * resolved and it points at a person — the user, the session's organizer, or
+ * the message's author. A report about a group points at nobody.
+ */
+export function canSuspend(report: QueuedReport): boolean {
+  if (isResolved(report.status)) return false;
+  return (
+    report.subject_type === 'user' ||
+    report.subject_type === 'activity' ||
+    report.subject_type === 'message'
+  );
+}
+
 // ---------------------------------------------------------------- waiting
 
 const MS_PER_DAY = 86_400_000;

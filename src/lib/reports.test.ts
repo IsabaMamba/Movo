@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canModerateCancel, type QueuedReport } from './reports';
+import { canModerateCancel, canSuspend, type QueuedReport } from './reports';
 import type { ActivityStatus, ReportStatus, ReportSubject } from '../types/database';
 
 /**
@@ -59,5 +59,23 @@ describe('canModerateCancel', () => {
   it('does not offer it when the report is not about a session, or the session cannot be read', () => {
     expect(canModerateCancel(report('open', 'user', null))).toBe(false);
     expect(canModerateCancel(report('open', 'activity', null))).toBe(false);
+  });
+});
+
+describe('canSuspend', () => {
+  it('offers it for an unresolved report that points at a person', () => {
+    expect(canSuspend(report('open', 'user', null))).toBe(true);
+    expect(canSuspend(report('reviewing', 'activity', 'published'))).toBe(true);
+    expect(canSuspend(report('open', 'message', null))).toBe(true);
+  });
+
+  it('offers it even when the session is already cancelled', () => {
+    // The organizer can still be the problem after the session is gone.
+    expect(canSuspend(report('open', 'activity', 'cancelled'))).toBe(true);
+  });
+
+  it('does not offer it for a group, or once the report is resolved', () => {
+    expect(canSuspend(report('open', 'community', null))).toBe(false);
+    expect(canSuspend(report('actioned', 'user', null))).toBe(false);
   });
 });
