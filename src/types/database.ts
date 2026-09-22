@@ -254,6 +254,36 @@ export interface Staff {
   note: string | null;
 }
 
+// ------------------------------------------------- attendance history
+
+/** Costa Rica time: madrugada 04–07, mañana 07–12, tarde 12–17, noche 17–04. */
+export type TimeBand = 'early' | 'morning' | 'afternoon' | 'evening';
+
+/**
+ * Opt-in (0021). A row exists only for somebody who turned history on, and
+ * says which version of the notice they were shown.
+ */
+export interface AttendanceHistoryConsent {
+  user_id: string;
+  consented_at: string;
+  notice_version: string;
+}
+
+/**
+ * A district, a sport and a time band, dated to the Monday of its week.
+ * Deliberately no venue, no activity and no timestamp. Owner-read only;
+ * deleted after ninety days.
+ */
+export interface AttendanceHistoryRow {
+  id: string;
+  user_id: string;
+  district_code: string;
+  category_id: CategoryId;
+  week_of: string;
+  is_weekend: boolean;
+  band: TimeBand;
+}
+
 // ------------------------------------------------- category attributes
 
 export interface RunningAttributes {

@@ -211,5 +211,7 @@ data in it would have been a far worse migration than doing it now.
 - **`claimed_by` needs extending.** Today it means "an imported session taken over by its
   real organiser". It now also has to cover an open session being adopted, and those are not
   quite the same event.
-- **Attendance-history tables are designed but not written**, and the 90-day delete job they
-  depend on does not exist yet. See `docs/security.md`.
+- **Attendance history exists (`0021`) and nothing reads it yet.** Recommendations are the
+  reason it was allowed; until they exist it is only the person's own record. When they do,
+  their weights must be cleared by the same two functions that clear the history. See
+  `docs/security.md`.

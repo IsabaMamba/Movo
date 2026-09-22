@@ -71,6 +71,11 @@ const ALLOWED = new Set([
   'mes',
   'país',
   'estás', // `tú estás` — the same word in both voices
+  // The future is the same word in both voices. Not a rule for all of `-rás`,
+  // though: voseo `comprás` ends the same way. Listed one verb at a time.
+  'tendrás',
+  // Places.
+  'tibás',
   // Rule 3 reads identifiers too, and English collides with it: `creá` + `te`
   // is `create`, as in `StyleSheet.create`.
   'create',
