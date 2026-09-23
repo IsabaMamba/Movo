@@ -137,7 +137,9 @@ export function SignUpScreen() {
       {/* Before the account exists, not after: the rules are what the person
           agrees to meet strangers under. */}
       <Link href="/normas" style={s.link}>
-        <Text style={s.linkText}>Al crear tu cuenta aceptas las normas de la comunidad</Text>
+        <Text style={s.linkText}>
+          Al crear tu cuenta confirmas que tienes 18 años o más y aceptas las normas de la comunidad
+        </Text>
       </Link>
 
       <Link href="/sign-in" style={s.link}>

@@ -200,7 +200,9 @@ account, linked from sign-up, the report sheet, the roster of a session the team
 the suspension screen — which lets a suspended person through to that one route. They promise
 only what `0019` and `0020` do, and the suspension lengths are read from `SUSPENSION_LENGTHS`
 so the text cannot drift from the queue's buttons. **A change of substance is a new
-`RULES_VERSION`.** Still undecided and deliberately not in the text: a minimum age, and a way to
+`RULES_VERSION`.** The minimum age is 18, decided 22 September 2026, and sign-up says so — **but nothing checks
+it**: sign-up asks for no birthdate, so the rule rests on the person's word and on suspending an
+account the team learns is a minor's. Still undecided and deliberately not in the text: a way to
 ask the team to reconsider a decision — there is no contact channel yet to point at.
 
 ## Required before strangers meet strangers

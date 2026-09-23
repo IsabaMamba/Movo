@@ -47,6 +47,11 @@ export const RULE_SECTIONS: RuleSection[] = [
     title: 'Para todas las personas',
     items: [
       {
+        rule: 'Movo es para mayores de 18 años',
+        detail:
+          'Para crear una cuenta tienes que tener 18 años o más. Si sabemos que una cuenta es de una persona menor de edad, el equipo la suspende.',
+      },
+      {
         rule: 'Trata bien a la gente',
         detail:
           'Nada de insultos, humillaciones ni discriminación por origen, género, orientación sexual, religión, discapacidad, edad, cuerpo o nivel deportivo. Alguien que empieza tiene el mismo lugar que alguien que compite.',
@@ -60,6 +65,11 @@ export const RULE_SECTIONS: RuleSection[] = [
         rule: 'Nunca amenaces ni uses la violencia',
         detail:
           'Ni en persona, ni en el chat, ni en broma. Tampoco se permite animar a otra persona a hacerlo.',
+      },
+      {
+        rule: 'Sin alcohol ni drogas',
+        detail:
+          'No llegues a una sesión bajo sus efectos ni los lleves. Hacer deporte con otras personas en ese estado pone en riesgo a todo el grupo.',
       },
       {
         rule: 'Sé quien dices ser',

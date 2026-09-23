@@ -27,6 +27,11 @@ describe('the rules', () => {
     expect(suspension?.detail).toContain(suspensionLengthsSentence());
   });
 
+  it('set the minimum age at 18, as sign-up says', () => {
+    const everyone = RULE_SECTIONS.find((section) => section.id === 'todos');
+    expect(everyone?.items[0]?.rule).toBe('Movo es para mayores de 18 años');
+  });
+
   it('have no duplicate headlines, which the screen uses as keys', () => {
     const headlines = [
       ...RULE_SECTIONS.flatMap((section) => section.items.map((item) => item.rule)),
