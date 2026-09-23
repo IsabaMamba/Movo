@@ -42,7 +42,7 @@ column is maintained by hand.
 | `0018_pico_blanco_venue`       | Data fix: moves the Pico Blanco venue from Colón, Mora to the trailhead in San Antonio de Escazú            | yes     |
 | `0019_moderate_cancel`         | `moderate_cancel_activity()` — staff cancel a reported session; `activities.cancelled_by_staff`             | yes     |
 | `0020_suspensions`             | `suspensions`, `suspend_account()`, `lift_suspension()`, `my_suspension()`; write triggers, hidden profiles | yes     |
-| `0021_attendance_history`      | Opt-in attendance history (district, sport, time band, week), owner-only; the 90-day purge on pg_cron       | no      |
+| `0021_attendance_history`      | Opt-in attendance history (district, sport, time band, week), owner-only; the 90-day purge on pg_cron       | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -182,14 +182,15 @@ photos carry GPS; without attestation the backend is an open API. Do these befor
 the first feature that uploads anything.
 
 **5. Attendance history and its 90-day delete job — together, or neither.** _Built in `0021`,
-not applied._ Opt-in from `/historial` (linked from Mis sesiones); a check-in writes district,
+applied on 22 September._ Opt-in from `/historial` (linked from Mis sesiones); a check-in writes district,
 sport, weekday/weekend and time band, dated to the week, and nothing else. Owner-read only.
 `purge_attendance_history()` deletes past 90 days and runs nightly on pg_cron.
 
-CI has no pg_cron, so it tests the purge function and never the schedule. **After `db push`,
-confirm the job exists:** `select jobname, schedule from cron.job` must return
-`purge-attendance-history`. Until somebody has run that query on the live project, the
-promise in `docs/security.md` is still unverified. The consent text is part of item 6 — counsel
+CI has no pg_cron, so it tests the purge function and never the schedule. On the live project,
+checked after `db push` on 22 September: `cron.job` holds `purge-attendance-history`, active,
+`17 9 * * *`; `anon` cannot read the history or call `set_attendance_history()`, and
+`authenticated` can neither insert rows nor run the purge. **Nobody has seen the job run yet** —
+`cron.job_run_details` will show its first run after 03:17 on 23 September. The consent text is part of item 6 — counsel
 should read it with the rest.
 
 **6. Ley 8968 consent text reviewed by local counsel,** and a written basis for the cross-border
