@@ -11,6 +11,7 @@
  * person out on a network error.
  */
 
+import { Link, usePathname } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -21,6 +22,7 @@ import { useAuth } from './AuthProvider';
 
 export function SuspensionGate({ children }: { children: ReactNode }) {
   const { session, signOut } = useAuth();
+  const pathname = usePathname();
   const userId = session?.user.id;
 
   const [suspension, setSuspension] = useState<MySuspension | null>(null);
@@ -46,7 +48,9 @@ export function SuspensionGate({ children }: { children: ReactNode }) {
     void check();
   }, [check]);
 
-  if (!suspension) return <>{children}</>;
+  // The rules are the one screen a suspended person is let through to: they
+  // were suspended under them, and must be able to read them.
+  if (!suspension || pathname === '/normas') return <>{children}</>;
 
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
@@ -69,6 +73,9 @@ export function SuspensionGate({ children }: { children: ReactNode }) {
             ? 'No tiene fecha de fin: dura hasta que el equipo la levante.'
             : 'Cuando llegue esa fecha termina sola; no tienes que hacer nada.'}
         </Text>
+        <Link href="/normas" style={s.back}>
+          <Text style={s.linkText}>Leer las normas de la comunidad</Text>
+        </Link>
       </View>
 
       <View style={s.confirmRow}>

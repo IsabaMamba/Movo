@@ -198,6 +198,13 @@ export function RosterScreen() {
                 ? `«${activity.cancel_reason}»`
                 : 'Sin motivo escrito.'}
           </Text>
+          {/* The sentence cites the rules; the organizer should be one tap
+              from reading which. */}
+          {activity.cancelled_by_staff && (
+            <Link href="/normas" style={s.back}>
+              <Text style={s.linkText}>Leer las normas de la comunidad</Text>
+            </Link>
+          )}
         </View>
       )}
 

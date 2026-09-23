@@ -494,6 +494,9 @@ export function SessionDetailScreen() {
           <Text style={s.sheetBody}>
             Cuéntanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
           </Text>
+          <Link href="/normas" style={s.back}>
+            <Text style={s.sheetBody}>Ver las normas de la comunidad</Text>
+          </Link>
 
           {/* One reason from a closed list: a radiogroup. The group carries the
               label because the options are bare words that mean nothing
