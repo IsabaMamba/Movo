@@ -134,6 +134,12 @@ export function SignUpScreen() {
         <Text style={s.buttonText}>{busy ? 'Creando…' : 'Crear cuenta'}</Text>
       </Pressable>
 
+      {/* Before the account exists, not after: the rules are what the person
+          agrees to meet strangers under. */}
+      <Link href="/normas" style={s.link}>
+        <Text style={s.linkText}>Al crear tu cuenta aceptas las normas de la comunidad</Text>
+      </Link>
+
       <Link href="/sign-in" style={s.link}>
         <Text style={s.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
       </Link>

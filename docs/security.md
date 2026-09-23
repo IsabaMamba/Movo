@@ -194,23 +194,29 @@ Neither power touches sign-in: a suspended account keeps its session and its tok
 the auth layer (`auth.users.banned_until`) would need the service key from a server, which Movo
 does not have.
 
-The organizer notice cites "las normas de la comunidad", and **no such rules are written down
-yet**. They need to exist, publicly, before the first session is cancelled this way.
+The organizer notice cites "las normas de la comunidad". **They are at `/normas`**
+(`src/features/rules/rules.ts`, versioned by `RULES_VERSION`): public, readable without an
+account, linked from sign-up, the report sheet, the roster of a session the team cancelled and
+the suspension screen — which lets a suspended person through to that one route. They promise
+only what `0019` and `0020` do, and the suspension lengths are read from `SUSPENSION_LENGTHS`
+so the text cannot drift from the queue's buttons. **A change of substance is a new
+`RULES_VERSION`.** Still undecided and deliberately not in the text: a minimum age, and a way to
+ask the team to reconsider a decision — there is no contact channel yet to point at.
 
 ## Required before strangers meet strangers
 
 Not yet built. Each is a blocker for the first public session, not a v2 item.
 
-| Control                       | Why                                                                                                                                                                                                                   |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                                                                                         |
-| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                                                                                    |
-| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                                                                                |
-| In-app reporting with a human | A report nobody reads is theatre. Queue, reader, named rota, cancelling a reported session and suspending an account exist — see Report triage above. What is missing is the written community rules the notices cite |
-| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                                                                                   |
-| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                                                                                |
-| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                                                                                   |
-| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                                                                                |
+| Control                       | Why                                                                                                                                                                                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity verification         | Unverified profiles are why nobody will meet at 5 a.m., and the reason women especially won't                                                                                                                                                |
+| Group minimum of 3, 1:1 off   | Removes the whole class of one-on-one meeting risk                                                                                                                                                                                           |
+| Public, named venues only     | Already structural (`locations.is_public_venue`); needs enforcement in the create flow                                                                                                                                                       |
+| In-app reporting with a human | A report nobody reads is theatre. Queue, reader, named rota, cancelling a reported session, suspending an account and the written community rules (`/normas`) exist — see Report triage above. What is missing is a way to appeal a decision |
+| Written incident protocol     | Decide who does what, before the night it is needed                                                                                                                                                                                          |
+| App Check / attestation       | Without it the backend is an open API and the user table is enumerable                                                                                                                                                                       |
+| EXIF stripping on upload      | Phone photos carry GPS coordinates straight into a stranger's hands                                                                                                                                                                          |
+| Locked-down storage buckets   | Supabase buckets are public by default                                                                                                                                                                                                       |
 
 ## Attendance history
 
