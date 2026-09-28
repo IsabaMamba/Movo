@@ -2,14 +2,13 @@ import { Link, Redirect } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
+// The bounds mirror the profiles check constraint, so the fallback name in
+// handle_new_user() never triggers. Mi cuenta uses the same pair.
+import { NAME_MAX, NAME_MIN } from '../../lib/account';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
 import { authStyles as s } from './styles';
-
-/** Mirrors the profiles check constraint so the fallback name never triggers. */
-const NAME_MIN = 2;
-const NAME_MAX = 60;
 
 export function SignUpScreen() {
   const { session, loading, signUp } = useAuth();

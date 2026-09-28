@@ -86,7 +86,7 @@ function seriesLine(startsAt: string, upcoming: number): string {
 const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
 export function DiscoverScreen() {
-  const { session, signOut } = useAuth();
+  const { session } = useAuth();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selected, setSelected] = useState<CategoryId | null>(null);
@@ -189,7 +189,6 @@ export function DiscoverScreen() {
         <View style={s.account}>
           {session ? (
             <>
-              <Text style={s.accountText}>{session.user.email}</Text>
               {/* Before Mis sesiones: an aviso is something that happened to a
                   plan you already made, and a list of plans can wait. */}
               <Link href="/avisos" asChild>
@@ -226,15 +225,11 @@ export function DiscoverScreen() {
               <Link href="/grupos">
                 <Text style={s.linkText}>Grupos</Text>
               </Link>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar sesión"
-                onPress={() => {
-                  void signOut();
-                }}
-              >
-                <Text style={s.linkText}>Cerrar sesión</Text>
-              </Pressable>
+              {/* Sign-out and the email address moved to Mi cuenta: the first
+                  screen anybody sees is about sessions, not about the account. */}
+              <Link href="/cuenta">
+                <Text style={s.linkText}>Mi cuenta</Text>
+              </Link>
             </>
           ) : (
             <>
