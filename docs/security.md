@@ -34,6 +34,11 @@ What we hold is a map of where specific people will be at specific times.
   migration that adds a table must `revoke all` on it explicitly**, and should carry a test
   that says so, because nothing else will notice.
 
+- **Column grants, not row grants, wherever a column is a judgement.** A policy restricts which
+  row a client may write, never which column. `0008` (activities), `0011` (notifications) and
+  `0024` (profiles, locations) each closed a case of that: `is_verified`, `is_public_venue` and
+  `district_code` are written only by migrations, `SECURITY DEFINER` code and triggers. **Any
+  new `grant update` or `grant insert` should name its columns.**
 - **Split profiles.** `profiles` is public and minimal; `profile_private` (phone, emergency
   contact, birthdate) is readable only by its owner.
 - **No precise location, anywhere.** Venues are public points. Profiles carry a district,
