@@ -47,8 +47,9 @@ is a web build (ADR 0003's own decision), so Expo push reaches nobody today.
   steps. Until then the switch does not appear (no public key) and the trigger does nothing.
 - One generic sentence is less useful than the real one. Accepted: a person who wants the
   detail on the lock screen is the person least likely to be the one at risk.
-- iPhones receive push only once Movo is added to the home screen, and only with a web
-  manifest. That is a limit of Safari, said on the switch itself.
+- iPhones receive push only once Movo is added to the home screen. That is a limit of Safari,
+  said on the switch itself. The web manifest and touch icon it needs exist since 28 September;
+  the icon is provisional (`public/icon.svg`) until there is a designed mark.
 - Every notice for somebody with a device costs one Edge Function call. At pilot volumes that
   is nothing; at real volume it should batch.
 
