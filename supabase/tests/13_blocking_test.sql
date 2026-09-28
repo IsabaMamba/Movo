@@ -63,6 +63,14 @@ insert into public.activities (
    '11100000-0000-0000-0000-0000000000a1', 'running',
    '11100000-0000-0000-0000-00000000aa01', 'Corrida de Ana',
    now() + interval '2 days', now() + interval '2 days 1 hour',
+   'published', 'public', '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb),
+  -- Since 0025 a profile is readable only with a reason; organizing a public
+  -- session is one. This is what makes Cris a fair control below: visible to
+  -- Ana for the same reason Beto was, before the block.
+  ('11100000-0000-0000-0000-00000000dd03',
+   '11100000-0000-0000-0000-0000000000c1', 'running',
+   '11100000-0000-0000-0000-00000000aa01', 'Corrida de Cris',
+   now() + interval '3 days', now() + interval '3 days 1 hour',
    'published', 'public', '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb);
 
 -- --------------------------------------------- the predicate, before a block
@@ -130,7 +138,7 @@ do $$ begin
   if not exists (
     select 1 from public.profiles where id = '11100000-0000-0000-0000-0000000000c1'
   ) then
-    raise exception 'FAIL: Ana cannot read an uninvolved profile — the policy is too broad';
+    raise exception 'FAIL: Ana cannot read Cris, a public organizer she has not blocked — the policy is too broad';
   end if;
 end $$;
 
