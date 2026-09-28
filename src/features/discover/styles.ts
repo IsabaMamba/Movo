@@ -8,7 +8,6 @@ export const discoverStyles = StyleSheet.create({
   header: { gap: space.xs, paddingHorizontal: space.xl },
   title: { ...type.display, color: color.text.primary },
   account: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
-  accountText: { ...type.caption, color: color.text.tertiary },
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
 
   /**
