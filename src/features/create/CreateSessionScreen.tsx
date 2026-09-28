@@ -33,6 +33,7 @@ import {
   type ValidationIssue,
 } from '../../lib/activities';
 import { projectRef, supabase } from '../../lib/supabase';
+import { weekdayPlural } from '../../lib/series';
 import {
   color,
   difficultyLabel,
@@ -62,8 +63,6 @@ const BANDS: DifficultyBand[] = ['suave', 'moderada', 'exigente'];
 
 /** Costa Rica is UTC-6 year round — no daylight saving to reason about. */
 const CR_OFFSET = '-06:00';
-
-const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
 /** Chips are `size.controlSm`; the target is padded back up to 44 without resizing them. */
 const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
@@ -215,7 +214,7 @@ export function CreateSessionScreen() {
           ok: true,
           message:
             `Serie creada · ${generated} ${generated === 1 ? 'sesión' : 'sesiones'}, ` +
-            `todos los ${WEEKDAYS[startsAt.getDay()] ?? ''} a las ${time} · ` +
+            `todos los ${weekdayPlural(startsAt.getDay())} a las ${time} · ` +
             `id ${seriesId.slice(0, 8)} · proyecto ${projectRef}`,
         }))
       : createActivity(
@@ -481,7 +480,7 @@ export function CreateSessionScreen() {
         {repeats && startsValid && (
           <Text style={s.hint}>
             Se crean las sesiones de los próximos 60 días, todos los{' '}
-            {WEEKDAYS[startsAt.getDay()] ?? ''} a las {time}. Puedes cancelar una sin cancelar el
+            {weekdayPlural(startsAt.getDay())} a las {time}. Puedes cancelar una sin cancelar el
             resto.
           </Text>
         )}

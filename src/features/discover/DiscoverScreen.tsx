@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 
 import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../../lib/activities';
+import { GAM_CENTRE, originFailureText, requestCoarseOrigin, type Point } from '../../lib/location';
 import { countUnreadNotifications, unreadA11yLabel } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
@@ -46,13 +47,6 @@ import { discoverStyles as s } from './styles';
  * exists.
  */
 const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
-
-/**
- * Centre of the Greater Metropolitan Area. Device location needs a permission
- * prompt and a fallback for when it is refused, so it lands separately — a
- * fixed centre still shows a useful list on first open.
- */
-const GAM_CENTRE = { lat: 9.9281, lng: -84.0907 };
 
 /**
  * The same words Crear offers when the level is chosen. The card used to print
@@ -86,7 +80,7 @@ function seriesLine(startsAt: string, upcoming: number): string {
 const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
 export function DiscoverScreen() {
-  const { session, signOut } = useAuth();
+  const { session } = useAuth();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selected, setSelected] = useState<CategoryId | null>(null);
@@ -95,6 +89,11 @@ export function DiscoverScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [unread, setUnread] = useState(0);
+  // Where the search starts. The GAM until the person asks for otherwise:
+  // opening the app never triggers a permission prompt. See lib/location.ts.
+  const [origin, setOrigin] = useState<Point>(GAM_CENTRE);
+  const [originMode, setOriginMode] = useState<'gam' | 'mine' | 'locating'>('gam');
+  const [originNote, setOriginNote] = useState<string | null>(null);
 
   const userId = session?.user.id;
 
@@ -141,11 +140,11 @@ export function DiscoverScreen() {
 
   const load = useCallback(async (): Promise<NearbyActivity[]> => {
     return fetchNearbyActivities(supabase, {
-      ...GAM_CENTRE,
+      ...origin,
       radiusM,
       categories: selected ? [selected] : undefined,
     });
-  }, [radiusM, selected]);
+  }, [origin, radiusM, selected]);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,6 +165,28 @@ export function DiscoverScreen() {
       cancelled = true;
     };
   }, [load]);
+
+  const pickMine = () => {
+    setOriginMode('locating');
+    setOriginNote(null);
+    void requestCoarseOrigin().then((result) => {
+      if (result.ok) {
+        setOrigin(result.point);
+        setOriginMode('mine');
+        setOriginNote('Cerca de ti, en un radio aproximado. Tu ubicación no se guarda.');
+      } else {
+        setOrigin(GAM_CENTRE);
+        setOriginMode('gam');
+        setOriginNote(originFailureText(result.reason));
+      }
+    });
+  };
+
+  const pickGam = () => {
+    setOrigin(GAM_CENTRE);
+    setOriginMode('gam');
+    setOriginNote(null);
+  };
 
   const refresh = () => {
     setRefreshing(true);
@@ -189,7 +210,6 @@ export function DiscoverScreen() {
         <View style={s.account}>
           {session ? (
             <>
-              <Text style={s.accountText}>{session.user.email}</Text>
               {/* Before Mis sesiones: an aviso is something that happened to a
                   plan you already made, and a list of plans can wait. */}
               <Link href="/avisos" asChild>
@@ -226,15 +246,11 @@ export function DiscoverScreen() {
               <Link href="/grupos">
                 <Text style={s.linkText}>Grupos</Text>
               </Link>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar sesión"
-                onPress={() => {
-                  void signOut();
-                }}
-              >
-                <Text style={s.linkText}>Cerrar sesión</Text>
-              </Pressable>
+              {/* Sign-out and the email address moved to Mi cuenta: the first
+                  screen anybody sees is about sessions, not about the account. */}
+              <Link href="/cuenta">
+                <Text style={s.linkText}>Mi cuenta</Text>
+              </Link>
             </>
           ) : (
             <>
@@ -251,7 +267,7 @@ export function DiscoverScreen() {
 
       {/* Above the filters, as designed: it summarises the week before the
           chips narrow it. Signed-in only — zone_heat() is not granted to anon. */}
-      {session ? <HeatBand centre={GAM_CENTRE} radiusM={radiusM} /> : null}
+      {session ? <HeatBand centre={origin} radiusM={radiusM} /> : null}
 
       <ScrollView
         accessibilityRole="radiogroup"
@@ -293,6 +309,41 @@ export function DiscoverScreen() {
           })}
         </View>
       </ScrollView>
+
+      <View accessibilityRole="radiogroup" accessibilityLabel="Buscar desde" style={s.filters}>
+        <View style={s.filterRow}>
+          <Pressable
+            accessibilityRole="radio"
+            accessibilityLabel="Desde el centro de la GAM"
+            aria-checked={originMode === 'gam'}
+            hitSlop={CHIP_HIT_SLOP}
+            onPress={pickGam}
+            style={[s.chip, originMode === 'gam' && s.chipOn]}
+          >
+            <Text style={[s.chipText, originMode === 'gam' && s.chipTextOn]}>Centro de la GAM</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="radio"
+            accessibilityLabel="Cerca de mí"
+            accessibilityHint="Pide permiso para usar tu ubicación aproximada. No se guarda."
+            aria-busy={originMode === 'locating'}
+            aria-checked={originMode === 'mine'}
+            disabled={originMode === 'locating'}
+            hitSlop={CHIP_HIT_SLOP}
+            onPress={pickMine}
+            style={[s.chip, originMode === 'mine' && s.chipOn]}
+          >
+            <Text style={[s.chipText, originMode === 'mine' && s.chipTextOn]}>
+              {originMode === 'locating' ? 'Buscando…' : 'Cerca de mí'}
+            </Text>
+          </Pressable>
+        </View>
+        {originNote !== null && (
+          <Text aria-live="polite" style={s.meta}>
+            {originNote}
+          </Text>
+        )}
+      </View>
 
       <ScrollView
         accessibilityRole="radiogroup"
