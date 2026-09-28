@@ -591,6 +591,9 @@ export function ReportQueueScreen() {
       <Link href="/staff/suspensiones" style={s.back}>
         <Text style={s.linkText}>Ver suspensiones vigentes</Text>
       </Link>
+      <Link href="/staff/lugares" style={s.back}>
+        <Text style={s.linkText}>Lugares por verificar</Text>
+      </Link>
 
       {/*
         Two views rather than one list.

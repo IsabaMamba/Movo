@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { districtMismatch, pointOf } from './venues';
+import { districtMismatch, explainVerifyError, pointOf } from './venues';
 
 /**
  * Correcting a venue starts with reading back where it is. A misread point —
@@ -50,5 +50,24 @@ describe('districtMismatch', () => {
     expect(districtMismatch(null, 'San Juan')).toBe(false);
     expect(districtMismatch('  ', 'San Juan')).toBe(false);
     expect(districtMismatch('Moravia', null)).toBe(false);
+  });
+});
+
+describe('explainVerifyError', () => {
+  it('turns each refusal into the rule', () => {
+    expect(
+      explainVerifyError(new Error('the point is in no district; fix it before verifying')),
+    ).toMatch(/no cae en ningún distrito/);
+    expect(explainVerifyError(new Error('a private place cannot be verified'))).toBe(
+      'Un lugar privado no se puede verificar.',
+    );
+    expect(explainVerifyError(new Error('only the Movo team can verify a venue'))).toBe(
+      'Solo el equipo de Movo puede hacer esto.',
+    );
+    expect(explainVerifyError(new Error('say what was checked'))).toBe('Escribe qué revisaste.');
+  });
+
+  it('shows an unrecognised error as it came', () => {
+    expect(explainVerifyError(new Error('algo nuevo'))).toBe('algo nuevo');
   });
 });

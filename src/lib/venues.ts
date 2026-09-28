@@ -161,3 +161,101 @@ export function districtMismatch(typed: string | null, zoneName: string | null):
   if (!typed?.trim() || !zoneName) return false;
   return fold(typed) !== fold(zoneName);
 }
+
+// ------------------------------------------------------------- staff (0027)
+
+/** Whether the caller is on the Movo team. Answers only about the caller. */
+export async function amIStaff(db: SupabaseClient): Promise<boolean> {
+  const { data, error } = await db.rpc('is_staff');
+  if (error) return false;
+  return data === true;
+}
+
+export interface StaffVenue extends MyVenue {
+  createdBy: string | null;
+  creatorName: string | null;
+  verifiedAt: string | null;
+  verifiedNote: string | null;
+}
+
+interface StaffVenueRow extends VenueRow {
+  created_by: string | null;
+  verified_at: string | null;
+  verified_note: string | null;
+  creator: { display_name: string } | null;
+}
+
+/** Every venue, unverified first. Staff can read every creator's profile (0025). */
+export async function fetchVenuesForReview(db: SupabaseClient): Promise<StaffVenue[]> {
+  const { data, error } = await db
+    .from('locations')
+    .select(
+      'id, name, district, address, is_verified, geog, created_by, verified_at, verified_note, ' +
+        'zone:zones(name), creator:profiles!locations_created_by_fkey(display_name)',
+    )
+    .order('is_verified', { ascending: true })
+    .order('created_at', { ascending: false });
+  if (error) throw toApiError(error);
+
+  return ((data ?? []) as unknown as StaffVenueRow[]).flatMap((row) => {
+    const point = pointOf(row.geog);
+    if (!point) return [];
+    return [
+      {
+        id: row.id,
+        name: row.name,
+        district: row.district,
+        address: row.address,
+        is_verified: row.is_verified,
+        lat: point.lat,
+        lng: point.lng,
+        zoneName: row.zone?.name ?? null,
+        createdBy: row.created_by,
+        creatorName: row.creator?.display_name ?? null,
+        verifiedAt: row.verified_at,
+        verifiedNote: row.verified_note,
+      },
+    ];
+  });
+}
+
+/** Staff only. Refused for a blank note, a private venue or a point in no district. */
+export async function verifyVenue(
+  db: SupabaseClient,
+  venueId: string,
+  note: string,
+): Promise<void> {
+  const { error } = await db.rpc('verify_location', {
+    p_location_id: venueId,
+    p_note: note.trim(),
+  });
+  if (error) throw toApiError(error);
+}
+
+/** Staff only. Hands the venue back to its creator. */
+export async function unverifyVenue(
+  db: SupabaseClient,
+  venueId: string,
+  note: string,
+): Promise<void> {
+  const { error } = await db.rpc('unverify_location', {
+    p_location_id: venueId,
+    p_note: note.trim(),
+  });
+  if (error) throw toApiError(error);
+}
+
+/** The functions' refusals, in the words the reviewer needs. */
+export function explainVerifyError(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message : '';
+  if (message.includes('in no district')) {
+    return 'El punto no cae en ningún distrito: está en el mar o fuera del país. Hay que corregirlo antes.';
+  }
+  if (message.includes('private place')) return 'Un lugar privado no se puede verificar.';
+  if (message.includes('already verified')) return 'Ya estaba verificado.';
+  if (message.includes('only the Movo team')) return 'Solo el equipo de Movo puede hacer esto.';
+  if (message.includes('say what was checked') || message.includes('say why')) {
+    return 'Escribe qué revisaste.';
+  }
+  return message || 'No se pudo completar.';
+}
