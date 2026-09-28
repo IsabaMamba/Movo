@@ -95,7 +95,11 @@ export function InboxScreen() {
     // Navigation first, and not inside a `.then()`. Reading the aviso is the
     // point; recording that it was read is bookkeeping.
     if (item.activityId !== null) {
-      router.push({ pathname: '/sesion/[id]', params: { id: item.activityId } });
+      router.push(
+        item.opensRoster
+          ? { pathname: '/organizar/[id]', params: { id: item.activityId } }
+          : { pathname: '/sesion/[id]', params: { id: item.activityId } },
+      );
     }
     markRead(item.id);
   };
@@ -133,7 +137,11 @@ export function InboxScreen() {
           accessible
           accessibilityRole="button"
           accessibilityLabel={label}
-          accessibilityHint="Abre la sesión y marca el aviso como leído."
+          accessibilityHint={
+            item.opensRoster
+              ? 'Abre la lista de asistencia y marca el aviso como leído.'
+              : 'Abre la sesión y marca el aviso como leído.'
+          }
           key={item.id}
           onPress={() => {
             open(item);

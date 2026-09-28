@@ -103,6 +103,11 @@ export interface InboxItem {
   text: string;
   /** The session to open, or null when the notification leads nowhere. */
   activityId: string | null;
+  /**
+   * Open the organizer's roster rather than the public session page. Only
+   * for notices that ask the organizer to do something the roster is for.
+   */
+  opensRoster?: true;
 }
 
 /**
@@ -213,6 +218,16 @@ export function toInboxItem(row: Notification): InboxItem {
         ...base,
         text: `Por ahora eres la única persona apuntada a ${title}. Si nadie más se une, estarías a solas con quien organiza. Si prefieres no ir así, puedes salir de la sesión.`,
         activityId,
+      };
+
+    // Written by remind_unclosed_sessions() (0023), once, an hour after the
+    // end. Opens the roster, because marking who came is the thing to do.
+    case 'close_reminder':
+      return {
+        ...base,
+        text: `${title} ya terminó y sigue abierta. Marca quién llegó y ciérrala: sin eso, la asistencia no cuenta.`,
+        activityId,
+        opensRoster: true,
       };
 
     case 'report_resolved':
