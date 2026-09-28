@@ -191,6 +191,26 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('a session ended and nobody closed it', () => {
+    it('asks the organiser to mark who came, and opens the roster', () => {
+      const item = toInboxItem(
+        row({ type: 'close_reminder', payload: { title: 'Trote', activity_id: 'a8' } }),
+      );
+      expect(item.text).toBe(
+        'Trote ya terminó y sigue abierta. Marca quién llegó y ciérrala: sin eso, la asistencia no cuenta.',
+      );
+      expect(item.activityId).toBe('a8');
+      expect(item.opensRoster).toBe(true);
+    });
+
+    it('leaves every other notice opening the session page', () => {
+      const item = toInboxItem(
+        row({ type: 'waitlist_promoted', payload: { title: 'Trote', activity_id: 'a8' } }),
+      );
+      expect(item.opensRoster).toBeUndefined();
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.

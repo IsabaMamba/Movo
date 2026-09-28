@@ -187,6 +187,7 @@ export type NotificationType =
   | 'account_restored'
   | 'solo_session_organizer'
   | 'solo_session_participant'
+  | 'close_reminder'
   | (string & {});
 
 export interface Notification {
