@@ -170,6 +170,27 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('a session would be two people alone', () => {
+    it('tells the organiser one person joined and what they can do', () => {
+      const item = toInboxItem(
+        row({ type: 'solo_session_organizer', payload: { title: 'Trote', activity_id: 'a7' } }),
+      );
+      expect(item.text).toMatch(/^Solo una persona se apuntó a Trote\./);
+      expect(item.text).toContain('encuentro a solas');
+      expect(item.text).toContain('cancelarla');
+      expect(item.activityId).toBe('a7');
+    });
+
+    it('tells the participant they can leave, and opens the session to do it', () => {
+      const item = toInboxItem(
+        row({ type: 'solo_session_participant', payload: { title: 'Trote', activity_id: 'a7' } }),
+      );
+      expect(item.text).toMatch(/^Por ahora eres la única persona apuntada a Trote\./);
+      expect(item.text).toContain('puedes salir de la sesión');
+      expect(item.activityId).toBe('a7');
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.

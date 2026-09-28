@@ -185,6 +185,8 @@ export type NotificationType =
   | 'report_resolved'
   | 'account_suspended'
   | 'account_restored'
+  | 'solo_session_organizer'
+  | 'solo_session_participant'
   | (string & {});
 
 export interface Notification {
