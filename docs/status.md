@@ -64,6 +64,7 @@ column is maintained by hand.
 | `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district              | yes     |
 | `0025_profile_visibility`      | `profile_visible()`: a profile is readable only by its owner, people sharing a session or group, staff — or anybody, for a public organizer          | yes     |
 | `0026_web_push`                | `push_subscriptions`, `register_push_subscription()` (push hosts only), and a trigger that asks the `send-push` Edge Function to deliver each notice | yes     |
+| `0027_verify_venues`           | `verify_location()` / `unverify_location()`, staff only, with a note; `verified_by`, `verified_at`, `verified_note` on the venue                     | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -270,7 +271,7 @@ transfer to `us-east-1`.
 **8. Profile and account screen.** _Done except the photo._ `/cuenta` (#81) edits the name and
 signs out. The photo waits for item 4; `profiles.avatar_url` has no client grant until it lands.
 
-**9. Fix and verify venues.** _Screen done (#82); two venues still to fix, and nobody can verify._
+**9. Fix and verify venues.** _Correction screen done (#82); staff verification built (`0027`, `/staff/lugares`); two venues still to fix._
 `/lugares` shows a creator the typed district next to the resolved one and corrects an unverified
 venue. Pico Blanco was moved by `0018`; Canchas de Fonseca and Parque de la
 democracia still resolve to a different district than the one typed for them (see above), and
