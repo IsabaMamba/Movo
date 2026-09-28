@@ -96,8 +96,8 @@ The report queue got its first readers on 17 September: two rows inserted into `
 Supabase panel, by hand, on purpose — no client can grant itself that role.
 
 `0021`'s purge has run every night since 23 September, all `succeeded`. `0023` was applied on 28
-September: `remind-unclosed-sessions`, active, hourly at minute 5; no client can run it; seven
-live sessions were due a reminder on its first run. `0022` was applied on 28
+September: `remind-unclosed-sessions`, active, hourly at minute 5; no client can run it. Its first run, at 19:05 UTC, `succeeded` and sent seven
+reminders to four organizers; nothing was left due. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
