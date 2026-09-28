@@ -9,6 +9,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { disablePush } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
 
 /** signUp resolves without a session when the project requires confirmation. */
@@ -76,6 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return data.session ? 'signed-in' : 'confirmation-required';
       },
       signOut: async () => {
+        // Before signing out, while there is still a session to unregister
+        // with: a device must not keep receiving somebody's notices after
+        // they leave it. Never throws (see lib/push.ts).
+        await disablePush(supabase);
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
       },

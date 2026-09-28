@@ -1,6 +1,6 @@
 # 0003 — Expo for native, web build first to reach real users
 
-**Status:** Accepted · 2026-09
+**Status:** Accepted · 2026-09 · **Amended by** ADR 0007: remote push on web is Web Push, not Expo.
 
 ## Context
 

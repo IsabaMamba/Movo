@@ -25,6 +25,21 @@ export default tseslint.config(
     },
   },
   {
+    // The service worker runs in the browser's worker scope, not the bundle.
+    files: ['public/sw.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: { self: 'readonly', URL: 'readonly' },
+    },
+  },
+  {
+    // Edge Functions run on Deno, with npm: specifiers; tsc does not see them.
+    files: ['supabase/functions/**/*.ts'],
+    languageOptions: {
+      globals: { Deno: 'readonly', Response: 'readonly', TextEncoder: 'readonly' },
+    },
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
       // Unused args are fine when prefixed with _, which keeps signatures honest.
