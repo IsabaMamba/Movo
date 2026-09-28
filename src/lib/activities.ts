@@ -328,6 +328,12 @@ function addDays(date: Date, days: number): Date {
 /** Costa Rica has no DST, but naming the zone keeps Panama/Guatemala honest. */
 export const DEFAULT_TIMEZONE = 'America/Costa_Rica';
 
+/**
+ * «mar, 29 sept, 18:00». Always 24-hour: `es-CR` defaults to «6:00 p. m.»,
+ * and the design, modo solo, the edit form and the suspension notice all say
+ * 18:00. A session time is read against a watch, not a sentence, and two
+ * clocks on two screens is how somebody turns up at the wrong half of the day.
+ */
 export function formatSessionTime(
   isoInstant: string,
   timeZone: string = DEFAULT_TIMEZONE,
@@ -337,8 +343,9 @@ export function formatSessionTime(
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
+    hourCycle: 'h23',
     timeZone,
   }).format(new Date(isoInstant));
 }
