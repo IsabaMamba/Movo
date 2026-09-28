@@ -136,6 +136,10 @@ export function OrganizerHomeScreen() {
         <Text style={s.subtitle}>Tus sesiones, la lista de quién va y el check-in.</Text>
       </View>
 
+      <Link href="/lugares" style={s.back}>
+        <Text style={s.linkText}>Mis lugares</Text>
+      </Link>
+
       {error && (
         <Text accessibilityRole="alert" style={s.error}>
           {error}
