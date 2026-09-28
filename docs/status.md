@@ -62,7 +62,7 @@ column is maintained by hand.
 | `0022_solo_session_warning`    | `warn_solo_sessions()` every 15 min on pg_cron: a session with one person joined, inside 24 h, warns both                                   | yes     |
 | `0023_close_reminder`          | `remind_unclosed_sessions()` hourly on pg_cron: one reminder to the organizer an hour after an unclosed session ends                        | yes     |
 | `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district     | yes     |
-| `0025_profile_visibility`      | `profile_visible()`: a profile is readable only by its owner, people sharing a session or group, staff — or anybody, for a public organizer | no      |
+| `0025_profile_visibility`      | `profile_visible()`: a profile is readable only by its owner, people sharing a session or group, staff — or anybody, for a public organizer | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -107,7 +107,9 @@ September: `remind-unclosed-sessions`, active, hourly at minute 5; no client can
 reminders to four organizers; nothing was left due. `0024` was applied on 28 September after #80
 merged; checked afterwards as `authenticated`: cannot update `profiles.is_verified`, cannot insert or
 update `locations.is_verified`, `is_public_venue` or `district_code`; can still rename themselves,
-create a venue and move their own. `0022` was applied on 28
+create a venue and move their own. `0025` was applied the same evening: with the anon key alone,
+`/rest/v1/profiles` went from all seven profiles to four — exactly the people who organize a public
+session. Descubrir and a session's organizer still load without signing in. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
