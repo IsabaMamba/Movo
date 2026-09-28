@@ -231,8 +231,8 @@ reminded.
 **12. Device location in Descubrir.** It searches from a fixed GAM centre. Needs the permission
 prompt and a fallback when it is refused.
 
-**13. Times in 24-hour format.** Cards say "6:00 p. m."; the design and modo solo use "18:00".
-`formatSessionTime` in `src/lib/activities.ts`.
+**13. Times in 24-hour format.** _Done._ `formatSessionTime` now says "18:00" and "05:30", like the
+design, modo solo and the edit form; `src/lib/activities.test.ts` holds it there.
 
 **14. Dependabot #37 and #38.** Check the Expo SDK pins before merging.
 
