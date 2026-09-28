@@ -20,7 +20,7 @@
 import { SUSPENSION_LENGTHS } from '../../lib/suspensions';
 
 /** ISO date of this text. Shown on the screen; bump it with any change of substance. */
-export const RULES_VERSION = '2026-09-22';
+export const RULES_VERSION = '2026-09-28';
 
 export interface RuleSection {
   id: string;
@@ -105,6 +105,11 @@ export const RULE_SECTIONS: RuleSection[] = [
         rule: 'Solo lugares públicos',
         detail:
           'Parques, canchas, senderos, lugares con nombre donde hay más gente. Nunca una casa, un carro ni un punto privado.',
+      },
+      {
+        rule: 'Una sesión es un grupo',
+        detail:
+          'Si faltando 24 horas solo hay una persona apuntada, Movo les avisa a ti y a ella de que sería un encuentro a solas. Lo recomendable es cancelarla o esperar a que se apunte alguien más.',
       },
       {
         rule: 'Alguien responde',

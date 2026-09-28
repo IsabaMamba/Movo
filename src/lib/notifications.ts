@@ -198,6 +198,23 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId: null,
       };
 
+    // Written by warn_solo_sessions() (0022), once, inside the last 24 hours.
+    // Neither names anybody: the organizer already sees who joined, and the
+    // participant already knows who organizes.
+    case 'solo_session_organizer':
+      return {
+        ...base,
+        text: `Solo una persona se apuntó a ${title}. Si nadie más se une, sería un encuentro a solas. Puedes cancelarla o esperar a que se apunte alguien más.`,
+        activityId,
+      };
+
+    case 'solo_session_participant':
+      return {
+        ...base,
+        text: `Por ahora eres la única persona apuntada a ${title}. Si nadie más se une, estarías a solas con quien organiza. Si prefieres no ir así, puedes salir de la sesión.`,
+        activityId,
+      };
+
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes
       // nothing else, because what was decided about another person is not the
