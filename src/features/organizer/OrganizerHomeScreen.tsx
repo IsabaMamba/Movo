@@ -17,6 +17,7 @@ import {
   formatSessionTime,
   type OrganizedActivity,
 } from '../../lib/activities';
+import { groupUpcoming, type UpcomingEntry } from '../../lib/series';
 import { supabase } from '../../lib/supabase';
 import { densityOf, occupancyA11yLabel, occupancyLabel } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
@@ -125,6 +126,57 @@ export function OrganizerHomeScreen() {
     );
   };
 
+  /**
+   * A series is one card here, as it is in Descubrir: nine Tuesdays of the
+   * same club listed as nine sessions hid the one thing the organizer runs.
+   * It opens the series, where the dates, the edit and the cancel are.
+   * «Pendientes de cerrar» stays one card per date — each one needs its own
+   * roster marked.
+   */
+  const seriesCard = (entry: Extract<UpcomingEntry<OrganizedActivity>, { kind: 'series' }>) => {
+    const { next, dates } = entry;
+    const more = dates.length - 1;
+    const when = formatSessionTime(next.starts_at);
+    const occupancy = occupancyLabel(next.joined_count, next.max_participants);
+    const moreLabel = more > 0 ? `y ${more} ${more === 1 ? 'fecha más' : 'fechas más'}` : null;
+    return (
+      <Pressable
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={[
+          next.title,
+          'Serie',
+          `Próxima fecha ${when}`,
+          next.location.name,
+          occupancy,
+          moreLabel,
+        ]
+          .filter((part): part is string => part !== null)
+          .join('. ')}
+        accessibilityHint="Abre la serie: sus fechas, editarla o cancelarla"
+        key={`series-${entry.seriesId}`}
+        onPress={() => {
+          router.push({ pathname: '/organizar/serie/[id]', params: { id: entry.seriesId } });
+        }}
+        style={s.card}
+      >
+        <View style={[s.badge, s.badgeLive]}>
+          <Text style={[s.badgeText, s.badgeLiveText]}>Serie</Text>
+        </View>
+        <Text style={s.cardTitle}>{next.title}</Text>
+        <Text style={s.cardMeta}>
+          Próxima: {when} · {next.location.name}
+        </Text>
+        <Text style={s.cardMeta}>
+          {occupancy}
+          {moreLabel !== null ? ` · ${moreLabel}` : ''}
+        </Text>
+      </Pressable>
+    );
+  };
+
+  const upcomingEntries = groupUpcoming(upcoming);
+
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
       <Link href="/" style={s.back}>
@@ -135,6 +187,10 @@ export function OrganizerHomeScreen() {
         <Text style={s.title}>Organizar</Text>
         <Text style={s.subtitle}>Tus sesiones, la lista de quién va y el check-in.</Text>
       </View>
+
+      <Link href="/lugares" style={s.back}>
+        <Text style={s.linkText}>Mis lugares</Text>
+      </Link>
 
       {error && (
         <Text accessibilityRole="alert" style={s.error}>
@@ -170,7 +226,9 @@ export function OrganizerHomeScreen() {
           {upcoming.length > 0 && (
             <View style={{ gap: 12 }}>
               <Text style={s.sectionTitle}>Próximas</Text>
-              {upcoming.map(card)}
+              {upcomingEntries.map((entry) =>
+                entry.kind === 'single' ? card(entry.activity) : seriesCard(entry),
+              )}
             </View>
           )}
 
