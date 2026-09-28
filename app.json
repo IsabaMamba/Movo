@@ -13,13 +13,25 @@
     },
     "android": {
       "package": "cr.movo.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "blockedPermissions": ["android.permission.ACCESS_FINE_LOCATION"]
     },
     "web": {
       "bundler": "metro",
       "output": "static"
     },
-    "plugins": ["expo-router", "expo-status-bar", "expo-font", "expo-splash-screen"],
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      "expo-splash-screen",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Movo usa tu ubicación aproximada, solo cuando tocas «Cerca de mí», para mostrarte sesiones cerca. No la guarda."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }
