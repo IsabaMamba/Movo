@@ -40,14 +40,14 @@ select v.id::uuid, 'a2200000-0000-0000-0000-000000000001', 'running',
        'b2200000-0000-0000-0000-000000000001', v.title,
        now() + v.ends_in - interval '1 hour', now() + v.ends_in, v.status::public.activity_status, 'public'
   from (values
-    ('c2200000-0000-0000-0000-000000000001', 'R1', interval '-3 hours',   'published'),
-    ('c2200000-0000-0000-0000-000000000002', 'R2', interval '-3 hours',   'full'),
-    ('c2200000-0000-0000-0000-000000000011', 'N1', interval '2 hours',    'published'),
-    ('c2200000-0000-0000-0000-000000000012', 'N2', interval '-20 minutes','published'),
-    ('c2200000-0000-0000-0000-000000000013', 'N3', interval '-3 hours',   'completed'),
-    ('c2200000-0000-0000-0000-000000000014', 'N4', interval '-3 hours',   'cancelled'),
-    ('c2200000-0000-0000-0000-000000000015', 'N5', interval '-3 hours',   'draft'),
-    ('c2200000-0000-0000-0000-000000000016', 'N6', interval '-40 days',   'published')
+    ('c2200000-0000-0000-0000-000000000001', 'Sesión R1', interval '-3 hours',   'published'),
+    ('c2200000-0000-0000-0000-000000000002', 'Sesión R2', interval '-3 hours',   'full'),
+    ('c2200000-0000-0000-0000-000000000011', 'Sesión N1', interval '2 hours',    'published'),
+    ('c2200000-0000-0000-0000-000000000012', 'Sesión N2', interval '-20 minutes','published'),
+    ('c2200000-0000-0000-0000-000000000013', 'Sesión N3', interval '-3 hours',   'completed'),
+    ('c2200000-0000-0000-0000-000000000014', 'Sesión N4', interval '-3 hours',   'cancelled'),
+    ('c2200000-0000-0000-0000-000000000015', 'Sesión N5', interval '-3 hours',   'draft'),
+    ('c2200000-0000-0000-0000-000000000016', 'Sesión N6', interval '-40 days',   'published')
   ) as v(id, title, ends_in, status);
 
 -- Ana is on R1, not checked in. The job must leave her exactly as she is.
