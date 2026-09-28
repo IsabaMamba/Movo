@@ -1,18 +1,34 @@
-# Status — 17 September 2026
+# Status — 28 September 2026
 
 An honest read of what exists, what has run for real, and what comes next. Update this file when
 the answer changes; a status document that lags is worse than none.
 
 **Alejandro — start at [Roadmap](#roadmap). Everything above it is context.**
 
-## What changed since 13 September
+## What changed since 17 September
 
-| PR  | What                                                                                                                              |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- |
-| #36 | Cancel and edit a session. `0008` revoked direct `UPDATE` on `activities`; time and venue lock once anyone joins                  |
-| #39 | Descubrir showed the session level as the raw enum ("advanced")                                                                   |
-| #40 | A recurring session is one card in Descubrir (`0009`), "Otras fechas" in Detalle, filter chips no longer cut in half on phones    |
-| #41 | Attendance only around the session (`0010`): check-in from 30 min before start, close-out from the start, re-join clears check-in |
+Documentation-only PRs (`docs(status)` after each migration) are left out.
+
+| PR      | What                                                                                                                        |
+| ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| #49–#58 | Heat by administrative zone (`0014`–`0017`): zones seeded from OpenStreetMap, the week's heat and the real map in Descubrir |
+| #52     | The voice gate caught voseo it had been passing as clean                                                                    |
+| #61     | Pico Blanco moved to the Escazú trailhead (`0018`)                                                                          |
+| #62     | `LICENSE` carves out the OpenStreetMap data                                                                                 |
+| #63     | The edit screen says why time and venue lock                                                                                |
+| #64     | Staff can cancel a reported session (`0019`)                                                                                |
+| #66     | Staff can suspend an account (`0020`): writes blocked, profile hidden, calendar cleared, suspension screen                  |
+| #68     | Opt-in attendance history and its 90-day purge on pg_cron (`0021`), `/historial`                                            |
+| #70     | The community rules at `/normas`, public; minimum age 18; no alcohol or drugs                                               |
+| #73     | A session with one person joined warns both, from 24 h before (`0022`)                                                      |
+| #75     | The organizer is reminded once to close an ended session (`0023`)                                                           |
+| #76     | Session times on the 24-hour clock                                                                                          |
+| #78     | Manage a series as a series: `/organizar/serie/[id]` edits or cancels it whole; Organizar shows one card per series         |
+| #79     | «Cerca de mí» in Descubrir: device location on request, rounded to ~1 km, stored nowhere                                    |
+| #80     | Security: `0024` column grants — nobody can verify themselves or their venue, or make a venue private                       |
+| #81     | Mi cuenta: name, sign-out moved off Descubrir                                                                               |
+| #82     | Mis lugares: typed district next to the one the map resolves, and correcting an unverified venue                            |
+| #60–#72 | Dependencies: vitest 5, supabase-js 2.117.1, prettier, eslint, typescript-eslint, `@types/node`                             |
 
 ### Migrations
 
@@ -44,8 +60,8 @@ column is maintained by hand.
 | `0020_suspensions`             | `suspensions`, `suspend_account()`, `lift_suspension()`, `my_suspension()`; write triggers, hidden profiles                             | yes     |
 | `0021_attendance_history`      | Opt-in attendance history (district, sport, time band, week), owner-only; the 90-day purge on pg_cron                                   | yes     |
 | `0022_solo_session_warning`    | `warn_solo_sessions()` every 15 min on pg_cron: a session with one person joined, inside 24 h, warns both                               | yes     |
-| `0023_close_reminder`          | `remind_unclosed_sessions()` hourly on pg_cron: one reminder to the organizer an hour after an unclosed session ends                    | no      |
-| `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district | no      |
+| `0023_close_reminder`          | `remind_unclosed_sessions()` hourly on pg_cron: one reminder to the organizer an hour after an unclosed session ends                    | yes     |
+| `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -61,12 +77,11 @@ one cantón. The detail is in the header of `scripts/fetch-osm-zones.mjs`.
 
 Three consequences to keep:
 
-- **Attribution is a condition, not a courtesy.** The heat-map screen must show "© colaboradores
-  de OpenStreetMap" wherever it draws the zones. It does not exist yet; this is the line to
-  remember when it does.
-- **`0016` is ODbL, not under `LICENSE`.** `NOTICE.md` says so. `LICENSE` still claims every file
-  in the repository; changing that sentence is a decision for Kristopher, not a side effect of a
-  migration.
+- **Attribution is a condition, not a courtesy.** Anything that draws the zones must show "©
+  colaboradores de OpenStreetMap". The heat band in Descubrir (#56, #57) does, in
+  `HeatBand.tsx`; a new screen that draws them has to as well.
+- **`0016` is ODbL, not under `LICENSE`.** `NOTICE.md` says so, and since #62 `LICENSE` says so
+  too.
 - **Provenance is not settled.** OSM's lines match the IGN's almost exactly, which suggests they
   were traced from it, and the OSM wiki records no permission from the IGN. Whether licensed
   OSM data carries the upstream restriction is a question for counsel — the same question as the
@@ -86,7 +101,12 @@ and resolves to 10202 San Antonio, Escazú. The other two need somebody who know
 The report queue got its first readers on 17 September: two rows inserted into `staff` from the
 Supabase panel, by hand, on purpose — no client can grant itself that role.
 
-`0021`'s purge has run every night since 23 September, all `succeeded`. `0022` was applied on 28
+`0021`'s purge has run every night since 23 September, all `succeeded`. `0023` was applied on 28
+September: `remind-unclosed-sessions`, active, hourly at minute 5; no client can run it. Its first run, at 19:05 UTC, `succeeded` and sent seven
+reminders to four organizers; nothing was left due. `0024` was applied on 28 September after #80
+merged; checked afterwards as `authenticated`: cannot update `profiles.is_verified`, cannot insert or
+update `locations.is_verified`, `is_public_venue` or `district_code`; can still rename themselves,
+create a venue and move their own. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
@@ -140,7 +160,7 @@ product needs next. P2 can wait for users.
 
 ### P0 — before any stranger uses Movo
 
-**1. Somebody reads the reports.** _Mostly done — one blank left, and it is not a code blank._
+**1. Somebody reads the reports, and can act on them.** _Code done. What is left is not code._
 
 `0012` adds a `staff` table with no client grants, `is_staff()`, a `reports_read_staff` policy and
 `resolve_report()`, which stamps the reviewer from `auth.uid()`, refuses to reopen a closed report,
@@ -157,16 +177,19 @@ The rota is written down — **Report triage in `docs/security.md`: a named firs
 evening check, and 24 hours as the ceiling**, measured from `created_at` to `reviewed_at` so the
 promise is a query rather than an intention.
 
-Two blanks are left in it, and neither is code:
+What is left:
 
 - **`staff` holds two accounts and both are Kristopher's**, one of them the `Lee sin` test
   account. Alejandro's own account has to go in, and `Lee sin` has to come out — a test account
   should not be able to read every safety report.
-- **Acting on a report.** Resolving records a judgement; it does not act on one. Cancelling
-  somebody else's session, hiding a profile and blocking an account are three separate powers,
-  each needing its own function, test and decision about who holds it.
+- **Appealing a decision.** Staff can cancel a reported session (`0019`) and suspend an account,
+  which also hides its profile (`0020`), and `/normas` says what both mean. What the rules cannot
+  yet say is how to ask the team to reconsider: there is no contact channel. An address, once
+  there is one, is a line in `src/features/rules/rules.ts` and a new `RULES_VERSION`.
 
-**2. Deliver notifications.** _Inbox done. Delivery outside the app is not._
+**2. Deliver notifications.** _Inbox done. Delivery outside the app is not — and it matters more
+every week: since `0022` and `0023` the database writes safety warnings and close reminders that
+reach nobody who does not open Movo._
 
 `/avisos` reads `notifications`, marks `read_at`, and Descubrir carries an unread count. The two
 real rows from the test day — Alejandro Solano's promotion and Aguita's cancellation — are now
@@ -186,9 +209,11 @@ to change on purpose when it does rather than break.
 **3. Email confirmation back on, with custom SMTP.** It is off to unblock testing. Anyone can
 register with an address they do not own.
 
-**4. Storage lockdown, EXIF stripping, App Check.** Supabase buckets are public by default; phone
-photos carry GPS; without attestation the backend is an open API. Do these before item 8, which is
-the first feature that uploads anything.
+**4. Storage lockdown, EXIF stripping, App Check.** On 28 September the live project had **no
+storage buckets at all**, so there is nothing to lock down yet — but a bucket is public by default
+the moment one is created, and phone photos carry GPS. Both belong in the same PR as the first
+upload (item 8), not after it. App Check does not wait: without attestation the backend is an
+open API.
 
 **5. Attendance history and its 90-day delete job — together, or neither.** _Built in `0021`,
 applied on 22 September._ Opt-in from `/historial` (linked from Mis sesiones); a check-in writes district,
@@ -198,30 +223,30 @@ sport, weekday/weekend and time band, dated to the week, and nothing else. Owner
 CI has no pg_cron, so it tests the purge function and never the schedule. On the live project,
 checked after `db push` on 22 September: `cron.job` holds `purge-attendance-history`, active,
 `17 9 * * *`; `anon` cannot read the history or call `set_attendance_history()`, and
-`authenticated` can neither insert rows nor run the purge. **Nobody has seen the job run yet** —
-`cron.job_run_details` will show its first run after 03:17 on 23 September. The consent text is part of item 6 — counsel
-should read it with the rest.
+`authenticated` can neither insert rows nor run the purge. The job has run every night since 23
+September, all `succeeded`. The consent text is part of item 6 — counsel should read it with the
+rest.
 
 **6. Ley 8968 consent text reviewed by local counsel,** and a written basis for the cross-border
 transfer to `us-east-1`.
 
 ### P1 — what testing showed is missing
 
-**7. Decide the voice.** `docs/product.md` says `tú`; the whole app is `vos`, and every screen added
-since #34 made that larger. This is a decision for Kristopher and Alejandro, then one pass.
+**7. Decide the voice.** _Done._ `tú`, neutral Latin American Spanish (`docs/product.md`), and
+`npm run check:voice` fails CI on voseo.
 
-**8. Profile and account screen.** Display name, photo, sign-out. Sign-out currently lives in the
-Descubrir header. Depends on item 4.
+**8. Profile and account screen.** _Done except the photo._ `/cuenta` (#81) edits the name and
+signs out. The photo waits for item 4; `profiles.avatar_url` has no client grant until it lands.
 
-**9. Fix and verify venues.** The Pico blanco venue shares its latitude exactly with Parque de la
-paz, 17 km away, so its coordinates are almost certainly wrong — and there is no screen to correct
-a venue. `locations_update_own` already lets the creator edit an unverified venue; it needs a UI,
+**9. Fix and verify venues.** _Screen done (#82); two venues still to fix, and nobody can verify._
+`/lugares` shows a creator the typed district next to the resolved one and corrects an unverified
+venue. Pico Blanco was moved by `0018`; Canchas de Fonseca and Parque de la
+democracia still resolve to a different district than the one typed for them (see above), and
+there is no screen to correct a venue. `locations_update_own` already lets the creator edit an unverified venue; it needs a UI,
 and `is_verified` needs somebody allowed to set it.
 
-**10. Manage a series as a series.** A series is one card in Descubrir, but it cannot be edited or
-cancelled as a whole — only one date at a time — and Organizar still lists every occurrence
-separately. Needs `cancel_series()` / `update_series()` with the same locking rules as `0008`, and
-Organizar grouped the way `0009` groups Descubrir.
+**10. Manage a series as a series.** _Done (#78)._ `/organizar/serie/[id]` calls `update_series()`
+and `cancel_series()`, and Organizar shows a series as one card at its next date.
 
 **11. Sessions nobody closes.** _Reminder built in `0023`._ On 28 September seven sessions had
 passed and were still `published`, the oldest from 8 September. An automatic close would invent
@@ -229,13 +254,15 @@ no-shows nobody confirmed, so `remind_unclosed_sessions()` tells the organizer o
 after the end, and the inbox opens the roster. Sessions that ended more than 30 days ago are not
 reminded.
 
-**12. Device location in Descubrir.** It searches from a fixed GAM centre. Needs the permission
-prompt and a fallback when it is refused.
+**12. Device location in Descubrir.** _Done (#79)._ «Cerca de mí» asks only when tapped, rounds to two
+decimals (~1 km) before sending, stores nothing, and falls back to the GAM when refused. Native
+builds are unverified: there are none yet.
 
 **13. Times in 24-hour format.** _Done._ `formatSessionTime` now says "18:00" and "05:30", like the
 design, modo solo and the edit form; `src/lib/activities.test.ts` holds it there.
 
-**14. Dependabot #37 and #38.** Check the Expo SDK pins before merging.
+**14. Dependabot.** _Done for now._ #37, #38, #60 (vitest 5), #71 and #72 are merged; the Expo SDK
+pins were not touched.
 
 ### P2 — once there are users
 
