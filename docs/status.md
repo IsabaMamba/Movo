@@ -64,7 +64,7 @@ column is maintained by hand.
 | `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district              | yes     |
 | `0025_profile_visibility`      | `profile_visible()`: a profile is readable only by its owner, people sharing a session or group, staff — or anybody, for a public organizer          | yes     |
 | `0026_web_push`                | `push_subscriptions`, `register_push_subscription()` (push hosts only), and a trigger that asks the `send-push` Edge Function to deliver each notice | yes     |
-| `0027_verify_venues`           | `verify_location()` / `unverify_location()`, staff only, with a note; `verified_by`, `verified_at`, `verified_note` on the venue                     | no      |
+| `0027_verify_venues`           | `verify_location()` / `unverify_location()`, staff only, with a note; `verified_by`, `verified_at`, `verified_note` on the venue                     | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -114,7 +114,10 @@ create a venue and move their own. `0025` was applied the same evening: with the
 session. Descubrir and a session's organizer still load without signing in. `0026` was applied on 28 September: `pg_net` is installed, Vault is present, the
 `notifications_push` trigger exists, clients can register only through the function and it
 refuses a non-push endpoint. **No push secrets are in Vault yet**, so the trigger does nothing
-until the three steps under item 2 are done. `0022` was applied on 28
+until the three steps under item 2 are done. `0027` was applied the same evening: `verify_location()` and
+`unverify_location()` exist, anon cannot call them, and no client can write `is_verified` or
+`verified_by`. Six of seven venues are still unverified — verifying them is a job for
+`/staff/lugares`, not a migration. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
