@@ -36,32 +36,33 @@ Every file in `supabase/migrations/` appears here, and `npm run check:migrations
 does not. Applied means applied to the live Supabase project, which no check can verify — that
 column is maintained by hand.
 
-| Migration                      | What                                                                                                                                    | Applied |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `0001_schema`                  | Tables, enums and indexes                                                                                                               | yes     |
-| `0002_functions`               | Policy helpers, the counters trigger, participation and series RPCs, `nearby_activities()`                                              | yes     |
-| `0003_rls`                     | Row-level security on every table, grants and revokes                                                                                   | yes     |
-| `0004_seed_categories`         | Running, hiking and football, with their attribute schemas                                                                              | yes     |
-| `0005_currency`                | `price_minor` and `currency` on venues, sessions and series                                                                             | yes     |
-| `0006_seed_venue`              | Parque Metropolitano La Sabana                                                                                                          | yes     |
-| `0007_community_owner`         | A group's creator becomes its owner                                                                                                     | yes     |
-| `0008_cancel_edit`             | Cancel and edit a session; revoke direct `UPDATE` on `activities`                                                                       | yes     |
-| `0009_series_collapse`         | A series is one row in `nearby_activities()`                                                                                            | yes     |
-| `0010_attendance_window`       | Check-in from 30 minutes before the start, close-out from the start                                                                     | yes     |
-| `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                                                                      | yes     |
-| `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                                                                          | yes     |
-| `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series                                                            | yes     |
-| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                                                                      | yes     |
-| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue                                                         | yes     |
-| `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed                                                   | yes     |
-| `0017_zone_outlines`           | `zone_outlines()` — simplified zone shapes for one viewport, so a client can draw the map                                               | yes     |
-| `0018_pico_blanco_venue`       | Data fix: moves the Pico Blanco venue from Colón, Mora to the trailhead in San Antonio de Escazú                                        | yes     |
-| `0019_moderate_cancel`         | `moderate_cancel_activity()` — staff cancel a reported session; `activities.cancelled_by_staff`                                         | yes     |
-| `0020_suspensions`             | `suspensions`, `suspend_account()`, `lift_suspension()`, `my_suspension()`; write triggers, hidden profiles                             | yes     |
-| `0021_attendance_history`      | Opt-in attendance history (district, sport, time band, week), owner-only; the 90-day purge on pg_cron                                   | yes     |
-| `0022_solo_session_warning`    | `warn_solo_sessions()` every 15 min on pg_cron: a session with one person joined, inside 24 h, warns both                               | yes     |
-| `0023_close_reminder`          | `remind_unclosed_sessions()` hourly on pg_cron: one reminder to the organizer an hour after an unclosed session ends                    | yes     |
-| `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district | yes     |
+| Migration                      | What                                                                                                                                        | Applied |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `0001_schema`                  | Tables, enums and indexes                                                                                                                   | yes     |
+| `0002_functions`               | Policy helpers, the counters trigger, participation and series RPCs, `nearby_activities()`                                                  | yes     |
+| `0003_rls`                     | Row-level security on every table, grants and revokes                                                                                       | yes     |
+| `0004_seed_categories`         | Running, hiking and football, with their attribute schemas                                                                                  | yes     |
+| `0005_currency`                | `price_minor` and `currency` on venues, sessions and series                                                                                 | yes     |
+| `0006_seed_venue`              | Parque Metropolitano La Sabana                                                                                                              | yes     |
+| `0007_community_owner`         | A group's creator becomes its owner                                                                                                         | yes     |
+| `0008_cancel_edit`             | Cancel and edit a session; revoke direct `UPDATE` on `activities`                                                                           | yes     |
+| `0009_series_collapse`         | A series is one row in `nearby_activities()`                                                                                                | yes     |
+| `0010_attendance_window`       | Check-in from 30 minutes before the start, close-out from the start                                                                         | yes     |
+| `0011_notification_read_grant` | Clients may update only `read_at` on notifications                                                                                          | yes     |
+| `0012_staff_reports`           | `staff`, `is_staff()`, the report queue and `resolve_report()`                                                                              | yes     |
+| `0013_series_mutations`        | `update_series()`, `cancel_series()`; revoke `UPDATE` and `DELETE` on series                                                                | yes     |
+| `0014_zones`                   | IGN administrative zones, `locations.district_code`, `zone_heat()`                                                                          | yes     |
+| `0015_zone_heat_blocking`      | `zone_heat()` filters `is_blocked()`; the zone trigger places an unplaced venue                                                             | yes     |
+| `0016_seed_zones`              | 7 / 84 / 494 zones from OpenStreetMap (ODbL), and the venues that predate them placed                                                       | yes     |
+| `0017_zone_outlines`           | `zone_outlines()` — simplified zone shapes for one viewport, so a client can draw the map                                                   | yes     |
+| `0018_pico_blanco_venue`       | Data fix: moves the Pico Blanco venue from Colón, Mora to the trailhead in San Antonio de Escazú                                            | yes     |
+| `0019_moderate_cancel`         | `moderate_cancel_activity()` — staff cancel a reported session; `activities.cancelled_by_staff`                                             | yes     |
+| `0020_suspensions`             | `suspensions`, `suspend_account()`, `lift_suspension()`, `my_suspension()`; write triggers, hidden profiles                                 | yes     |
+| `0021_attendance_history`      | Opt-in attendance history (district, sport, time band, week), owner-only; the 90-day purge on pg_cron                                       | yes     |
+| `0022_solo_session_warning`    | `warn_solo_sessions()` every 15 min on pg_cron: a session with one person joined, inside 24 h, warns both                                   | yes     |
+| `0023_close_reminder`          | `remind_unclosed_sessions()` hourly on pg_cron: one reminder to the organizer an hour after an unclosed session ends                        | yes     |
+| `0024_verification_columns`    | Column grants on `profiles` and `locations`: nobody can verify themselves or their venue, make a venue private, or rewrite its district     | yes     |
+| `0025_profile_visibility`      | `profile_visible()`: a profile is readable only by its owner, people sharing a session or group, staff — or anybody, for a public organizer | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -212,8 +213,13 @@ register with an address they do not own.
 **4. Storage lockdown, EXIF stripping, App Check.** On 28 September the live project had **no
 storage buckets at all**, so there is nothing to lock down yet — but a bucket is public by default
 the moment one is created, and phone photos carry GPS. Both belong in the same PR as the first
-upload (item 8), not after it. App Check does not wait: without attestation the backend is an
-open API.
+upload (item 8), not after it.
+
+"App Check" was the wrong tool for what this item feared. On 28 September the public anon key
+listed every profile; attestation cannot stop that, because the key is meant to be public. `0025`
+closes it in RLS instead. What is left of the item is a captcha on sign-up (Supabase Auth supports
+Cloudflare Turnstile; it needs a site key, which is an account decision) and reviewing the auth rate
+limits.
 
 **5. Attendance history and its 90-day delete job — together, or neither.** _Built in `0021`,
 applied on 22 September._ Opt-in from `/historial` (linked from Mis sesiones); a check-in writes district,
