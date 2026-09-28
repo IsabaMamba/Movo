@@ -170,6 +170,47 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('a session would be two people alone', () => {
+    it('tells the organiser one person joined and what they can do', () => {
+      const item = toInboxItem(
+        row({ type: 'solo_session_organizer', payload: { title: 'Trote', activity_id: 'a7' } }),
+      );
+      expect(item.text).toMatch(/^Solo una persona se apuntó a Trote\./);
+      expect(item.text).toContain('encuentro a solas');
+      expect(item.text).toContain('cancelarla');
+      expect(item.activityId).toBe('a7');
+    });
+
+    it('tells the participant they can leave, and opens the session to do it', () => {
+      const item = toInboxItem(
+        row({ type: 'solo_session_participant', payload: { title: 'Trote', activity_id: 'a7' } }),
+      );
+      expect(item.text).toMatch(/^Por ahora eres la única persona apuntada a Trote\./);
+      expect(item.text).toContain('puedes salir de la sesión');
+      expect(item.activityId).toBe('a7');
+    });
+  });
+
+  describe('a session ended and nobody closed it', () => {
+    it('asks the organiser to mark who came, and opens the roster', () => {
+      const item = toInboxItem(
+        row({ type: 'close_reminder', payload: { title: 'Trote', activity_id: 'a8' } }),
+      );
+      expect(item.text).toBe(
+        'Trote ya terminó y sigue abierta. Marca quién llegó y ciérrala: sin eso, la asistencia no cuenta.',
+      );
+      expect(item.activityId).toBe('a8');
+      expect(item.opensRoster).toBe(true);
+    });
+
+    it('leaves every other notice opening the session page', () => {
+      const item = toInboxItem(
+        row({ type: 'waitlist_promoted', payload: { title: 'Trote', activity_id: 'a8' } }),
+      );
+      expect(item.opensRoster).toBeUndefined();
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.
