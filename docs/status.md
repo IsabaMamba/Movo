@@ -43,7 +43,7 @@ column is maintained by hand.
 | `0019_moderate_cancel`         | `moderate_cancel_activity()` — staff cancel a reported session; `activities.cancelled_by_staff`             | yes     |
 | `0020_suspensions`             | `suspensions`, `suspend_account()`, `lift_suspension()`, `my_suspension()`; write triggers, hidden profiles | yes     |
 | `0021_attendance_history`      | Opt-in attendance history (district, sport, time band, week), owner-only; the 90-day purge on pg_cron       | yes     |
-| `0022_solo_session_warning`    | `warn_solo_sessions()` every 15 min on pg_cron: a session with one person joined, inside 24 h, warns both   | no      |
+| `0022_solo_session_warning`    | `warn_solo_sessions()` every 15 min on pg_cron: a session with one person joined, inside 24 h, warns both   | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -83,6 +83,12 @@ and resolves to 10202 San Antonio, Escazú. The other two need somebody who know
 
 The report queue got its first readers on 17 September: two rows inserted into `staff` from the
 Supabase panel, by hand, on purpose — no client can grant itself that role.
+
+`0021`'s purge has run every night since 23 September, all `succeeded`. `0022` was applied on 28
+September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
+`warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
+session was due a warning at that moment, so **nobody has received one yet** — the first real
+warning is still to be seen in an inbox.
 
 > This section used to be one sentence: "all ten migrations are applied". It stayed that
 > sentence on a branch carrying thirteen — the seventh instance of the defect §B of
