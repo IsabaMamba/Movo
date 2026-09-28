@@ -109,3 +109,38 @@ export const unreadLinkStyles = StyleSheet.create({
     fontVariant: [...type.dataSmall.fontVariant],
   },
 });
+
+/**
+ * The push switch on /avisos. A surface, not a card: it is a setting about the
+ * list below it, and a card would read as one more aviso.
+ */
+export const pushStyles = StyleSheet.create({
+  panel: {
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    gap: space.sm,
+    padding: space.lg,
+  },
+  title: { ...type.heading, color: color.text.primary },
+  body: { ...type.bodySmall, color: color.text.secondary },
+  error: { ...type.bodySmall, color: color.semantic.dangerOnRaised },
+
+  /** Off is the primary action; on is outlined, so turning it off never looks urgent. */
+  button: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    minHeight: size.minTarget,
+    paddingHorizontal: space.xl,
+  },
+  buttonOn: {
+    backgroundColor: 'transparent',
+    borderColor: color.border.strong,
+    borderWidth: stroke.hair,
+  },
+  buttonText: { ...type.action, color: color.text.inverse },
+  buttonTextOn: { color: color.text.primary },
+});

@@ -42,6 +42,11 @@ What we hold is a map of where specific people will be at specific times.
 - **Profiles are readable with a reason, not listable.** `0025`: your own; an organizer of a
   public session; somebody you share a session or a group with; everybody, for staff. Blocking and
   suspension still apply on top. Before it, the public anon key listed every profile.
+- **Push carries no details, and goes only to push services.** `0026` / ADR 0007: the
+  notification text is fixed («Tienes un aviso nuevo en Movo»), because a lock screen is public;
+  a device is registered only for the four known push hosts, so the sender cannot be aimed at an
+  arbitrary URL; the function's URL and secret are in Vault, the VAPID private key in the
+  function's secrets.
 - **Split profiles.** `profiles` is public and minimal; `profile_private` (phone, emergency
   contact, birthdate) is readable only by its owner.
 - **No precise location, anywhere.** Venues are public points. Profiles carry a district,

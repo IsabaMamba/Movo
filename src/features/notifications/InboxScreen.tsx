@@ -27,6 +27,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
+import { PushSwitch } from './PushSwitch';
 import { inboxStyles as s } from './styles';
 
 /** The mark-read link renders at 36px; the target is padded back up to 44. */
@@ -191,6 +192,8 @@ export function InboxScreen() {
         <Text style={s.title}>Avisos</Text>
         <Text style={s.subtitle}>Lo que pasó con las sesiones a las que ibas.</Text>
       </View>
+
+      <PushSwitch />
 
       {error !== null && (
         <Text accessibilityRole="alert" aria-live="assertive" style={s.error}>
