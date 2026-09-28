@@ -225,6 +225,11 @@ out turns the device off.
    `select vault.create_secret('<the same PUSH_FUNCTION_SECRET>', 'push_function_secret');`
 
 Until step 3 the trigger does nothing, by design. Native push still waits for compiled apps.
+
+On iPhone, push arrives only after Movo is added to the home screen. `public/manifest.webmanifest`
+and the touch icon make that possible. **The icon is provisional** — an M drawn from the palette,
+because no mark has been designed. To replace it, edit `public/icon.svg` and run
+`node scripts/render-icons.mjs`; `src/theme/manifest.test.ts` checks every size the manifest claims.
 Loosening the edit lock still comes after delivery, not before, and `07_cancel_edit_test.sql` has
 to change on purpose when it does rather than break.
 

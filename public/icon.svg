@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Provisional mark: no logo has been designed yet. The ground is bg.base and the stroke
+       accent.primary (src/theme/colors.ts). Full-bleed so it also works as a maskable icon: the
+       M stays inside the central safe zone (a circle of 40% radius). Replace this file and run
+       `node scripts/render-icons.mjs` to regenerate the PNGs. -->
+  <rect width="512" height="512" fill="#0B0F1F"/>
+  <polyline points="156,352 156,160 256,272 356,160 356,352" fill="none" stroke="#FFC56B"
+            stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

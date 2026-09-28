@@ -64,6 +64,21 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content={color.bg.base} />
 
+        {/* Installable. On iPhone this is not cosmetic: Safari delivers Web Push
+            only to a site added to the home screen (ADR 0007), and it needs the
+            manifest and the touch icon to offer that. The icon is provisional
+            — see public/icon.svg. */}
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Movo" />
+        {/* Plain black, not black-translucent: translucent draws the page under
+            the status bar, and no screen pads for the safe area yet. */}
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
         {/* Disables body scrolling on web so ScrollView components work as they
             do on native. Expo Router ships it; without it nested scroll breaks. */}
         <ScrollViewStyleReset />
