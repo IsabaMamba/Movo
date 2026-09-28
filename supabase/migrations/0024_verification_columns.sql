@@ -46,12 +46,14 @@ grant update (display_name, bio, home_district) on public.profiles to authentica
 
 revoke insert, update on public.locations from authenticated;
 
--- Exactly what createVenue() in src/lib/activities.ts sends. is_public_venue
+-- What createVenue() in src/lib/activities.ts sends, plus `id`: a client that
+-- picks its own uuid gains nothing but a primary-key error if it collides.
+-- is_public_venue
 -- stays in the insert list because the policy requires it to be true; it is
 -- absent from the update list, so it can never become false. is_verified and
 -- district_code are in neither: the first defaults to false, the second is
 -- set by locations_set_zone().
-grant insert (name, address, district, geog, is_public_venue, created_by)
+grant insert (id, name, address, district, geog, is_public_venue, created_by)
   on public.locations to authenticated;
 
 -- What a creator may correct on a venue that is not verified yet. Moving the
