@@ -303,6 +303,36 @@ What follows for us:
 - **Get the consent language reviewed by local counsel.** A few hours is cheap against the
   sanction range.
 
+### Leaving: export and deletion (0029)
+
+**Mi cuenta → Tus datos** downloads everything Movo holds about the person, using
+`export_my_data()`, and deletes the account, using `delete_my_account()`. Deleting takes one
+typed word and runs in a single transaction.
+
+- **What is theirs is deleted.** This covers the account, the profile, the private profile,
+  their sessions and series, memberships, notifications, attendance history and push devices.
+- **What is shared stays, without them:**
+  - venues they created;
+  - reports they filed, which lose the reporter;
+  - reports about them, whose subject id no longer resolves to anybody;
+  - messages they wrote in a chat, shown as «usuario eliminado».
+
+  These last two were product decisions taken on 7 October; see the migration header.
+
+- **Other people are looked after first.**
+  - Future sessions they organized are cancelled, and each roster gets a notice.
+  - Their places in other people's sessions go to the waitlist.
+  - A group they own passes to one of its organizers, or failing that to its longest-standing
+    member, who is told. A group with nobody else in it is deleted.
+- **Two refusals:**
+  - **While a suspension is in force.** Deleting would erase the suspension, and the same
+    email could sign up again. The person has to write to the team instead. Whether this holds
+    up under Ley 8968 is a question for counsel.
+  - **While on `staff`.**
+- **Known gap.** Past sessions they organized are deleted along with them, so they leave the
+  history of everybody who attended. The same applies to a lifted suspension: the record goes
+  with the account.
+
 This document is engineering guidance, not legal advice.
 
 ## Secrets

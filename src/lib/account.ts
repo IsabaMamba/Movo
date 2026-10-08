@@ -47,3 +47,40 @@ export async function updateMyName(
   if (error) throw toApiError(error);
   return (data as { display_name: string }).display_name;
 }
+
+// ------------------------------------------------- leaving (0029)
+
+/**
+ * Everything Movo holds about the caller, as export_my_data() assembles it.
+ * Other people appear only as ids.
+ */
+export async function exportMyData(db: SupabaseClient): Promise<unknown> {
+  const { data, error } = await db.rpc('export_my_data');
+  if (error) throw toApiError(error);
+  return data;
+}
+
+/** `movo-mis-datos-2026-10-07.json`, by the local calendar day. */
+export function exportFileName(now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `movo-mis-datos-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.json`;
+}
+
+/**
+ * The word typed to confirm. A second button alone is one accidental double
+ * tap away from losing every session and group; a word is not.
+ */
+export const DELETE_WORD = 'borrar';
+
+export function confirmsDeletion(typed: string): boolean {
+  return typed.trim().toLowerCase() === DELETE_WORD;
+}
+
+/**
+ * Deletes the caller's account. The database refuses while the account is
+ * suspended or on the team, with a sentence written for the screen.
+ */
+export async function deleteMyAccount(db: SupabaseClient): Promise<void> {
+  const { error } = await db.rpc('delete_my_account');
+  if (error) throw toApiError(error);
+}

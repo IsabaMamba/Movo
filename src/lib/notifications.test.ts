@@ -211,6 +211,32 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('somebody deleted their account', () => {
+    it('tells the roster the session is off, and opens nothing', () => {
+      // The session is deleted with the account: a link would lead to "not found".
+      const item = toInboxItem(
+        row({ type: 'activity_cancelled', payload: { title: 'Mejenga', by: 'gone' } }),
+      );
+      expect(item.text).toBe('Mejenga se canceló: quien la organizaba ya no está en Movo.');
+      expect(item.activityId).toBeNull();
+    });
+
+    it('tells whoever inherits a group that it is theirs now', () => {
+      const item = toInboxItem(
+        row({ type: 'group_handed_over', payload: { community_id: 'g1', name: 'Mejengueros' } }),
+      );
+      expect(item.text).toBe(
+        'Ahora administras el grupo Mejengueros: quien lo creó ya no está en Movo.',
+      );
+      expect(item.activityId).toBeNull();
+    });
+
+    it('still makes a sentence without the group name', () => {
+      const item = toInboxItem(row({ type: 'group_handed_over', payload: {} }));
+      expect(item.text).toBe('Ahora administras un grupo: quien lo creó ya no está en Movo.');
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.

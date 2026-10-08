@@ -66,6 +66,7 @@ column is maintained by hand.
 | `0026_web_push`                | `push_subscriptions`, `register_push_subscription()` (push hosts only), and a trigger that asks the `send-push` Edge Function to deliver each notice | yes     |
 | `0027_verify_venues`           | `verify_location()` / `unverify_location()`, staff only, with a note; `verified_by`, `verified_at`, `verified_note` on the venue                     | yes     |
 | `0028_drop_device_tokens`      | Drops `device_tokens`: unused since Web Push replaced Expo push (ADR 0007), and client-writable                                                      | yes     |
+| `0029_delete_account`          | `delete_my_account()` and `export_my_data()`; messages keep no author, reports keep no reporter; fixes `reporter_id` `not null` vs `set null`        | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
