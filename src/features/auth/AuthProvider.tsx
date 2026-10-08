@@ -21,7 +21,12 @@ interface AuthValue {
   /** True until the stored session has been read; routing must wait for it. */
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<SignUpOutcome>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+    birthdate: string,
+  ) => Promise<SignUpOutcome>;
   signOut: () => Promise<void>;
 }
 
@@ -66,16 +71,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       },
-      signUp: async (email, password, displayName) => {
+      signUp: async (email, password, displayName, birthdate) => {
         // handle_new_user() reads display_name out of raw_user_meta_data and
         // falls back to 'Nuevo usuario' if it fails the profiles constraint.
         // It also records which version of /normas the form showed (0030):
         // done in the database because, with email confirmation on, there is
-        // no session here to record it with.
+        // no session here to record it with. And it checks the date of birth
+        // again (0031): the form refuses under 18, the database makes sure.
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { display_name: displayName, rules_version: RULES_VERSION } },
+          options: {
+            data: { display_name: displayName, rules_version: RULES_VERSION, birthdate },
+          },
         });
         if (error) throw error;
         return data.session ? 'signed-in' : 'confirmation-required';
