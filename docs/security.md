@@ -303,6 +303,30 @@ What follows for us:
 - **Get the consent language reviewed by local counsel.** A few hours is cheap against the
   sanction range.
 
+### The consent log (0030)
+
+`consents` keeps one row for every grant and every withdrawal: who, which purpose, which
+version of the text they saw, and when. Rows are never changed afterwards. No client can
+insert, update or delete them; a client can only read its own and call `record_consent()`.
+What is in force is the latest row for each purpose.
+
+| Purpose              | Written by                                                                   | Version constant                                             |
+| -------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `rules`              | `handle_new_user()` at sign-up, from the `rules_version` metadata            | `RULES_VERSION` (`src/features/rules/rules.ts`)              |
+| `location`           | Descubrir, when «Cerca de mí» is granted while signed in                     | `LOCATION_NOTICE_VERSION` (`src/lib/location.ts`)            |
+| `push`               | The switch in /avisos, on and off                                            | `PUSH_NOTICE_VERSION` (`src/lib/push.ts`)                    |
+| `attendance_history` | A trigger on `attendance_history_consent`, so it always agrees with the gate | `ATTENDANCE_NOTICE_VERSION` (`src/lib/attendanceHistory.ts`) |
+
+**When a text changes in substance, bump its constant.** The next grant then records the new
+version.
+
+**Gaps:**
+
+- **Accounts created before 0030 have no `rules` row.** Their version is unknown, and the log
+  does not invent one. If they have to accept the current text, that is a new step in the app.
+- **Signing out switches push off on that device, but it is not recorded as a withdrawal.**
+  It is the device leaving, not the person changing their mind.
+
 ### Leaving: export and deletion (0029)
 
 **Mi cuenta → Tus datos** downloads everything Movo holds about the person, using

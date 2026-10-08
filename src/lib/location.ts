@@ -19,6 +19,14 @@ export interface Point {
   lng: number;
 }
 
+/**
+ * Which text the person saw when they let Movo read their location (0030).
+ * It is two texts: the permission string in app.json, which the phone shows,
+ * and the line Descubrir shows after («Tu ubicación no se guarda»). Bump this
+ * when either changes in substance.
+ */
+export const LOCATION_NOTICE_VERSION = '2026-10-08';
+
 /** Centre of the Greater Metropolitan Area: the origin whenever there is no other. */
 export const GAM_CENTRE: Point = { lat: 9.9281, lng: -84.0907 };
 

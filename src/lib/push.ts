@@ -17,6 +17,12 @@ import { toApiError } from './errors';
 
 const SW_PATH = '/sw.js';
 
+/**
+ * Which text the person saw when they switched push on (0030): the
+ * explanation in PushSwitch. Bump this when it changes in substance.
+ */
+export const PUSH_NOTICE_VERSION = '2026-10-08';
+
 /** Set per deployment; absent means push is not configured and the switch hides. */
 export function vapidPublicKey(): string | null {
   const key = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
