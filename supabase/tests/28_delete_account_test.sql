@@ -20,7 +20,7 @@ begin;
 -- ---------------------------------------------------------------- setup
 --
 -- Dora deletes her account. She organizes «Dora mañana» (Ana joined), is
--- joined to Beto's one-place session with Ana waiting behind her, owns two
+-- joined to Beto's two-place session with Caro, Ana waiting behind, owns two
 -- groups — one with Beto (member) and Caro (organizer), one with nobody else
 -- — wrote a message, filed a report about Beto and was reported by him.
 -- Eva is suspended. Fede is staff.
@@ -46,12 +46,15 @@ values
    'b2800000-0000-0000-0000-000000000001', 'Dora mañana',
    now() + interval '2 days', now() + interval '2 days 1 hour', 'published', 'public', null),
   ('c2800000-0000-0000-0000-000000000002', 'a2800000-0000-0000-0000-000000000003', 'running',
-   'b2800000-0000-0000-0000-000000000001', 'Un cupo',
-   now() + interval '3 days', now() + interval '3 days 1 hour', 'published', 'public', 1);
+   'b2800000-0000-0000-0000-000000000001', 'Dos cupos',
+   now() + interval '3 days', now() + interval '3 days 1 hour', 'published', 'public', 2);
 
+-- Capacity is at least 2 (0001), so Caro takes the second place and Ana waits.
 select set_config('request.jwt.claim.sub', 'a2800000-0000-0000-0000-000000000002', true);
 select public.join_activity('c2800000-0000-0000-0000-000000000001');
 select set_config('request.jwt.claim.sub', 'a2800000-0000-0000-0000-000000000001', true);
+select public.join_activity('c2800000-0000-0000-0000-000000000002');
+select set_config('request.jwt.claim.sub', 'a2800000-0000-0000-0000-000000000004', true);
 select public.join_activity('c2800000-0000-0000-0000-000000000002');
 select set_config('request.jwt.claim.sub', 'a2800000-0000-0000-0000-000000000002', true);
 select public.join_activity('c2800000-0000-0000-0000-000000000002');
