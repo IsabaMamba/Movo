@@ -65,6 +65,7 @@ column is maintained by hand.
 | `0025_profile_visibility`      | `profile_visible()`: a profile is readable only by its owner, people sharing a session or group, staff — or anybody, for a public organizer          | yes     |
 | `0026_web_push`                | `push_subscriptions`, `register_push_subscription()` (push hosts only), and a trigger that asks the `send-push` Edge Function to deliver each notice | yes     |
 | `0027_verify_venues`           | `verify_location()` / `unverify_location()`, staff only, with a note; `verified_by`, `verified_at`, `verified_note` on the venue                     | yes     |
+| `0028_drop_device_tokens`      | Drops `device_tokens`: unused since Web Push replaced Expo push (ADR 0007), and client-writable                                                      | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,

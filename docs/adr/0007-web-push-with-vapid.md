@@ -21,8 +21,8 @@ is a web build (ADR 0003's own decision), so Expo push reaches nobody today.
 1. **Web Push, directly.** A service worker (`public/sw.js`), a VAPID key pair, and
    `PushManager.subscribe()`. It is the standard the browsers implement themselves — Chrome and
    Edge through FCM, Firefox through Mozilla, Safari (including iOS home-screen apps, 16.4+)
-   through Apple — with no third-party account in between. Native builds keep
-   `device_tokens` and Expo push for when they exist.
+   through Apple — with no third-party account in between. Native builds get a table of
+   their own when they exist; `device_tokens`, built for Expo push, was dropped in `0028`.
 2. **Sent by a Supabase Edge Function, triggered by the database.** An `after insert` trigger
    on `notifications` calls `send-push` through `pg_net`, with only the notice's id. The URL
    and a shared secret live in Supabase Vault, the VAPID private key in the function's
