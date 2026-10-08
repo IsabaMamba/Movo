@@ -68,7 +68,7 @@ column is maintained by hand.
 | `0028_drop_device_tokens`      | Drops `device_tokens`: unused since Web Push replaced Expo push (ADR 0007), and client-writable                                                                       | yes     |
 | `0029_delete_account`          | `delete_my_account()` and `export_my_data()`; messages keep no author, reports keep no reporter; fixes `reporter_id` `not null` vs `set null`                         | yes     |
 | `0030_consents`                | `consents` — an append-only log of grants and withdrawals with the text version (rules at sign-up, location, push, attendance history); `record_consent()`            | yes     |
-| `0031_minimum_age`             | `handle_new_user()` refuses a declared date of birth under 18, impossible or malformed; stores it in `profile_private.birthdate`, which loses its client update grant | no      |
+| `0031_minimum_age`             | `handle_new_user()` refuses a declared date of birth under 18, impossible or malformed; stores it in `profile_private.birthdate`, which loses its client update grant | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -129,7 +129,9 @@ until the three steps under item 2 are done. `0027` was applied the same evening
 exists with no client write grant, `record_consent()` is executable by `authenticated` and not by
 `anon`, the attendance-history trigger is in place, and `handle_new_user()` records
 `rules_version`. The log started empty: nobody had attendance history on, and the seven
-existing accounts have no `rules` row. `0022` was applied on 28
+existing accounts have no `rules` row. `0031` was applied the same day: `handle_new_user()`
+checks the date of birth, `profile_private.birthdate` has no client update grant while `locale`
+keeps one, and no existing account has a date of birth. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
