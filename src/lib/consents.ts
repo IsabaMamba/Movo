@@ -71,3 +71,26 @@ export async function recordConsent(
     return false;
   }
 }
+
+/**
+ * Where the person stands with the community rules.
+ *
+ * `none` is every account created before 0030 — not a refusal, just no
+ * record — and `outdated` is somebody who accepted an older text.
+ */
+export type RulesStatus = 'current' | 'outdated' | 'none';
+
+export function rulesStatus(row: ConsentRow | undefined, currentVersion: string): RulesStatus {
+  if (!row) return 'none';
+  return row.version === currentVersion ? 'current' : 'outdated';
+}
+
+/** «8 de octubre de 2026», in Costa Rica time. */
+export function consentDateLabel(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Costa_Rica',
+  }).format(new Date(iso));
+}

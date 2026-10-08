@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { inForce, type ConsentRow } from './consents';
+import { consentDateLabel, inForce, rulesStatus, type ConsentRow } from './consents';
 
 /**
  * The log keeps every grant and withdrawal; what a screen shows is what is in
@@ -51,5 +51,27 @@ describe('inForce', () => {
       row({ purpose: 'push', granted: false, version: null }),
     ]);
     expect(Object.keys(result)).toEqual(['rules']);
+  });
+});
+
+describe('rulesStatus', () => {
+  it('is none without a row: an account from before the log, not a refusal', () => {
+    expect(rulesStatus(undefined, '2026-09-28')).toBe('none');
+  });
+
+  it('is current only for the exact version on screen', () => {
+    expect(rulesStatus(row({ purpose: 'rules', version: '2026-09-28' }), '2026-09-28')).toBe(
+      'current',
+    );
+    expect(rulesStatus(row({ purpose: 'rules', version: '2026-08-01' }), '2026-09-28')).toBe(
+      'outdated',
+    );
+  });
+});
+
+describe('consentDateLabel', () => {
+  it('uses Costa Rica time, not UTC', () => {
+    // 03:00 UTC on the 9th is still the evening of the 8th in Costa Rica.
+    expect(consentDateLabel('2026-10-09T03:00:00.000Z')).toMatch(/^8 de octubre de 2026$/);
   });
 });
