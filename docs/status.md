@@ -66,7 +66,7 @@ column is maintained by hand.
 | `0026_web_push`                | `push_subscriptions`, `register_push_subscription()` (push hosts only), and a trigger that asks the `send-push` Edge Function to deliver each notice | yes     |
 | `0027_verify_venues`           | `verify_location()` / `unverify_location()`, staff only, with a note; `verified_by`, `verified_at`, `verified_note` on the venue                     | yes     |
 | `0028_drop_device_tokens`      | Drops `device_tokens`: unused since Web Push replaced Expo push (ADR 0007), and client-writable                                                      | yes     |
-| `0029_delete_account`          | `delete_my_account()` and `export_my_data()`; messages keep no author, reports keep no reporter; fixes `reporter_id` `not null` vs `set null`        | no      |
+| `0029_delete_account`          | `delete_my_account()` and `export_my_data()`; messages keep no author, reports keep no reporter; fixes `reporter_id` `not null` vs `set null`        | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -121,7 +121,9 @@ until the three steps under item 2 are done. `0027` was applied the same evening
 `verified_by`. Six of seven venues are still unverified — verifying them is a job for
 `/staff/lugares`, not a migration. `0028` was applied on 7 October: the live
 `device_tokens` had zero rows, and afterwards `to_regclass` finds no such table while
-`push_subscriptions` is intact. `0022` was applied on 28
+`push_subscriptions` is intact. `0029` was applied on 8 October: `delete_my_account()` and
+`export_my_data()` exist, executable by `authenticated` and not by `anon`, and
+`reports.reporter_id` and `messages.author_id` are nullable. Nobody has deleted an account yet. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
