@@ -20,7 +20,14 @@ import {
 } from 'react-native';
 
 import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../../lib/activities';
-import { GAM_CENTRE, originFailureText, requestCoarseOrigin, type Point } from '../../lib/location';
+import { recordConsent } from '../../lib/consents';
+import {
+  GAM_CENTRE,
+  LOCATION_NOTICE_VERSION,
+  originFailureText,
+  requestCoarseOrigin,
+  type Point,
+} from '../../lib/location';
 import { countUnreadNotifications, unreadA11yLabel } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
@@ -174,6 +181,9 @@ export function DiscoverScreen() {
         setOrigin(result.point);
         setOriginMode('mine');
         setOriginNote('Cerca de ti, en un radio aproximado. Tu ubicación no se guarda.');
+        // The grant is recorded, not the place (0030). Signed out there is
+        // nobody to record it against, and nothing was linked to anybody.
+        if (session) void recordConsent(supabase, 'location', LOCATION_NOTICE_VERSION, true);
       } else {
         setOrigin(GAM_CENTRE);
         setOriginMode('gam');

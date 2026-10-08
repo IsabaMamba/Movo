@@ -11,6 +11,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { disablePush } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
+import { RULES_VERSION } from '../rules/rules';
 
 /** signUp resolves without a session when the project requires confirmation. */
 export type SignUpOutcome = 'signed-in' | 'confirmation-required';
@@ -68,10 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp: async (email, password, displayName) => {
         // handle_new_user() reads display_name out of raw_user_meta_data and
         // falls back to 'Nuevo usuario' if it fails the profiles constraint.
+        // It also records which version of /normas the form showed (0030):
+        // done in the database because, with email confirmation on, there is
+        // no session here to record it with.
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { display_name: displayName } },
+          options: { data: { display_name: displayName, rules_version: RULES_VERSION } },
         });
         if (error) throw error;
         return data.session ? 'signed-in' : 'confirmation-required';

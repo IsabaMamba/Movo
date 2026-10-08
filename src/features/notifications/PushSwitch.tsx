@@ -10,7 +10,14 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { disablePush, enablePush, getPushState, type PushState } from '../../lib/push';
+import { recordConsent } from '../../lib/consents';
+import {
+  disablePush,
+  enablePush,
+  getPushState,
+  PUSH_NOTICE_VERSION,
+  type PushState,
+} from '../../lib/push';
 import { supabase } from '../../lib/supabase';
 import { pushStyles as s } from './styles';
 
@@ -43,10 +50,21 @@ export function PushSwitch() {
   const toggle = () => {
     setBusy(true);
     setError(null);
-    const action =
-      state === 'on' ? disablePush(supabase).then(() => getPushState()) : enablePush(supabase);
+    const turningOff = state === 'on';
+    const action = turningOff
+      ? disablePush(supabase).then(() => getPushState())
+      : enablePush(supabase);
     action
-      .then(setState)
+      .then((next) => {
+        setState(next);
+        // Only what the person decided here is consent (0030). Sign-out also
+        // switches this device off, but that is the device leaving, not a
+        // withdrawal, so it is not recorded.
+        if (turningOff && next !== 'on') void recordConsent(supabase, 'push', null, false);
+        if (!turningOff && next === 'on') {
+          void recordConsent(supabase, 'push', PUSH_NOTICE_VERSION, true);
+        }
+      })
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : 'No se pudo cambiar. Intenta de nuevo.');
       })
