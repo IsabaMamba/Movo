@@ -226,6 +226,9 @@ export function AccountScreen() {
       </View>
 
       <View style={s.section}>
+        <Link href="/permisos" style={s.link}>
+          <Text style={s.linkText}>Tus permisos</Text>
+        </Link>
         <Link href="/historial" style={s.link}>
           <Text style={s.linkText}>Mi historial de asistencia</Text>
         </Link>
