@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 // The bounds mirror the profiles check constraint, so the fallback name in
 // handle_new_user() never triggers. Mi cuenta uses the same pair.
 import { NAME_MAX, NAME_MIN } from '../../lib/account';
+import { MIN_AGE, parseBirthdate } from '../../lib/age';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
@@ -15,6 +16,9 @@ export function SignUpScreen() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [day, setDay] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,20 +45,30 @@ export function SignUpScreen() {
 
   const trimmedName = displayName.trim();
   const nameValid = trimmedName.length >= NAME_MIN && trimmedName.length <= NAME_MAX;
-  const canSubmit = nameValid && email.length > 0 && password.length > 0 && !busy;
+  const birth = parseBirthdate(day, month, year);
+  const birthTouched = day.length > 0 || month.length > 0 || year.length > 0;
+  const canSubmit = nameValid && birth.ok && email.length > 0 && password.length > 0 && !busy;
 
   const submit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !birth.ok) return;
     setError(null);
     setBusy(true);
-    signUp(email.trim(), password, trimmedName)
+    signUp(email.trim(), password, trimmedName, birth.iso)
       .then((outcome) => {
         // With email confirmation on, signUp returns no session. Redirecting
         // to the app here would land on a screen that cannot read anything.
         if (outcome === 'confirmation-required') setConfirmationSent(true);
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : 'No se pudo crear la cuenta.');
+        const message = cause instanceof Error ? cause.message : '';
+        // The database's refusal (0031) reaches the client as Supabase Auth's
+        // generic wording. The form checks the same rule first, so this is a
+        // date the form let through and the database did not — say which field.
+        setError(
+          message.includes('Database error saving new user')
+            ? 'No se pudo crear la cuenta. Revisa tu fecha de nacimiento.'
+            : message || 'No se pudo crear la cuenta.',
+        );
       })
       .finally(() => {
         setBusy(false);
@@ -80,6 +94,51 @@ export function SignUpScreen() {
         style={s.input}
         value={displayName}
       />
+
+      <Text style={s.label}>Fecha de nacimiento</Text>
+      {/* Three plain fields rather than a date picker: a picker opens on
+          today and asks for decades of scrolling, and on web it is a
+          different control in every browser. */}
+      <View style={s.dateRow}>
+        <TextInput
+          accessibilityLabel="Día de nacimiento"
+          autoComplete="birthdate-day"
+          inputMode="numeric"
+          maxLength={2}
+          onChangeText={setDay}
+          placeholder="Día"
+          placeholderTextColor={color.text.tertiary}
+          style={[s.input, s.dateDay]}
+          value={day}
+        />
+        <TextInput
+          accessibilityLabel="Mes de nacimiento, en número"
+          autoComplete="birthdate-month"
+          inputMode="numeric"
+          maxLength={2}
+          onChangeText={setMonth}
+          placeholder="Mes"
+          placeholderTextColor={color.text.tertiary}
+          style={[s.input, s.dateDay]}
+          value={month}
+        />
+        <TextInput
+          accessibilityLabel="Año de nacimiento"
+          autoComplete="birthdate-year"
+          inputMode="numeric"
+          maxLength={4}
+          onChangeText={setYear}
+          placeholder="Año"
+          placeholderTextColor={color.text.tertiary}
+          style={[s.input, s.dateYear]}
+          value={year}
+        />
+      </View>
+      <Text accessibilityLiveRegion="polite" style={birthTouched && !birth.ok ? s.error : s.hint}>
+        {birthTouched && !birth.ok
+          ? birth.problem
+          : `Movo es para personas de ${MIN_AGE} años o más. Solo tú la ves y no se puede cambiar después.`}
+      </Text>
 
       <Text style={s.label}>Correo</Text>
       <TextInput
@@ -136,9 +195,7 @@ export function SignUpScreen() {
       {/* Before the account exists, not after: the rules are what the person
           agrees to meet strangers under. */}
       <Link href="/normas" style={s.link}>
-        <Text style={s.linkText}>
-          Al crear tu cuenta confirmas que tienes 18 años o más y aceptas las normas de la comunidad
-        </Text>
+        <Text style={s.linkText}>Al crear tu cuenta aceptas las normas de la comunidad</Text>
       </Link>
 
       <Link href="/sign-in" style={s.link}>

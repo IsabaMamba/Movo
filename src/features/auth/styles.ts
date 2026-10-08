@@ -41,6 +41,12 @@ export const authStyles = StyleSheet.create({
   buttonText: { ...type.action, color: color.text.inverse },
   link: { minHeight: size.minTarget, justifyContent: 'center' },
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
+  dateRow: { flexDirection: 'row', gap: space.sm },
+  // flexBasis and minWidth 0: on web a TextInput has an intrinsic width of
+  // about twenty characters, and without these the row overflows the screen.
+  dateDay: { flexBasis: 0, flexGrow: 1, minWidth: 0 },
+  dateYear: { flexBasis: 0, flexGrow: 1.6, minWidth: 0 },
+  hint: { ...type.caption, color: color.text.secondary },
   error: { ...type.bodySmall, color: color.semantic.dangerOnRaised },
   notice: { ...type.body, color: color.text.primary },
 });
