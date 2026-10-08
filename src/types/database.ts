@@ -164,7 +164,7 @@ export interface Message {
   id: string;
   activity_id: string | null;
   community_id: string | null;
-  author_id: string;
+  author_id: string | null;
   body: string;
   created_at: string;
   deleted_at: string | null;
@@ -219,7 +219,7 @@ export interface Community {
 
 export interface Report {
   id: string;
-  reporter_id: string;
+  reporter_id: string | null;
   subject_type: ReportSubject;
   /**
    * The reported row. One column points at four different tables depending on

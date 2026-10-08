@@ -162,6 +162,15 @@ export function toInboxItem(row: Notification): InboxItem {
       if (text(payload, 'by') === 'movo') {
         return { ...base, text: `El equipo de Movo canceló ${title}.`, activityId };
       }
+      // Written by delete_my_account() (0029). The session is deleted with
+      // the account, so there is nothing to open and no id to open it by.
+      if (text(payload, 'by') === 'gone') {
+        return {
+          ...base,
+          text: `${title} se canceló: quien la organizaba ya no está en Movo.`,
+          activityId: null,
+        };
+      }
       const reason = text(payload, 'reason');
       return {
         ...base,
@@ -229,6 +238,19 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId,
         opensRoster: true,
       };
+
+    // Written by delete_my_account() (0029) to whoever inherits a group.
+    case 'group_handed_over': {
+      const name = text(payload, 'name');
+      return {
+        ...base,
+        text:
+          name === null
+            ? 'Ahora administras un grupo: quien lo creó ya no está en Movo.'
+            : `Ahora administras el grupo ${name}: quien lo creó ya no está en Movo.`,
+        activityId: null,
+      };
+    }
 
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes
