@@ -1,0 +1,12 @@
+# Movo
+#
+# Every page that needs an account, and every session and group page, carries
+# <meta name="robots" content="noindex, nofollow"> (src/lib/robots.ts).
+#
+# They are deliberately NOT disallowed here. A crawler told not to fetch a page
+# never sees its noindex, and can still list the bare URL from a link
+# elsewhere; and a Disallow line is a public list of the paths it names.
+# Allowing the fetch is what makes noindex work.
+
+User-agent: *
+Allow: /
