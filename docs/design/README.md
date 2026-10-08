@@ -8,13 +8,14 @@ component disagrees with the field kit, the field kit is right until an ADR says
 
 ## Screens
 
-| File                  | What it is                                                               | Width |
-| --------------------- | ------------------------------------------------------------------------ | ----- |
-| `field-kit.html`      | The six input types × five states. **Read this first.**                  | Phone |
-| `crear-sesion.html`   | Create a session — the schema-driven form assembling itself per category | Phone |
-| `detalle-sesion.html` | Session detail — occupancy, roster, join, the safety affordances         | Phone |
-| `descubrir.html`      | Discover — the heat map, filters, empty states with pre-computed counts  | Phone |
-| `roles-ia.html`       | Roles, AI-proposed sessions, open sessions, solo mode                    | Phone |
+| File                        | What it is                                                                                                                   | Width |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `field-kit.html`            | The six input types × five states. **Read this first.**                                                                      | Phone |
+| `crear-sesion.html`         | Create a session — the schema-driven form assembling itself per category                                                     | Phone |
+| `detalle-sesion.html`       | Session detail — occupancy, roster, join, the safety affordances                                                             | Phone |
+| `descubrir.html`            | Discover — the heat map, filters, empty states with pre-computed counts                                                      | Phone |
+| `roles-ia.html`             | Roles, AI-proposed sessions, open sessions, solo mode                                                                        | Phone |
+| `descubrir-transicion.html` | Playable prototype: Descubrir list → full map → zone (v1 → v2). Spec in [`descubrir-transicion.md`](descubrir-transicion.md) | Phone |
 
 ## Reference
 
