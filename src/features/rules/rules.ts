@@ -109,12 +109,12 @@ export const RULE_SECTIONS: RuleSection[] = [
       {
         rule: 'Una sesión es un grupo',
         detail:
-          'Si faltando 24 horas solo hay una persona apuntada, Movo les avisa a ti y a ella de que sería un encuentro a solas. Lo recomendable es cancelarla o esperar a que se apunte alguien más.',
+          'Si faltando 24 horas solo va una persona, Movo les avisa a ti y a ella de que sería un encuentro a solas. Lo recomendable es cancelarla o esperar a que se una alguien más.',
       },
       {
         rule: 'Alguien responde',
         detail:
-          'Estás ahí a la hora, o avisas. Si se cancela, cancélala en Movo y di por qué: así le llega el aviso a cada persona apuntada.',
+          'Estás ahí a la hora, o avisas. Si se cancela, cancélala en Movo y di por qué: así le llega el aviso a cada persona que va.',
       },
       {
         rule: 'Cobra solo lo publicado',
@@ -140,7 +140,7 @@ export function consequenceItems(): { rule: string; detail: string }[] {
     {
       rule: 'Puede cancelar una sesión',
       detail:
-        'Si una sesión no cumple estas normas, el equipo la cancela y avisa a cada persona apuntada y a quien organiza.',
+        'Si una sesión no cumple estas normas, el equipo la cancela y avisa a cada persona que iba y a quien organiza.',
     },
     {
       rule: 'Puede suspender una cuenta',

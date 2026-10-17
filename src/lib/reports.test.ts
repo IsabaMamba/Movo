@@ -32,7 +32,7 @@ function report(
         ? null
         : {
             id: 'a1',
-            title: 'Mejenga',
+            title: 'Partido del jueves',
             starts_at: '2026-09-25T12:00:00.000Z',
             status: activity,
             organizer: null,

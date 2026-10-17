@@ -204,7 +204,7 @@ export function OrganizerHomeScreen() {
         <View style={s.empty}>
           <Text style={s.sectionTitle}>Todavía no organizas nada</Text>
           <Text style={s.emptyBody}>
-            Crea una sesión y aquí vas a ver quién se apunta y quién llegó.
+            Crea una sesión y aquí vas a ver quién se une y quién llegó.
           </Text>
           <Link href="/crear" style={s.back}>
             <Text style={s.linkText}>Crear sesión</Text>

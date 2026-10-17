@@ -42,13 +42,21 @@
  * fourteen and missed `escribile`; rule 3 found it on its first run. The
  * list grew, and rule 3 exists, because of that.
  *
+ * Rule 4 (16 October, the language board in docs/design/handoff-2026-10-16.md)
+ * is vocabulary rather than voseo: words the product stopped using. Each
+ * entry says what to write instead, so the failure is also the fix.
+ *
+ * It reads `src/` and `supabase/functions/` — everything a person can see
+ * that ships as code. Not `supabase/migrations/`, which are append-only and
+ * keep their words, nor `supabase/tests/`, whose fixtures are not copy.
+ *
  * Run by `npm run verify` and by CI.
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ROOT = 'src';
+const ROOTS = ['src', 'supabase/functions'];
 
 const LETTER = '[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]';
 
@@ -161,6 +169,27 @@ const ENCLITIC = new RegExp(
   'giu',
 );
 
+/**
+ * Rule 4: retired vocabulary, with its replacement. Matched as whole words,
+ * case-insensitively. «apunt» covers every form: apuntarme, apúntate,
+ * apuntada, se apuntó…
+ */
+const RETIRED = [
+  {
+    pattern: /(?<![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])ap[uú]nt[a-záéíóúñ]*/giu,
+    instead: 'unirse / quienes van',
+  },
+  {
+    pattern: /(?<![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])mejengas?(?![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])/giu,
+    instead: 'partido',
+  },
+  { pattern: /te vienes/giu, instead: '¿Te animas?' },
+  { pattern: /arranca tú/giu, instead: 'Da el primer paso' },
+  { pattern: /lleva a tu gente/giu, instead: 'Invita a tus amigos' },
+  { pattern: /así te ven/giu, instead: 'Ver perfil público' },
+  { pattern: /qué hay cerca/giu, instead: 'Encuentra con quién moverte' },
+];
+
 function walk(dir) {
   const out = [];
   for (const entry of readdirSync(dir)) {
@@ -173,7 +202,15 @@ function walk(dir) {
 
 const findings = [];
 
-for (const file of walk(ROOT)) {
+const files = ROOTS.filter((root) => {
+  try {
+    return statSync(root).isDirectory();
+  } catch {
+    return false;
+  }
+}).flatMap((root) => walk(root));
+
+for (const file of files) {
   const lines = readFileSync(file, 'utf8').split('\n');
   lines.forEach((line, i) => {
     // Comments cite the forms in order to explain the rule. They are not copy.
@@ -191,15 +228,22 @@ for (const file of walk(ROOT)) {
       if (ALLOWED.has(match[0].toLowerCase())) continue;
       findings.push({ file, line: i + 1, word: match[0], text: trimmed });
     }
+    for (const { pattern, instead } of RETIRED) {
+      for (const match of line.matchAll(pattern)) {
+        findings.push({ file, line: i + 1, word: `${match[0]} → ${instead}`, text: trimmed });
+      }
+    }
   });
 }
 
 if (findings.length === 0) {
-  console.log(`voice: clean — no voseo in ${ROOT}/`);
+  console.log(`voice: clean — no voseo or retired words in ${ROOTS.join(', ')}`);
   process.exit(0);
 }
 
-console.error(`voice: ${findings.length} occurrence(s) of voseo in ${ROOT}/\n`);
+console.error(
+  `voice: ${findings.length} occurrence(s) of voseo or retired words in ${ROOTS.join(', ')}\n`,
+);
 for (const f of findings) {
   console.error(`  ${f.file}:${f.line}  ${f.word}`);
   console.error(`      ${f.text.slice(0, 96)}`);

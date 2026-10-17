@@ -72,7 +72,7 @@ function localParts(iso: string): { date: string; time: string } {
 function explain(cause: unknown): string {
   const message = cause instanceof Error ? cause.message : '';
   if (message.includes('locked once people have joined')) {
-    return 'Ya hay gente apuntada: la hora y el lugar no se pueden mover.';
+    return 'Ya hay gente que va: la hora y el lugar no se pueden mover.';
   }
   if (message.includes('capacity cannot drop')) {
     return 'El cupo no puede quedar por debajo de la gente que ya va.';
@@ -327,11 +327,11 @@ export function EditSessionScreen() {
             {/* The one rule on this screen that is not obvious, and the one
                 that decides whether the organizer edits or cancels. */}
             <Text style={s.bannerText}>
-              Ya {onRoster === 1 ? 'hay 1 persona apuntada' : `hay ${onRoster} personas apuntadas`}.
-              La hora y el lugar quedan fijos: los avisos de Movo solo se ven dentro de la app, no
-              llegan al teléfono ni al correo, así que alguien podría llegar al lugar o a la hora
-              equivocada sin enterarse. Si tiene que cambiar, cancela esta sesión (cada persona
-              apuntada recibe un aviso) y publica otra.
+              Ya {onRoster === 1 ? 'va 1 persona' : `van ${onRoster} personas`}. La hora y el lugar
+              quedan fijos: los avisos de Movo solo se ven dentro de la app, no llegan al teléfono
+              ni al correo, así que alguien podría llegar al lugar o a la hora equivocada sin
+              enterarse. Si tiene que cambiar, cancela esta sesión (cada persona que va recibe un
+              aviso) y publica otra.
             </Text>
           </View>
         )}
@@ -447,7 +447,7 @@ export function EditSessionScreen() {
           <Text style={s.hint}>
             {activity.joined_count > 0
               ? `Ya van ${activity.joined_count}. El cupo puede subir, pero no bajar de ahí.`
-              : 'Todavía no se apuntó nadie.'}
+              : 'Todavía no se unió nadie.'}
             {activity.waitlist_count > 0 ? ` ${activity.waitlist_count} en espera.` : ''}
           </Text>
           {freed > 0 && (

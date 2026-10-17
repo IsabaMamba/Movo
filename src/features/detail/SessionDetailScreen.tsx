@@ -217,7 +217,7 @@ export function SessionDetailScreen() {
   };
 
   const actionLabel = !session
-    ? 'Inicia sesión para apuntarte'
+    ? 'Inicia sesión para unirte'
     : busy
       ? 'Un momento…'
       : going
@@ -226,7 +226,7 @@ export function SessionDetailScreen() {
           ? 'Salir de la lista'
           : full
             ? 'Entrar a la lista de espera'
-            : 'Voy';
+            : 'Unirme';
 
   /**
    * The label names the button; the hint names what it costs. Leaving frees a
@@ -375,8 +375,8 @@ export function SessionDetailScreen() {
           {/* Said before the chips, because the obvious assumption — that
               "Voy" signs you up for every Tuesday — is wrong. */}
           <Text style={s.privacyNote}>
-            Se repite cada semana. Cada fecha tiene su propia lista: apuntarte a esta no te apunta a
-            las demás.
+            Se repite cada semana. Cada fecha tiene su propia lista: unirte a esta no te une a las
+            demás.
           </Text>
           <View style={s.tagRow}>
             {otherDates.map((date) => {

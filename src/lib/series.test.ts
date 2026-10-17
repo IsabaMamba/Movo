@@ -64,13 +64,13 @@ describe('explainSeriesError', () => {
       'time and venue are locked: 3 people are on upcoming sessions of this series. Cancel and publish a new series, or edit the individual session',
     );
     expect(explainSeriesError(cause)).toBe(
-      'Hay 3 personas apuntadas en las próximas fechas: el día, la hora, la duración y el lugar no se pueden cambiar.',
+      'Van 3 personas a las próximas fechas: el día, la hora, la duración y el lugar no se pueden cambiar.',
     );
   });
 
   it('is singular for one person', () => {
     const cause = new Error('time and venue are locked: 1 people are on upcoming sessions');
-    expect(explainSeriesError(cause)).toMatch(/^Hay 1 persona apuntada en/);
+    expect(explainSeriesError(cause)).toMatch(/^Va 1 persona a las próximas/);
   });
 
   it('names the capacity floor', () => {

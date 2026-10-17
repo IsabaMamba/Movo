@@ -65,7 +65,7 @@ function standingOf(entry: MyParticipation, past: boolean): Standing {
       // The position exists nowhere else in the product, and "en espera" on
       // its own reads as a refusal rather than as a queue that moves.
       note: past
-        ? 'No se liberó un campo a tiempo.'
+        ? 'No se liberó un lugar a tiempo.'
         : 'Si alguien cancela, entras automáticamente.',
     };
   }
@@ -191,7 +191,9 @@ export function MySessionsScreen() {
 
       <View>
         <Text style={s.title}>Mis sesiones</Text>
-        <Text style={s.subtitle}>A lo que te apuntaste, antes y después de que pase.</Text>
+        <Text style={s.subtitle}>
+          Las sesiones a las que te uniste, antes y después de que pasen.
+        </Text>
       </View>
 
       {/* Next to the sessions, because it is made of them: the history is
@@ -210,13 +212,13 @@ export function MySessionsScreen() {
         <ActivityIndicator />
       ) : all.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.sectionTitle}>Todavía no te apuntaste a nada</Text>
+          <Text style={s.sectionTitle}>Todavía no tienes sesiones</Text>
           <Text style={s.emptyBody}>
             Cuando digas que vas a una sesión, acá la vas a volver a encontrar — incluso después de
             que empiece.
           </Text>
           <Link href="/" style={s.back}>
-            <Text style={s.linkText}>Ver qué hay cerca</Text>
+            <Text style={s.linkText}>Encuentra con quién moverte</Text>
           </Link>
         </View>
       ) : (
@@ -243,7 +245,7 @@ export function MySessionsScreen() {
             <View style={s.empty}>
               <Text style={s.emptyBody}>No tienes nada por delante. Lo de abajo ya pasó.</Text>
               <Link href="/" style={s.back}>
-                <Text style={s.linkText}>Ver qué hay cerca</Text>
+                <Text style={s.linkText}>Encuentra con quién moverte</Text>
               </Link>
             </View>
           )}
