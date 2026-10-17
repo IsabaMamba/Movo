@@ -1,12 +1,18 @@
 /**
- * Mi cuenta — the person's own account, and the way out of it.
+ * Perfil — the person, their settings, and the way out (Perfil v2, phone 1).
+ *
+ * The card at the top is the same one the public preview shows, plus the
+ * zone only its owner sees. Editing moved to /perfil/editar; this screen is
+ * the index: Tu actividad, Ajustes, Tu cuenta.
+ *
+ * Earlier notes, still true:
  *
  * Sign-out used to sit in Descubrir's header next to the email address, both
  * on the first screen anybody sees. It lives here now, with the name, the
  * attendance history and the community rules: the things that are about the
  * person rather than about sessions.
  *
- * Only the name is editable (see lib/account.ts). The photo waits for storage.
+ * The photo waits for storage, moderation and an avatar provider.
  *
  * «Tus datos» is the way out (0029): download everything Movo holds, or
  * delete the account. Deleting asks for a typed word rather than a second
@@ -15,8 +21,8 @@
  * is not hidden, and not dressed up as a warning either.
  */
 
-import { Link, Redirect, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Link, Redirect, router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -34,15 +40,43 @@ import {
   DELETE_WORD,
   exportFileName,
   exportMyData,
-  fetchMyName,
-  NAME_MAX,
-  nameProblem,
-  updateMyName,
 } from '../../lib/account';
 import { disablePush } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import { createStyles as s } from '../create/styles';
+import { ProfileCard } from '../profile/ProfileCard';
+import { profileStyles as p } from '../profile/styles';
+import { useMyProfile } from '../profile/useMyProfile';
+
+/** One row of a settings group: a label, an optional value, and where it goes. */
+function Row({
+  href,
+  label,
+  value,
+  last,
+}: {
+  href: '/historial' | '/organizar' | '/avisos' | '/permisos' | '/normas' | '/mis-sesiones';
+  label: string;
+  value?: string;
+  last?: boolean;
+}) {
+  return (
+    <Link href={href} asChild>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={label}
+        style={[p.row, last && p.rowLast]}
+      >
+        <Text style={p.rowText}>{label}</Text>
+        {value ? <Text style={p.rowValue}>{value}</Text> : null}
+        <Text aria-hidden style={p.rowChevron}>
+          ›
+        </Text>
+      </Pressable>
+    </Link>
+  );
+}
 
 /** Web saves a file; native hands the text to the share sheet. */
 async function deliverExport(data: unknown): Promise<void> {
@@ -61,9 +95,6 @@ async function deliverExport(data: unknown): Promise<void> {
 
 export function AccountScreen() {
   const { session, loading, signOut } = useAuth();
-  const [stored, setStored] = useState<string | null | undefined>(undefined);
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -72,51 +103,17 @@ export function AccountScreen() {
   const [deleting, setDeleting] = useState(false);
 
   const userId = session?.user.id;
+  const { profile, sportNames, zone, error: loadError, reload } = useMyProfile(userId);
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    fetchMyName(supabase, userId)
-      .then((value) => {
-        if (cancelled) return;
-        setStored(value);
-        setName(value ?? '');
-      })
-      .catch((cause: unknown) => {
-        if (cancelled) return;
-        setStored(null);
-        setError(cause instanceof Error ? cause.message : 'No se pudo cargar tu cuenta.');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  // Back from Editar perfil, the card should show what was just saved.
+  useFocusEffect(
+    useCallback(() => {
+      void reload().catch(() => undefined);
+    }, [reload]),
+  );
 
   if (loading) return <ActivityIndicator style={s.screen} />;
   if (!session || !userId) return <Redirect href="/sign-in" />;
-
-  const problem = nameProblem(name);
-  const changed = stored !== undefined && name.trim() !== (stored ?? '');
-  const canSave = !busy && changed && problem === null;
-
-  const save = () => {
-    if (!canSave) return;
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    updateMyName(supabase, userId, name)
-      .then((value) => {
-        setStored(value);
-        setName(value);
-        setNotice('Nombre guardado. Es el que aparece en las listas de las sesiones.');
-      })
-      .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : 'No se pudo guardar el nombre.');
-      })
-      .finally(() => {
-        setBusy(false);
-      });
-  };
 
   const download = () => {
     if (exporting) return;
@@ -160,15 +157,33 @@ export function AccountScreen() {
 
   return (
     <ScrollView
-      aria-busy={busy || exporting || deleting}
+      aria-busy={exporting || deleting}
       contentContainerStyle={s.content}
       style={s.screen}
     >
-      <View style={s.header}>
-        <Text accessibilityRole="header" style={s.title}>
-          Perfil
-        </Text>
-        <Text style={s.subtitle}>{session.user.email}</Text>
+      <Text accessibilityRole="header" style={s.title}>
+        Perfil
+      </Text>
+
+      {profile === undefined ? (
+        <ActivityIndicator />
+      ) : profile === null ? (
+        <Text style={s.error}>{loadError ?? 'No se pudo cargar tu perfil.'}</Text>
+      ) : (
+        <ProfileCard name={profile.display_name} sports={sportNames} zone={zone} />
+      )}
+
+      <View style={p.actions}>
+        <Link href="/perfil/editar" asChild>
+          <Pressable accessibilityRole="link" style={p.action}>
+            <Text style={p.actionText}>Editar perfil</Text>
+          </Pressable>
+        </Link>
+        <Link href="/perfil/publico" asChild>
+          <Pressable accessibilityRole="link" style={p.action}>
+            <Text style={p.actionText}>Ver perfil público</Text>
+          </Pressable>
+        </Link>
       </View>
 
       {notice !== null && (
@@ -187,61 +202,28 @@ export function AccountScreen() {
       )}
 
       <View style={s.section}>
-        <View style={s.field}>
-          <Text style={s.label}>Nombre</Text>
-          {stored === undefined ? (
-            <ActivityIndicator />
-          ) : (
-            <TextInput
-              accessibilityLabel="Nombre"
-              accessibilityHint="Es el nombre que ven quien organiza y el resto de la sesión."
-              autoComplete="name"
-              maxLength={NAME_MAX}
-              onChangeText={setName}
-              onSubmitEditing={save}
-              style={s.input}
-              value={name}
-            />
-          )}
-          <Text style={s.hint}>
-            {changed && problem !== null
-              ? problem
-              : 'Es el nombre que ven quien organiza y el resto de la sesión. La foto de perfil todavía no está disponible.'}
-          </Text>
+        <Text style={p.groupLabel}>TU ACTIVIDAD</Text>
+        <View style={p.group}>
+          <Row href="/mis-sesiones" label="Mis sesiones" />
+          <Row href="/historial" label="Historial de asistencia" />
+          {/* Organizar lives here since the tab bar (16 October): most people
+              organise nothing, so it is a row, not a tab. */}
+          <Row href="/organizar" label="Organizar" last />
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={busy ? 'Guardando' : 'Guardar el nombre'}
-          aria-disabled={!canSave}
-          disabled={!canSave}
-          onPress={save}
-          style={[s.publish, !canSave && s.publishDisabled]}
-        >
-          <Text style={s.publishText}>{busy ? 'Guardando…' : 'Guardar el nombre'}</Text>
-        </Pressable>
       </View>
 
       <View style={s.section}>
-        {/* Organizar lives here since the tab bar (16 October): most people
-            organise nothing, so it is a row, not a tab. */}
-        <Link href="/organizar" style={s.link}>
-          <Text style={s.linkText}>Organizar</Text>
-        </Link>
-        <Link href="/permisos" style={s.link}>
-          <Text style={s.linkText}>Tus permisos</Text>
-        </Link>
-        <Link href="/historial" style={s.link}>
-          <Text style={s.linkText}>Mi historial de asistencia</Text>
-        </Link>
-        <Link href="/mis-sesiones" style={s.link}>
-          <Text style={s.linkText}>Mis sesiones</Text>
-        </Link>
-        <Link href="/normas" style={s.link}>
-          <Text style={s.linkText}>Normas de la comunidad</Text>
-        </Link>
+        <Text style={p.groupLabel}>AJUSTES</Text>
+        <View style={p.group}>
+          <Row href="/avisos" label="Avisos" />
+          <Row href="/permisos" label="Tus permisos" />
+          <Row href="/normas" label="Normas de la comunidad" last />
+        </View>
       </View>
 
       <View style={s.section}>
+        <Text style={p.groupLabel}>TU CUENTA</Text>
+        <Text style={s.hint}>{session.user.email}</Text>
         <Text accessibilityRole="header" style={s.label}>
           Tus datos
         </Text>
