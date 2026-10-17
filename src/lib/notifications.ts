@@ -231,6 +231,16 @@ export function toInboxItem(row: Notification): InboxItem {
 
     // Written by remind_unclosed_sessions() (0023), once, an hour after the
     // end. Opens the roster, because marking who came is the thing to do.
+    // Written by set_activity_links() (0032) to everybody going, when the
+    // organizer changes the links after they joined. Opens the session, where
+    // the links are shown with their domains.
+    case 'activity_link_changed':
+      return {
+        ...base,
+        text: `Cambiaron los enlaces de ${title}. Revísalos antes de ir.`,
+        activityId,
+      };
+
     case 'close_reminder':
       return {
         ...base,
