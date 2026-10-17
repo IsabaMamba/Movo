@@ -32,6 +32,7 @@ import {
   fetchPublicVenues,
   type ValidationIssue,
 } from '../../lib/activities';
+import { linksProblem, setActivityLinks } from '../../lib/links';
 import { projectRef, supabase } from '../../lib/supabase';
 import { weekdayPlural } from '../../lib/series';
 import {
@@ -44,6 +45,7 @@ import {
 } from '../../theme';
 import type { Category, Location, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
+import { LinkFields } from '../links/LinkFields';
 import { AddVenue } from '../venues/AddVenue';
 import { SchemaFields } from './SchemaFields';
 import { createStyles as s } from './styles';
@@ -115,6 +117,7 @@ export function CreateSessionScreen() {
   const [price, setPrice] = useState('');
   const [unlisted, setUnlisted] = useState(false);
   const [attributes, setAttributes] = useState<Record<string, unknown>>({});
+  const [links, setLinks] = useState<string[]>([]);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -179,6 +182,8 @@ export function CreateSessionScreen() {
   if (capped && (!Number.isFinite(capacityValue) || (capacityValue ?? 0) < 2)) {
     missing.push('el cupo tiene que ser de 2 personas o más');
   }
+  const linkProblem = repeats ? null : linksProblem(links);
+  if (linkProblem !== null) missing.push('revisa los enlaces');
 
   const canSubmit = !busy && missing.length === 0;
 
@@ -228,13 +233,26 @@ export function CreateSessionScreen() {
             publish: true,
           },
           category.attribute_schema,
-        ).then((id) => ({
-          ok: true,
+        ).then(async (id) => {
           // The id is the evidence. "Ya aparece en Descubrir" was a claim the
           // screen had no way to back, and it was believed for four days while
           // the table stayed empty.
-          message: `Sesión publicada · id ${id.slice(0, 8)} · proyecto ${projectRef}`,
-        }));
+          const published = `Sesión publicada · id ${id.slice(0, 8)} · proyecto ${projectRef}`;
+          const urls = links.map((u) => u.trim()).filter(Boolean);
+          if (urls.length === 0) return { ok: true, message: published };
+          // A second call (0032). The session already exists if it fails, so
+          // say exactly that rather than reporting the whole publish as failed.
+          try {
+            await setActivityLinks(supabase, id, urls);
+            return { ok: true, message: published };
+          } catch (cause: unknown) {
+            const why = cause instanceof Error ? cause.message : 'error desconocido';
+            return {
+              ok: true,
+              message: `${published} · Los enlaces no se guardaron (${why}). Agrégalos desde Editar.`,
+            };
+          }
+        });
 
     run
       .then((r) => {
@@ -644,10 +662,25 @@ export function CreateSessionScreen() {
         </View>
       )}
 
-      {/* 05 */}
+      {/* 05 — links (0032). Per session, so a series takes them date by date. */}
       <View style={s.section}>
         <View style={s.sectionHead}>
           <Text style={s.sectionNumber}>05</Text>
+          <Text style={s.sectionTitle}>Enlaces</Text>
+        </View>
+        {repeats ? (
+          <Text style={s.hint}>
+            En una serie, los enlaces se agregan en cada fecha desde Editar sesión.
+          </Text>
+        ) : (
+          <LinkFields onChange={setLinks} values={links} />
+        )}
+      </View>
+
+      {/* 06 */}
+      <View style={s.section}>
+        <View style={s.sectionHead}>
+          <Text style={s.sectionNumber}>06</Text>
           <Text style={s.sectionTitle}>¿Quién la ve?</Text>
         </View>
         <View accessibilityRole="radiogroup" accessibilityLabel="¿Quién la ve?" style={s.chipRow}>

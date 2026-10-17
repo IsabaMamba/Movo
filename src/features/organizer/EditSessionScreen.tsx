@@ -15,6 +15,9 @@
  *     joined is a bait-and-switch, and a category change reshapes the
  *     attributes the session was published with.
  *
+ *   * Links (0032) can change at any time before the start, and everybody
+ *     going is told when they do — set_activity_links() writes the notice.
+ *
  * update_activity() enforces all of it. The form shows the same rules so the
  * organizer meets them before pressing save, not in an error afterwards.
  */
@@ -29,10 +32,12 @@ import {
   updateActivity,
   type ActivityDetail,
 } from '../../lib/activities';
+import { fetchActivityLinks, linksProblem, setActivityLinks } from '../../lib/links';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size, timeZone } from '../../theme';
 import type { Location } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
+import { LinkFields } from '../links/LinkFields';
 import { createStyles as s } from '../create/styles';
 
 /** Costa Rica is UTC-6 year round, the same assumption Crear makes. */
@@ -96,6 +101,8 @@ export function EditSessionScreen() {
   const [venueId, setVenueId] = useState<string | null>(null);
   const [capped, setCapped] = useState(false);
   const [capacity, setCapacity] = useState('');
+  const [links, setLinks] = useState<string[]>([]);
+  const [savedLinks, setSavedLinks] = useState<string[]>([]);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,8 +112,12 @@ export function EditSessionScreen() {
     if (!id) return;
     let cancelled = false;
 
-    Promise.all([fetchActivityDetail(supabase, id), fetchPublicVenues(supabase)])
-      .then(([detail, locs]) => {
+    Promise.all([
+      fetchActivityDetail(supabase, id),
+      fetchPublicVenues(supabase),
+      fetchActivityLinks(supabase, id).catch(() => []),
+    ])
+      .then(([detail, locs, current]) => {
         if (cancelled) return;
         setActivity(detail);
         setVenues(locs);
@@ -126,6 +137,9 @@ export function EditSessionScreen() {
         setVenueId(detail.location_id);
         setCapped(detail.max_participants !== null);
         setCapacity(detail.max_participants === null ? '' : String(detail.max_participants));
+        const urls = current.map((link) => link.url);
+        setLinks(urls);
+        setSavedLinks(urls);
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
@@ -208,6 +222,7 @@ export function EditSessionScreen() {
     );
   }
   if (venueId === null) missing.push('elige un lugar');
+  if (linksProblem(links) !== null) missing.push('revisa los enlaces');
 
   const canSave = !busy && missing.length === 0;
 
@@ -221,6 +236,9 @@ export function EditSessionScreen() {
         ? activity.waitlist_count
         : Math.min(activity.waitlist_count, capacityValue - activity.joined_count)
       : 0;
+
+  const cleanLinks = links.map((u) => u.trim()).filter(Boolean);
+  const linksChanged = cleanLinks.join('\n') !== savedLinks.join('\n');
 
   const save = () => {
     if (!canSave || !startsAt || venueId === null) return;
@@ -237,13 +255,20 @@ export function EditSessionScreen() {
       locationId: venueId,
       maxParticipants: capacityValue,
     })
-      .then((row) => {
+      .then(async (row) => {
         setActivity({ ...activity, ...row });
+        // Only when they changed: an unchanged set writes nothing anyway, but
+        // the message should not claim people were told.
+        if (linksChanged) {
+          await setActivityLinks(supabase, activity.id, cleanLinks);
+          setSavedLinks(cleanLinks);
+        }
         setSaved(
           `Cambios guardados · id ${row.id.slice(0, 8)}` +
             (freed > 0
               ? ` · ${freed} ${freed === 1 ? 'persona pasó' : 'personas pasaron'} de la lista de espera a ir`
-              : ''),
+              : '') +
+            (linksChanged && onRoster > 0 ? ' · avisamos del cambio de enlaces a quienes van' : ''),
         );
       })
       .catch((cause: unknown) => {
@@ -434,6 +459,11 @@ export function EditSessionScreen() {
             </Text>
           )}
         </View>
+      </View>
+
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Enlaces</Text>
+        <LinkFields goingCount={onRoster} onChange={setLinks} values={links} />
       </View>
 
       {error !== null && (
