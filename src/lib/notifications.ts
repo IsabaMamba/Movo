@@ -218,14 +218,14 @@ export function toInboxItem(row: Notification): InboxItem {
     case 'solo_session_organizer':
       return {
         ...base,
-        text: `Solo una persona se apuntó a ${title}. Si nadie más se une, sería un encuentro a solas. Puedes cancelarla o esperar a que se apunte alguien más.`,
+        text: `Solo una persona se unió a ${title}. Si nadie más se une, sería un encuentro a solas. Puedes cancelarla o esperar a que se una alguien más.`,
         activityId,
       };
 
     case 'solo_session_participant':
       return {
         ...base,
-        text: `Por ahora eres la única persona apuntada a ${title}. Si nadie más se une, estarías a solas con quien organiza. Si prefieres no ir así, puedes salir de la sesión.`,
+        text: `Por ahora eres la única persona que va a ${title}. Si nadie más se une, estarías a solas con quien organiza. Si prefieres no ir así, puedes salir de la sesión.`,
         activityId,
       };
 

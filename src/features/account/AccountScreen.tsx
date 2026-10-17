@@ -108,7 +108,7 @@ export function AccountScreen() {
       .then((value) => {
         setStored(value);
         setName(value);
-        setNotice('Nombre guardado. Así te ven en las listas de las sesiones.');
+        setNotice('Nombre guardado. Es el que aparece en las listas de las sesiones.');
       })
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : 'No se pudo guardar el nombre.');
@@ -198,7 +198,7 @@ export function AccountScreen() {
           ) : (
             <TextInput
               accessibilityLabel="Nombre"
-              accessibilityHint="Así te ven quien organiza y el resto de la sesión."
+              accessibilityHint="Es el nombre que ven quien organiza y el resto de la sesión."
               autoComplete="name"
               maxLength={NAME_MAX}
               onChangeText={setName}
@@ -210,7 +210,7 @@ export function AccountScreen() {
           <Text style={s.hint}>
             {changed && problem !== null
               ? problem
-              : 'Así te ven quien organiza y el resto de la sesión. La foto de perfil todavía no está disponible.'}
+              : 'Es el nombre que ven quien organiza y el resto de la sesión. La foto de perfil todavía no está disponible.'}
           </Text>
         </View>
         <Pressable

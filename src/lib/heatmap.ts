@@ -268,7 +268,7 @@ export function heatSummary(blobs: readonly Blob[]): string {
     .map(
       (b) =>
         `${b.name}, ${plural(b.sessions, 'sesión', 'sesiones')} y ` +
-        `${plural(b.joined, 'persona apuntada', 'personas apuntadas')}`,
+        `${plural(b.joined, 'persona que va', 'personas que van')}`,
     );
   return `Mapa de calor de los próximos ${HEAT_WINDOW_DAYS} días ${where}: ${zones.join('; ')}.`;
 }

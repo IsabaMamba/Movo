@@ -140,30 +140,30 @@ describe('toInboxItem', () => {
       const item = toInboxItem(
         row({
           type: 'activity_cancelled',
-          payload: { title: 'Mejenga', activity_id: 'a5', by: 'movo', reason: 'no debería estar' },
+          payload: { title: 'Partido', activity_id: 'a5', by: 'movo', reason: 'no debería estar' },
         }),
       );
-      expect(item.text).toBe('El equipo de Movo canceló Mejenga.');
+      expect(item.text).toBe('El equipo de Movo canceló Partido.');
       expect(item.text).not.toContain('no debería estar');
       expect(item.activityId).toBe('a5');
     });
 
     it('treats any other `by` as the organiser cancelling', () => {
       const item = toInboxItem(
-        row({ type: 'activity_cancelled', payload: { title: 'Mejenga', by: 'alguien' } }),
+        row({ type: 'activity_cancelled', payload: { title: 'Partido', by: 'alguien' } }),
       );
-      expect(item.text).toBe('Mejenga se canceló. Sin motivo escrito.');
+      expect(item.text).toBe('Partido se canceló. Sin motivo escrito.');
     });
 
     it('tells the organiser it broke the rules, without the report', () => {
       const item = toInboxItem(
         row({
           type: 'activity_cancelled_by_movo',
-          payload: { title: 'Mejenga', activity_id: 'a5' },
+          payload: { title: 'Partido', activity_id: 'a5' },
         }),
       );
       expect(item.text).toBe(
-        'El equipo de Movo canceló Mejenga por no cumplir las normas de la comunidad.',
+        'El equipo de Movo canceló Partido por no cumplir las normas de la comunidad.',
       );
       expect(item.text).not.toMatch(/report/i);
       expect(item.activityId).toBe('a5');
@@ -175,7 +175,7 @@ describe('toInboxItem', () => {
       const item = toInboxItem(
         row({ type: 'solo_session_organizer', payload: { title: 'Trote', activity_id: 'a7' } }),
       );
-      expect(item.text).toMatch(/^Solo una persona se apuntó a Trote\./);
+      expect(item.text).toMatch(/^Solo una persona se unió a Trote\./);
       expect(item.text).toContain('encuentro a solas');
       expect(item.text).toContain('cancelarla');
       expect(item.activityId).toBe('a7');
@@ -185,7 +185,7 @@ describe('toInboxItem', () => {
       const item = toInboxItem(
         row({ type: 'solo_session_participant', payload: { title: 'Trote', activity_id: 'a7' } }),
       );
-      expect(item.text).toMatch(/^Por ahora eres la única persona apuntada a Trote\./);
+      expect(item.text).toMatch(/^Por ahora eres la única persona que va a Trote\./);
       expect(item.text).toContain('puedes salir de la sesión');
       expect(item.activityId).toBe('a7');
     });
@@ -225,9 +225,9 @@ describe('toInboxItem', () => {
     it('tells the roster the session is off, and opens nothing', () => {
       // The session is deleted with the account: a link would lead to "not found".
       const item = toInboxItem(
-        row({ type: 'activity_cancelled', payload: { title: 'Mejenga', by: 'gone' } }),
+        row({ type: 'activity_cancelled', payload: { title: 'Partido', by: 'gone' } }),
       );
-      expect(item.text).toBe('Mejenga se canceló: quien la organizaba ya no está en Movo.');
+      expect(item.text).toBe('Partido se canceló: quien la organizaba ya no está en Movo.');
       expect(item.activityId).toBeNull();
     });
 

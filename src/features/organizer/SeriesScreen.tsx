@@ -209,7 +209,7 @@ export function SeriesScreen() {
         setNotice(
           n === 0
             ? 'Serie cancelada. No quedaba ninguna fecha por delante.'
-            : `Serie cancelada: ${n === 1 ? 'se canceló 1 fecha' : `se cancelaron ${n} fechas`}. Cada persona apuntada recibió un aviso.`,
+            : `Serie cancelada: ${n === 1 ? 'se canceló 1 fecha' : `se cancelaron ${n} fechas`}. Cada persona que iba recibió un aviso.`,
         );
       })
       .catch((cause: unknown) => {
@@ -274,8 +274,8 @@ export function SeriesScreen() {
       <View style={s.section}>
         <Text style={s.sectionTitle}>Editar la serie</Text>
         <Text style={s.hint}>
-          Hora de Costa Rica. El precio y la categoría no se editan. Las fechas en las que nadie se
-          apuntó siguen los cambios; las que ya tienen gente conservan lo que tenían.
+          Hora de Costa Rica. El precio y la categoría no se editan. Las fechas a las que nadie se
+          unió siguen los cambios; las que ya tienen gente conservan lo que tenían.
         </Text>
 
         <View style={s.field}>
@@ -307,11 +307,11 @@ export function SeriesScreen() {
         {locked && (
           <View style={s.banner}>
             <Text style={s.bannerText}>
-              {onUpcoming === 1 ? 'Hay 1 persona apuntada' : `Hay ${onUpcoming} personas apuntadas`}{' '}
-              en las próximas fechas. El día, la hora, la duración y el lugar quedan fijos: los
-              avisos de Movo solo se ven dentro de la app, así que alguien podría llegar al lugar o
-              a la hora equivocada. Si tienen que cambiar, cancela la serie (cada persona recibe un
-              aviso) y publica una nueva.
+              {onUpcoming === 1 ? 'Va 1 persona' : `Van ${onUpcoming} personas`} a las próximas
+              fechas. El día, la hora, la duración y el lugar quedan fijos: los avisos de Movo solo
+              se ven dentro de la app, así que alguien podría llegar al lugar o a la hora
+              equivocada. Si tienen que cambiar, cancela la serie (cada persona recibe un aviso) y
+              publica una nueva.
             </Text>
           </View>
         )}
@@ -464,14 +464,14 @@ export function SeriesScreen() {
       <View style={s.section}>
         <Text style={s.sectionTitle}>Cancelar la serie</Text>
         <Text style={s.hint}>
-          Se cancelan todas las fechas que vienen y cada persona apuntada recibe un aviso con el
+          Se cancelan todas las fechas que vienen y cada persona que va recibe un aviso con el
           motivo. Las fechas que ya pasaron se quedan como fueron.
         </Text>
         {confirmingCancel ? (
           <View style={s.field}>
             <View style={s.labelRow}>
               <Text style={s.label}>Motivo</Text>
-              <Text style={s.optional}>opcional, lo ve cada persona apuntada</Text>
+              <Text style={s.optional}>opcional, lo ve cada persona que va</Text>
             </View>
             <TextInput
               accessibilityLabel="Motivo, opcional"

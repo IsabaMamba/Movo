@@ -197,7 +197,7 @@ export function RosterScreen() {
       .then((noShows) => {
         setNotice(
           noShows === 0
-            ? 'Sesión cerrada. Todos los que se apuntaron llegaron.'
+            ? 'Sesión cerrada. Llegaron todas las personas que iban.'
             : // `no_show` is a column value, not a word anybody says. STATE_LABEL
               // already translates it; this was the one place the raw enum
               // reached a person, in the sentence confirming the only
@@ -224,7 +224,7 @@ export function RosterScreen() {
         // delivers it to a phone yet.
         setNotice(
           count === 0
-            ? 'Sesión cancelada. No había nadie apuntado.'
+            ? 'Sesión cancelada. No iba nadie.'
             : `Sesión cancelada. ${count} ${count === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones, pero Movo todavía no manda avisos: escríbeles.`,
         );
         return load();
@@ -351,7 +351,7 @@ export function RosterScreen() {
       <View>
         <Text style={s.sectionTitle}>Quién va</Text>
         {roster.length === 0 ? (
-          <Text style={s.emptyBody}>Todavía no se apuntó nadie.</Text>
+          <Text style={s.emptyBody}>Todavía no se unió nadie.</Text>
         ) : shown.length === 0 ? (
           <Text style={s.emptyBody}>
             {filter === 'arrived' ? 'Todavía no llegó nadie.' : 'No falta nadie.'}
@@ -514,13 +514,13 @@ export function RosterScreen() {
             <View style={s.confirm}>
               <Text accessibilityRole="alert" style={s.confirmText}>
                 {onRoster === 0
-                  ? 'No hay nadie apuntado. La sesión deja de aparecer en Descubrir.'
+                  ? 'No va nadie. La sesión deja de aparecer en Descubrir.'
                   : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escríbeles tú.`}{' '}
                 No se puede deshacer.
               </Text>
               <TextInput
                 accessibilityLabel="Motivo, opcional"
-                accessibilityHint="Lo ve toda la gente apuntada."
+                accessibilityHint="Lo ven todas las personas que van."
                 maxLength={280}
                 onChangeText={setReason}
                 placeholder="Motivo (opcional): llueve, cancha cerrada…"

@@ -92,7 +92,7 @@ export function GruposScreen() {
 
       <View>
         <Text style={s.title}>Grupos</Text>
-        <Text style={s.subtitle}>Clubes y mejengas con nombre propio.</Text>
+        <Text style={s.subtitle}>Clubes y partidos con nombre propio.</Text>
       </View>
 
       {error && (
@@ -124,7 +124,7 @@ export function GruposScreen() {
                 accessibilityLabel="De qué se trata el grupo"
                 multiline
                 onChangeText={setDescription}
-                placeholder="Mejenga los jueves en La Sabana, 7v7, todos los niveles."
+                placeholder="Partido los jueves en La Sabana, 7v7, todos los niveles."
                 placeholderTextColor={color.text.tertiary}
                 style={[s.input, { minHeight: 88 }]}
                 value={description}

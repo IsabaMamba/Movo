@@ -158,7 +158,7 @@ describe('heatSummary', () => {
     const blobs = layoutBlobs([ULLOA, COLON], { ...GAM, spanKm: 50 });
     expect(heatSummary(blobs)).toBe(
       'Mapa de calor de los próximos 7 días alrededor del centro de búsqueda: ' +
-        'Ulloa, 4 sesiones y 0 personas apuntadas; Colón, 1 sesión y 3 personas apuntadas.',
+        'Ulloa, 4 sesiones y 0 personas que van; Colón, 1 sesión y 3 personas que van.',
     );
   });
 

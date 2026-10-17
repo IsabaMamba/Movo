@@ -169,7 +169,7 @@ export function explainSeriesError(cause: unknown): string {
   const locked = /time and venue are locked: (\d+) people/.exec(message);
   if (locked) {
     const n = Number(locked[1]);
-    return `${n === 1 ? 'Hay 1 persona apuntada' : `Hay ${n} personas apuntadas`} en las próximas fechas: el día, la hora, la duración y el lugar no se pueden cambiar.`;
+    return `${n === 1 ? 'Va 1 persona' : `Van ${n} personas`} a las próximas fechas: el día, la hora, la duración y el lugar no se pueden cambiar.`;
   }
   const floor = /capacity cannot go below (\d+)/.exec(message);
   if (floor) {
