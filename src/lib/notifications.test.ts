@@ -211,6 +211,16 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('the organizer changed the links', () => {
+    it('says which session and opens it', () => {
+      const item = toInboxItem(
+        row({ type: 'activity_link_changed', payload: { title: 'Ruta 31', activity_id: 'a31' } }),
+      );
+      expect(item.text).toBe('Cambiaron los enlaces de Ruta 31. Revísalos antes de ir.');
+      expect(item.activityId).toBe('a31');
+    });
+  });
+
   describe('somebody deleted their account', () => {
     it('tells the roster the session is off, and opens nothing', () => {
       // The session is deleted with the account: a link would lead to "not found".

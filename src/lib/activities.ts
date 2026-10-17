@@ -848,6 +848,9 @@ export const REPORT_REASONS = [
   { value: 'informacion_falsa', label: 'La información no es real' },
   { value: 'lugar_inseguro', label: 'El lugar no es seguro o no es público' },
   { value: 'spam', label: 'Spam o publicidad' },
+  // 0032. A session's links go somewhere Movo has no say; a bad one is
+  // reported on the session, with this reason, into the same queue.
+  { value: 'enlace', label: 'Un enlace es engañoso o peligroso' },
   { value: 'otro', label: 'Otra cosa' },
 ] as const;
 

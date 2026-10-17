@@ -294,7 +294,6 @@ export interface RunningAttributes {
   pace_min_per_km: number;
   route_type?: 'calle' | 'trail' | 'pista';
   has_pacers?: boolean;
-  route_url?: string;
   no_drop?: boolean;
 }
 
