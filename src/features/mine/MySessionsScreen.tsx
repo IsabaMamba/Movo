@@ -185,10 +185,6 @@ export function MySessionsScreen() {
 
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
-      <Link href="/" style={s.back}>
-        <Text style={s.backText}>← Descubrir</Text>
-      </Link>
-
       <View>
         <Text style={s.title}>Mis sesiones</Text>
         <Text style={s.subtitle}>

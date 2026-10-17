@@ -242,31 +242,11 @@ export function DiscoverScreen() {
                   )}
                 </Pressable>
               </Link>
-              {/* Before Crear and Organizar: most people attend sessions and
-                  organise none, so the one that is theirs comes first. */}
-              <Link href="/mis-sesiones">
-                <Text style={s.linkText}>Mis sesiones</Text>
-              </Link>
-              <Link href="/crear">
-                <Text style={s.linkText}>Crear sesión</Text>
-              </Link>
-              <Link href="/organizar">
-                <Text style={s.linkText}>Organizar</Text>
-              </Link>
-              <Link href="/grupos">
-                <Text style={s.linkText}>Grupos</Text>
-              </Link>
-              {/* Sign-out and the email address moved to Mi cuenta: the first
-                  screen anybody sees is about sessions, not about the account. */}
-              <Link href="/cuenta">
-                <Text style={s.linkText}>Mi cuenta</Text>
-              </Link>
+              {/* Mis sesiones, Crear, Grupos and Perfil are tabs now; Organizar
+                  is a row inside Perfil. Avisos stays here, with its count. */}
             </>
           ) : (
             <>
-              <Link href="/grupos">
-                <Text style={s.linkText}>Grupos</Text>
-              </Link>
               <Link href="/sign-in">
                 <Text style={s.linkText}>Iniciar sesión</Text>
               </Link>

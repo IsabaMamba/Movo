@@ -164,13 +164,9 @@ export function AccountScreen() {
       contentContainerStyle={s.content}
       style={s.screen}
     >
-      <Link href="/" style={s.link}>
-        <Text style={s.linkText}>← Descubrir</Text>
-      </Link>
-
       <View style={s.header}>
         <Text accessibilityRole="header" style={s.title}>
-          Mi cuenta
+          Perfil
         </Text>
         <Text style={s.subtitle}>{session.user.email}</Text>
       </View>
@@ -226,6 +222,11 @@ export function AccountScreen() {
       </View>
 
       <View style={s.section}>
+        {/* Organizar lives here since the tab bar (16 October): most people
+            organise nothing, so it is a row, not a tab. */}
+        <Link href="/organizar" style={s.link}>
+          <Text style={s.linkText}>Organizar</Text>
+        </Link>
         <Link href="/permisos" style={s.link}>
           <Text style={s.linkText}>Tus permisos</Text>
         </Link>

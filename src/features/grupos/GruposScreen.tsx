@@ -45,7 +45,7 @@ export function GruposScreen() {
   const [busy, setBusy] = useState(false);
 
   const load = () => {
-    fetchCommunities(supabase)
+    fetchCommunities(supabase, session !== null)
       .then(setCommunities)
       .catch((cause: unknown) => {
         setCommunities([]);
@@ -53,7 +53,7 @@ export function GruposScreen() {
       });
   };
 
-  useEffect(load, []);
+  useEffect(load, [session]);
 
   const slug = slugify(name);
   const canCreate = !busy && name.trim().length >= 2 && slug.length >= 2;
@@ -86,10 +86,6 @@ export function GruposScreen() {
 
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
-      <Link href="/" style={s.back}>
-        <Text style={s.backText}>← Descubrir</Text>
-      </Link>
-
       <View>
         <Text style={s.title}>Grupos</Text>
         <Text style={s.subtitle}>Clubes y partidos con nombre propio.</Text>
@@ -239,7 +235,9 @@ export function GruposScreen() {
               accessibilityRole="button"
               accessibilityLabel={[
                 community.name,
-                `${community.member_count} ${community.member_count === 1 ? 'miembro' : 'miembros'}`,
+                community.member_count === null
+                  ? null
+                  : `${community.member_count} ${community.member_count === 1 ? 'miembro' : 'miembros'}`,
                 community.is_public ? 'Abierto a cualquiera' : 'Solo invitados',
                 community.description,
               ]
@@ -254,8 +252,10 @@ export function GruposScreen() {
             >
               <Text style={s.cardTitle}>{community.name}</Text>
               <Text style={s.cardSlug}>
-                /{community.slug} · {community.member_count}{' '}
-                {community.member_count === 1 ? 'miembro' : 'miembros'}
+                /{community.slug}
+                {community.member_count === null
+                  ? ''
+                  : ` · ${community.member_count} ${community.member_count === 1 ? 'miembro' : 'miembros'}`}
                 {community.is_public ? '' : ' · solo invitados'}
               </Text>
               {community.description && (

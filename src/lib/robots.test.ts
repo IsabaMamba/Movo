@@ -18,7 +18,7 @@ function routes(dir = 'src/app'): string[] {
     const parts = relative('src/app', full)
       .slice(0, -'.tsx'.length)
       .split(sep)
-      .filter((part) => part !== 'index')
+      .filter((part) => part !== 'index' && !/^\(.*\)$/u.test(part))
       .map((part) => (part.startsWith('[') ? 'x1' : part));
     return ['/' + parts.join('/')];
   });
