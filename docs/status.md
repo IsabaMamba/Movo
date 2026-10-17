@@ -71,6 +71,7 @@ column is maintained by hand.
 | `0031_minimum_age`             | `handle_new_user()` refuses a declared date of birth under 18, impossible or malformed; stores it in `profile_private.birthdate`, which loses its client update grant                                 | yes     |
 | `0032_activity_links`          | `activity_links` (up to 2 https links per session, domain stored), `set_activity_links()` for the organizer, `link_domain()` checks; the roster is told when links change; `route_url` leaves Running | yes     |
 | `0033_self_check_in`           | `self_check_in()` with a per-session 4-digit code, 15 min before to 45 after, 5 wrong codes lock; `check_in_code()`, `new_check_in_code()`, `undo_check_in()` for the organizer                       | yes     |
+| `0034_profile_v2`              | `home_district` closed to every client (column grant) and made a distrito code with a foreign key; `my_profile()`; `set_my_interests()`; sports readable where the profile is                         | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
