@@ -707,7 +707,8 @@ export async function fetchOrganizerRoster(
 // ------------------------------------------------------------------ grupos
 
 export interface CommunityWithCount extends Community {
-  member_count: number;
+  /** Null when signed out: anon may read groups but not their members (0003). */
+  member_count: number | null;
 }
 
 export type CommunityMemberEntry = {
@@ -721,7 +722,19 @@ export type CommunityMemberEntry = {
  * Public groups, plus any private one the caller belongs to — the read policy
  * decides which, so this asks for everything and lets RLS filter.
  */
-export async function fetchCommunities(db: SupabaseClient): Promise<CommunityWithCount[]> {
+export async function fetchCommunities(
+  db: SupabaseClient,
+  signedIn = true,
+): Promise<CommunityWithCount[]> {
+  // Signed out there is no grant on community_members, and asking for the
+  // count fails the whole list with 42501. The groups are public; the
+  // number of people in them is not, so it is simply left out.
+  if (!signedIn) {
+    const { data, error } = await db.from('communities').select('*').order('name');
+    if (error) throw toApiError(error);
+    return ((data ?? []) as Community[]).map((row) => ({ ...row, member_count: null }));
+  }
+
   const { data, error } = await db
     .from('communities')
     .select('*, community_members(count)')
