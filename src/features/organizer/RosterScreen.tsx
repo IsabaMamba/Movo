@@ -9,12 +9,18 @@
  * Close-out is deliberately separate from check-in: closing turns everyone
  * still marked `joined` into `no_show` permanently, so it is a decision, not
  * a side effect of leaving the screen.
+ *
+ * Asistencia v2 (0033): people now mark their own arrival with the session's
+ * code, so this screen shows the code, refreshes itself while check-in is
+ * open, says how each person was marked («con código» or «por ti»), and lets
+ * the organizer undo either before closing.
  */
 
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import { checkedInBy, undoCheckIn } from '../../lib/checkIn';
 import {
   cancelActivity,
   checkIn,
@@ -28,6 +34,8 @@ import {
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
+import { CodePanel } from '../checkin/CodePanel';
+import { checkInStyles as cs } from '../checkin/styles';
 import { organizerStyles as s } from './styles';
 
 const STATE_LABEL: Record<string, string> = {
@@ -45,6 +53,18 @@ const CHECK_HIT_SLOP = hitSlopFor(size.controlSm);
  * leaving the screen — the consequence is that everyone still unmarked becomes
  * a permanent no-show, so it is the hint on every control that can trigger it.
  */
+type Filter = 'all' | 'arrived' | 'missing';
+
+/** «05:52», in Costa Rica time, for the moment somebody was marked. */
+function clock(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'America/Costa_Rica',
+  }).format(new Date(iso));
+}
+
 const CLOSE_HINT =
   'Marca como no llegó a quien quede sin marcar y cancela a quien esté en espera. No se puede deshacer.';
 
@@ -61,6 +81,7 @@ export function RosterScreen() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [reason, setReason] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -83,6 +104,26 @@ export function RosterScreen() {
       cancelled = true;
     };
   }, [load]);
+
+  // While people can still mark themselves, the list refreshes on its own,
+  // every 10 seconds. Polling rather than a realtime channel: nothing else in
+  // Movo holds a socket open, and ten seconds is fast enough to watch.
+  const live =
+    activity != null &&
+    session != null &&
+    activity.organizer_id === session.user.id &&
+    (activity.status === 'published' || activity.status === 'full') &&
+    Date.now() >= new Date(activity.starts_at).getTime() - 30 * 60_000 &&
+    Date.now() <= new Date(activity.starts_at).getTime() + 3 * 60 * 60_000;
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => {
+      void load().catch(() => undefined);
+    }, 10_000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [live, load]);
 
   if (activity === undefined) return <ActivityIndicator style={s.screen} />;
 
@@ -127,6 +168,27 @@ export function RosterScreen() {
         setPending(null);
       });
   };
+
+  const undo = (userId: string) => {
+    setPending(userId);
+    setError(null);
+    undoCheckIn(supabase, activity.id, userId)
+      .then(() => load())
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : 'No se pudo deshacer la llegada.');
+      })
+      .finally(() => {
+        setPending(null);
+      });
+  };
+
+  const shown = roster.filter((p) =>
+    filter === 'arrived'
+      ? p.status === 'attended'
+      : filter === 'missing'
+        ? p.status === 'joined'
+        : true,
+  );
 
   const close = () => {
     setConfirming(false);
@@ -256,12 +318,46 @@ export function RosterScreen() {
         <Text style={s.hint}>Solo quien organiza puede marcar llegadas o cerrar la sesión.</Text>
       )}
 
+      {isOrganizer && !closed && !cancelled && checkInOpen && roster.length > 0 && (
+        <CodePanel activityId={activity.id} arrived={attended} total={attended + expected} />
+      )}
+
+      {roster.length > 0 && (
+        <View accessibilityRole="radiogroup" accessibilityLabel="Mostrar" style={cs.filters}>
+          {(
+            [
+              ['all', `Todas · ${roster.length}`],
+              ['arrived', `Llegaron · ${attended}`],
+              ['missing', `Faltan · ${expected}`],
+            ] as const
+          ).map(([value, label]) => (
+            <Pressable
+              accessibilityRole="radio"
+              aria-checked={filter === value}
+              accessibilityLabel={label}
+              hitSlop={CHECK_HIT_SLOP}
+              key={value}
+              onPress={() => {
+                setFilter(value);
+              }}
+              style={[cs.filter, filter === value && cs.filterOn]}
+            >
+              <Text style={[cs.filterText, filter === value && cs.filterTextOn]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       <View>
         <Text style={s.sectionTitle}>Quién va</Text>
         {roster.length === 0 ? (
           <Text style={s.emptyBody}>Todavía no se apuntó nadie.</Text>
+        ) : shown.length === 0 ? (
+          <Text style={s.emptyBody}>
+            {filter === 'arrived' ? 'Todavía no llegó nadie.' : 'No falta nadie.'}
+          </Text>
         ) : (
-          roster.map((person) => {
+          shown.map((person) => {
             const done = person.status === 'attended';
             const name = person.profile.display_name;
             const state = STATE_LABEL[person.status] ?? person.status;
@@ -289,6 +385,28 @@ export function RosterScreen() {
                     ? ` · ${person.waitlist_pos}`
                     : ''}
                 </Text>
+                {done && person.checked_in_at && (
+                  <Text style={cs.how}>
+                    {clock(person.checked_in_at)} ·{' '}
+                    {checkedInBy(person.user_id, person.checked_in_by) === 'self'
+                      ? 'con código'
+                      : 'por ti'}
+                  </Text>
+                )}
+                {done && isOrganizer && !closed && !cancelled && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Deshacer la llegada de ${name}`}
+                    accessibilityHint="Vuelve a dejarla sin marcar. Solo antes de cerrar."
+                    disabled={pending === person.user_id}
+                    hitSlop={CHECK_HIT_SLOP}
+                    onPress={() => {
+                      undo(person.user_id);
+                    }}
+                  >
+                    <Text style={cs.undo}>{pending === person.user_id ? '…' : 'Deshacer'}</Text>
+                  </Pressable>
+                )}
                 {isOrganizer && !closed && !cancelled && checkInOpen && (
                   <Pressable
                     /* A button, not a checkbox. It is `disabled` the moment it
@@ -301,11 +419,7 @@ export function RosterScreen() {
                        somebody already marked present. */
                     accessibilityRole="button"
                     accessibilityLabel={done ? `${name} ya llegó` : `Marcar llegada de ${name}`}
-                    /* Check-in is what writes attendance, and this screen offers
-                       no way back once it is written. */
-                    accessibilityHint={
-                      done ? undefined : 'No se puede deshacer desde esta pantalla'
-                    }
+                    accessibilityHint={done ? undefined : 'Se puede deshacer antes de cerrar'}
                     aria-disabled={done || pending === person.user_id}
                     aria-busy={pending === person.user_id}
                     disabled={done || pending === person.user_id}

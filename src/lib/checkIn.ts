@@ -96,3 +96,27 @@ export function checkedInBy(
   if (checkedInByUserId === null) return null;
   return checkedInByUserId === participantId ? 'self' : 'organizer';
 }
+
+/**
+ * The session «Tu próxima» is about: one the person is going to (or already
+ * marked), not cancelled or closed, still inside or before its window, and
+ * starting within a day. Soonest first.
+ */
+export function nextArrival<
+  T extends { status: string; activity: { status: string; starts_at: string } },
+>(entries: readonly T[], now: Date = new Date()): T | null {
+  const day = 24 * 60 * 60_000;
+  const candidates = entries
+    .filter(
+      (e) =>
+        (e.status === 'joined' || e.status === 'attended') &&
+        e.activity.status !== 'cancelled' &&
+        e.activity.status !== 'completed' &&
+        checkInWindow(e.activity.starts_at, now) !== 'late' &&
+        new Date(e.activity.starts_at).getTime() - now.getTime() < day,
+    )
+    .sort(
+      (a, b) => new Date(a.activity.starts_at).getTime() - new Date(b.activity.starts_at).getTime(),
+    );
+  return candidates[0] ?? null;
+}

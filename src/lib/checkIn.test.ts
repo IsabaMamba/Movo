@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkedInBy, checkInWindow, cleanCode, outcomeText } from './checkIn';
+import { checkedInBy, checkInWindow, cleanCode, nextArrival, outcomeText } from './checkIn';
 
 /**
  * The window must match self_check_in() in 0033 to the minute: a button that
@@ -46,5 +46,34 @@ describe('checkedInBy', () => {
     expect(checkedInBy('u1', 'u1')).toBe('self');
     expect(checkedInBy('u1', 'org')).toBe('organizer');
     expect(checkedInBy('u1', null)).toBeNull();
+  });
+});
+
+describe('nextArrival', () => {
+  const now = new Date('2026-10-20T12:00:00.000Z');
+  const entry = (status: string, startsAt: string, activityStatus = 'published') => ({
+    status,
+    activity: { status: activityStatus, starts_at: startsAt },
+  });
+
+  it('picks the soonest session still inside its window or ahead today', () => {
+    const late = entry('joined', '2026-10-20T10:00:00.000Z');
+    const now10 = entry('joined', '2026-10-20T11:30:00.000Z');
+    const later = entry('joined', '2026-10-20T18:00:00.000Z');
+    expect(nextArrival([later, late, now10], now)).toBe(now10);
+  });
+
+  it('skips waiting, cancelled, closed and anything more than a day away', () => {
+    expect(
+      nextArrival(
+        [
+          entry('waitlisted', '2026-10-20T12:10:00.000Z'),
+          entry('joined', '2026-10-20T12:10:00.000Z', 'cancelled'),
+          entry('attended', '2026-10-20T11:50:00.000Z', 'completed'),
+          entry('joined', '2026-10-22T12:00:00.000Z'),
+        ],
+        now,
+      ),
+    ).toBeNull();
   });
 });
