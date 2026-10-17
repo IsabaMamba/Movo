@@ -29,6 +29,7 @@ import {
   type SeriesOccurrence,
   type ReportReason,
 } from '../../lib/activities';
+import { fetchActivityLinks, type ActivityLink } from '../../lib/links';
 import { supabase } from '../../lib/supabase';
 import {
   color,
@@ -44,6 +45,7 @@ import {
 } from '../../theme';
 import type { ActivityParticipant, JsonSchemaProperty } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
+import { SessionLinks } from '../links/SessionLinks';
 import { detailStyles as s } from './styles';
 
 /** Initials stand in until avatars are uploaded; there is no storage bucket yet. */
@@ -94,6 +96,7 @@ export function SessionDetailScreen() {
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportBusy, setReportBusy] = useState(false);
   const [otherDates, setOtherDates] = useState<SeriesOccurrence[]>([]);
+  const [links, setLinks] = useState<ActivityLink[]>([]);
 
   const userId = session?.user.id;
 
@@ -110,6 +113,10 @@ export function SessionDetailScreen() {
       ? await fetchSeriesOccurrences(supabase, detail.series_id).catch((): SeriesOccurrence[] => [])
       : [];
     setOtherDates(dates.filter((date) => date.id !== detail.id));
+
+    // Readable wherever the session is (0032). A failure hides the links
+    // rather than the session.
+    setLinks(await fetchActivityLinks(supabase, detail.id).catch((): ActivityLink[] => []));
 
     if (userId) {
       // Both are permitted to fail quietly: the roster is organizer- and
@@ -345,6 +352,22 @@ export function SessionDetailScreen() {
           <Text style={s.meetingNote}>{activity.location.district}</Text>
         )}
       </View>
+
+      <SessionLinks
+        links={links}
+        onReport={(link) => {
+          if (!session) {
+            router.push('/sign-in');
+            return;
+          }
+          // The session's own report form, with the reason chosen and the
+          // domain written in, so the reviewer knows which link.
+          setReportId(null);
+          setReason('enlace');
+          setReportDetails(`Enlace: ${link.domain} (${link.url})`);
+          setReporting(true);
+        }}
+      />
 
       {otherDates.length > 0 && (
         <View style={s.section}>

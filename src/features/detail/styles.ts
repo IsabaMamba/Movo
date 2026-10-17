@@ -200,4 +200,57 @@ export const detailStyles = StyleSheet.create({
     minHeight: size.control,
   },
   cancelText: { ...type.action, color: color.text.primary },
+
+  /**
+   * Links (0032). A card per link with the domain in full, and «Vas a salir
+   * de Movo» before leaving. The sheet reuses the report sheet's shape with a
+   * cool rail: leaving is a decision to check, not a warning.
+   */
+  linkBlock: { gap: space.xs },
+  linkCard: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    gap: space.xs,
+    minHeight: size.minTarget,
+    padding: space.lg,
+  },
+  linkTitle: { ...type.heading, color: color.text.primary },
+  linkDomain: { ...type.bodySmall, color: color.text.secondary },
+  leaveSheet: { borderLeftColor: color.accent.cool },
+  leaveTarget: {
+    backgroundColor: color.bg.raised,
+    borderRadius: radius.sm,
+    gap: space.xs,
+    padding: space.md,
+  },
+  leaveDomain: { ...type.title, color: color.text.primary },
+  leaveUrl: { ...type.caption, color: color.text.tertiary },
+  checkRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.md,
+    minHeight: size.minTarget,
+  },
+  checkBox: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.sm,
+    borderWidth: stroke.hair,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  checkBoxOn: { backgroundColor: color.accent.deep, borderColor: color.accent.cool },
+  checkMark: { ...type.label, color: color.text.primary },
+  leaveOpen: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.md,
+    flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  leaveOpenText: { ...type.action, color: color.text.inverse },
 });
