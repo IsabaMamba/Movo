@@ -237,6 +237,9 @@ update public.activities set visibility = 'community'
 insert into public.activity_links (activity_id, position, url, domain)
 values ('c3100000-0000-0000-0000-000000000002', 1, 'https://hidden.cr/x', 'hidden.cr');
 
+-- No JWT at all, as 03 does: otherwise auth.uid() is still Olga, who
+-- organizes both sessions and may read them.
+select set_config('request.jwt.claim.sub', '', true);
 set local role anon;
 do $$ begin
   if not exists (select 1 from public.activity_links
