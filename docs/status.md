@@ -70,6 +70,7 @@ column is maintained by hand.
 | `0030_consents`                | `consents` — an append-only log of grants and withdrawals with the text version (rules at sign-up, location, push, attendance history); `record_consent()`                                            | yes     |
 | `0031_minimum_age`             | `handle_new_user()` refuses a declared date of birth under 18, impossible or malformed; stores it in `profile_private.birthdate`, which loses its client update grant                                 | yes     |
 | `0032_activity_links`          | `activity_links` (up to 2 https links per session, domain stored), `set_activity_links()` for the organizer, `link_domain()` checks; the roster is told when links change; `route_url` leaves Running | yes     |
+| `0033_self_check_in`           | `self_check_in()` with a per-session 4-digit code, 15 min before to 45 after, 5 wrong codes lock; `check_in_code()`, `new_check_in_code()`, `undo_check_in()` for the organizer                       | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
