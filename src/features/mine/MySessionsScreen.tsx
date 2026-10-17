@@ -10,10 +10,14 @@
  * The screen answers three questions in order, which is why it is split the
  * way it is: what is next, where do I stand in a waitlist, and did the
  * organizer ever record that I showed up.
+ *
+ * Since Asistencia v2 (0033) it also answers «am I there?»: the session
+ * starting soonest is lifted to the top with «Llegué», which marks the
+ * person's own arrival with the organizer's code.
  */
 
 import { Link, Redirect, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 
@@ -22,9 +26,11 @@ import {
   formatSessionTime,
   type MyParticipation,
 } from '../../lib/activities';
+import { nextArrival } from '../../lib/checkIn';
 import { supabase } from '../../lib/supabase';
 import { priceLabel } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
+import { ArrivalCard } from '../checkin/ArrivalCard';
 import { mineStyles as s } from './styles';
 
 interface Standing {
@@ -101,30 +107,31 @@ export function MySessionsScreen() {
 
   const userId = session?.user.id;
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!userId) return;
+    setEntries(await fetchMyParticipations(supabase, userId));
+  }, [userId]);
+
+  useEffect(() => {
     let cancelled = false;
-
-    fetchMyParticipations(supabase, userId)
-      .then((rows) => {
-        if (!cancelled) setEntries(rows);
-      })
-      .catch((cause: unknown) => {
-        if (cancelled) return;
-        setEntries([]);
-        setError(cause instanceof Error ? cause.message : 'No se pudieron cargar tus sesiones.');
-      });
-
+    load().catch((cause: unknown) => {
+      if (cancelled) return;
+      setEntries([]);
+      setError(cause instanceof Error ? cause.message : 'No se pudieron cargar tus sesiones.');
+    });
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [load]);
 
   if (loading) return <ActivityIndicator style={s.screen} />;
   if (!session) return <Redirect href="/sign-in" />;
 
   const now = Date.now();
-  const rows = entries ?? [];
+  const all = entries ?? [];
+  // Shown once, at the top, not again in the lists below.
+  const next = nextArrival(all);
+  const rows = next ? all.filter((e) => e !== next) : all;
   const upcoming = rows.filter((e) => new Date(e.activity.starts_at).getTime() > now);
   // Reversed: the most recent thing you did is the one you might still need
   // to sort out, and the run from three months ago is not.
@@ -201,7 +208,7 @@ export function MySessionsScreen() {
 
       {entries === null ? (
         <ActivityIndicator />
-      ) : rows.length === 0 ? (
+      ) : all.length === 0 ? (
         <View style={s.empty}>
           <Text style={s.sectionTitle}>Todavía no te apuntaste a nada</Text>
           <Text style={s.emptyBody}>
@@ -214,6 +221,15 @@ export function MySessionsScreen() {
         </View>
       ) : (
         <>
+          {next && (
+            <ArrivalCard
+              entry={next}
+              onChanged={() => {
+                void load().catch(() => undefined);
+              }}
+            />
+          )}
+
           {upcoming.length > 0 && (
             <View style={s.group}>
               <Text style={s.sectionTitle}>Lo que viene</Text>
@@ -223,7 +239,7 @@ export function MySessionsScreen() {
 
           {/* Above the history, not below it: read after the past list, "lo de
               abajo ya pasó" points at nothing. */}
-          {upcoming.length === 0 && (
+          {upcoming.length === 0 && !next && (
             <View style={s.empty}>
               <Text style={s.emptyBody}>No tienes nada por delante. Lo de abajo ya pasó.</Text>
               <Link href="/" style={s.back}>
