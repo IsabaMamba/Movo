@@ -70,7 +70,7 @@ column is maintained by hand.
 | `0030_consents`                | `consents` — an append-only log of grants and withdrawals with the text version (rules at sign-up, location, push, attendance history); `record_consent()`                                            | yes     |
 | `0031_minimum_age`             | `handle_new_user()` refuses a declared date of birth under 18, impossible or malformed; stores it in `profile_private.birthdate`, which loses its client update grant                                 | yes     |
 | `0032_activity_links`          | `activity_links` (up to 2 https links per session, domain stored), `set_activity_links()` for the organizer, `link_domain()` checks; the roster is told when links change; `route_url` leaves Running | yes     |
-| `0033_self_check_in`           | `self_check_in()` with a per-session 4-digit code, 15 min before to 45 after, 5 wrong codes lock; `check_in_code()`, `new_check_in_code()`, `undo_check_in()` for the organizer                       | no      |
+| `0033_self_check_in`           | `self_check_in()` with a per-session 4-digit code, 15 min before to 45 after, 5 wrong codes lock; `check_in_code()`, `new_check_in_code()`, `undo_check_in()` for the organizer                       | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -136,7 +136,10 @@ checks the date of birth, `profile_private.birthdate` has no client update grant
 keeps one, and no existing account has a date of birth. `0032` was applied on 16 October:
 `activity_links` exists with no client write grant and is readable by `anon`,
 `set_activity_links()` is executable by `authenticated` and not by `anon`, `route_url` is gone
-from Running's schema, and `link_domain()` turns a Strava link into `strava.com`. `0022` was applied on 28
+from Running's schema, and `link_domain()` turns a Strava link into `strava.com`. `0033` was applied the same day: `check_in_codes`
+and `check_in_attempts` exist with no client grants, `self_check_in()` is executable by
+`authenticated` and not by `anon`, and `random_check_in_code()` draws four digits and is not
+exposed to clients. No session has a code yet. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
