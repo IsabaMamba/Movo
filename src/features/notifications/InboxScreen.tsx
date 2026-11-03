@@ -205,7 +205,7 @@ export function InboxScreen() {
         <ActivityIndicator />
       ) : rows.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.sectionTitle}>Acá te vamos a avisar</Text>
+          <Text style={s.sectionTitle}>Aquí te vamos a avisar</Text>
           <Text style={s.emptyBody}>
             Cuando se libere un lugar y entres desde la lista de espera, y cuando alguien cancele
             una sesión a la que ibas. Nada más — no vas a recibir avisos de cosas que no te tocan.

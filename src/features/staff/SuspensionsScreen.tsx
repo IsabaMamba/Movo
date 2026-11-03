@@ -127,7 +127,7 @@ export function SuspensionsScreen() {
         <View style={s.empty}>
           <Text style={s.sectionTitle}>No hay suspensiones vigentes</Text>
           <Text style={s.emptyBody}>
-            Si no estás en el equipo de Movo tampoco vas a ver ninguna acá: es el permiso, no una
+            Si no estás en el equipo de Movo tampoco vas a ver ninguna aquí: es el permiso, no una
             pantalla rota.
           </Text>
         </View>

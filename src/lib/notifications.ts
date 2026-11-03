@@ -244,7 +244,7 @@ export function toInboxItem(row: Notification): InboxItem {
     case 'close_reminder':
       return {
         ...base,
-        text: `${title} ya terminó y sigue abierta. Marca quién llegó y ciérrala: sin eso, la asistencia no cuenta.`,
+        text: `${title} ya terminó y sigue abierta. Revisa quién llegó y ciérrala: sin eso, la asistencia no cuenta.`,
         activityId,
         opensRoster: true,
       };

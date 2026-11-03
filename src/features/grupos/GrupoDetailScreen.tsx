@@ -24,7 +24,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { gruposStyles as s } from './styles';
 
 const ROLE_LABEL: Record<string, string> = {
-  owner: 'Dueña o dueño',
+  owner: 'Administra',
   organizer: 'Organiza',
   member: 'Miembro',
 };

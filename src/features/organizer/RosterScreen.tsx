@@ -351,7 +351,11 @@ export function RosterScreen() {
       <View>
         <Text style={s.sectionTitle}>Quién va</Text>
         {roster.length === 0 ? (
-          <Text style={s.emptyBody}>Todavía no se unió nadie.</Text>
+          <Text style={s.emptyBody}>
+            {activity.max_participants === null
+              ? 'Todavía no hay nadie.'
+              : `Todavía no hay nadie · 0 de ${activity.max_participants}`}
+          </Text>
         ) : shown.length === 0 ? (
           <Text style={s.emptyBody}>
             {filter === 'arrived' ? 'Todavía no llegó nadie.' : 'No falta nadie.'}

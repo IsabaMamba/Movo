@@ -208,7 +208,7 @@ export function HeatBand({ centre, radiusM }: Props) {
             <Text style={s.bandMessageText}>
               {failed
                 ? 'No se pudo cargar el mapa de calor.'
-                : 'Nada programado por acá esta semana.'}
+                : 'Nada programado por aquí esta semana.'}
             </Text>
           </View>
         )}
