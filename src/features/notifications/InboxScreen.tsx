@@ -11,33 +11,73 @@
  * Every row is a fact about a session the user is already on the roster of, so
  * the list is deliberately not a feed: there is nothing to browse, only things
  * to find out and then be done with.
+ *
+ * Laid out as step 20 of the 2 November walkthrough: a back arrow and
+ * «Marcar todo» in the header, three filters, «Nuevos» above «Antes», and one
+ * row per aviso with an icon for its kind, the sentence and how long ago.
  */
 
 import { Link, Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { formatSessionTime } from '../../lib/activities';
 import {
   fetchNotifications,
+  inFilter,
   markNotificationRead,
+  timeAgo,
   toInboxItem,
+  type InboxFilter,
   type InboxItem,
 } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
-import { hitSlopFor, size } from '../../theme';
+import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
+import { Icon, type IconName } from '../nav/Icon';
 import { PushSwitch } from './PushSwitch';
 import { inboxStyles as s } from './styles';
 
 /** The mark-read link renders at 36px; the target is padded back up to 44. */
 const MARK_HIT_SLOP = hitSlopFor(size.controlSm);
 
+const FILTERS: { id: InboxFilter; label: string }[] = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'sesiones', label: 'Mis sesiones' },
+  { id: 'organizar', label: 'Organizar' },
+];
+
+/** The walkthrough's icon circle: what kind of news it is, before the words. */
+function kindIcon(kind: string): { name: IconName; tint: string } {
+  switch (kind) {
+    case 'waitlist_promoted':
+    case 'account_restored':
+      return { name: 'check', tint: color.semantic.success };
+    case 'activity_cancelled':
+    case 'activity_cancelled_by_movo':
+      return { name: 'close', tint: color.semantic.dangerOnRaised };
+    case 'account_suspended':
+      return { name: 'alert', tint: color.semantic.dangerOnRaised };
+    case 'activity_link_changed':
+      return { name: 'link', tint: color.accent.cool };
+    case 'close_reminder':
+      return { name: 'clipboard', tint: color.accent.primary };
+    case 'solo_session_organizer':
+    case 'solo_session_participant':
+    case 'group_handed_over':
+      return { name: 'people', tint: color.accent.cool };
+    case 'report_resolved':
+      return { name: 'flag', tint: color.accent.cool };
+    default:
+      return { name: 'bell', tint: color.accent.cool };
+  }
+}
+
 export function InboxScreen() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<InboxFilter>('todos');
 
   const userId = session?.user.id;
 
@@ -72,7 +112,7 @@ export function InboxScreen() {
    * write puts the row back to unread and says so. The row is the real signal:
    * it survives coming back from the session, which is where the person
    * usually is by the time the request gives up, and it agrees with the badge
-   * on Descubrir, which reads the same column from the server.
+   * on the bell, which reads the same column from the server.
    */
   const markRead = (id: string) => {
     setItems((current) =>
@@ -92,6 +132,11 @@ export function InboxScreen() {
     });
   };
 
+  /** Every unread one, each through the same optimistic path as a single tap. */
+  const markAll = () => {
+    for (const item of items ?? []) if (!item.read) markRead(item.id);
+  };
+
   const open = (item: InboxItem) => {
     // Navigation first, and not inside a `.then()`. Reading the aviso is the
     // point; recording that it was read is bookkeeping.
@@ -109,23 +154,31 @@ export function InboxScreen() {
   if (!session) return <Redirect href="/sign-in" />;
 
   const rows = items ?? [];
+  const shown = rows.filter((item) => inFilter(item, filter));
+  const fresh = shown.filter((item) => !item.read);
+  const before = shown.filter((item) => item.read);
+  const unread = rows.filter((item) => !item.read).length;
 
-  const body = (item: InboxItem) => (
-    <>
-      {/* The chip and the "sin leer" in the composed label encode the same
-          thing, so to a screen reader the chip is decoration. */}
-      {!item.read && (
-        <View aria-hidden style={s.badge}>
-          <Text style={s.badgeText}>Nuevo</Text>
+  const body = (item: InboxItem) => {
+    const icon = kindIcon(item.kind);
+    return (
+      <>
+        <View aria-hidden style={[s.iconCircle, { borderColor: icon.tint }]}>
+          <Icon color={icon.tint} name={icon.name} size={18} />
         </View>
-      )}
-      <Text style={s.cardText}>{item.text}</Text>
-      <Text style={s.cardWhen}>{formatSessionTime(item.createdAt)}</Text>
-    </>
-  );
+        <View style={s.rowText}>
+          <Text style={[s.cardText, item.read && s.cardTextRead]}>{item.text}</Text>
+          <Text style={s.cardWhen}>{timeAgo(item.createdAt)}</Text>
+        </View>
+        {/* The dot and the «Sin leer» in the composed label say the same
+            thing, so to a screen reader the dot is decoration. */}
+        {!item.read && <View aria-hidden style={s.unreadDot} />}
+      </>
+    );
+  };
 
   const card = (item: InboxItem) => {
-    const label = [item.read ? null : 'Sin leer', item.text, formatSessionTime(item.createdAt)]
+    const label = [item.read ? null : 'Sin leer', item.text, timeAgo(item.createdAt)]
       .filter((part) => part !== null)
       .join('. ');
 
@@ -161,8 +214,8 @@ export function InboxScreen() {
       inert and the one thing it can do is an explicit control instead.
     */
     return (
-      <View key={item.id} style={[s.card, !item.read && s.cardUnread]}>
-        <View accessible accessibilityLabel={label}>
+      <View key={item.id} style={[s.cardColumn, !item.read && s.cardUnread]}>
+        <View accessible accessibilityLabel={label} style={s.cardInner}>
           {body(item)}
         </View>
         {!item.read && (
@@ -184,16 +237,57 @@ export function InboxScreen() {
 
   return (
     <ScrollView aria-busy={items === null} contentContainerStyle={s.content} style={s.screen}>
-      <Link href="/" style={s.back}>
-        <Text style={s.backText}>← Descubrir</Text>
-      </Link>
-
-      <View>
-        <Text style={s.title}>Avisos</Text>
-        <Text style={s.subtitle}>Lo que pasó con las sesiones a las que ibas.</Text>
+      <View style={s.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          hitSlop={MARK_HIT_SLOP}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/');
+          }}
+          style={s.headerBack}
+        >
+          <Icon color={color.text.primary} name="back" size={22} />
+        </Pressable>
+        <Text accessibilityRole="header" style={s.title}>
+          Avisos
+        </Text>
+        {unread > 0 && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Marcar todo como leído, ${unread} sin leer`}
+            hitSlop={MARK_HIT_SLOP}
+            onPress={markAll}
+            style={s.markAll}
+          >
+            <Text style={s.markAllText}>Marcar todo</Text>
+          </Pressable>
+        )}
       </View>
 
-      <PushSwitch />
+      <View accessibilityRole="radiogroup" style={s.chipRow}>
+        {FILTERS.map((f) => {
+          const on = filter === f.id;
+          return (
+            <Pressable
+              accessibilityRole="radio"
+              aria-checked={on}
+              hitSlop={MARK_HIT_SLOP}
+              key={f.id}
+              onPress={() => {
+                setFilter(f.id);
+              }}
+              style={[s.chip, on && s.chipOn]}
+            >
+              <Text style={[s.chipText, on && s.chipTextOn]}>
+                {on ? '✓ ' : ''}
+                {f.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       {error !== null && (
         <Text accessibilityRole="alert" aria-live="assertive" style={s.error}>
@@ -214,13 +308,30 @@ export function InboxScreen() {
             <Text style={s.linkText}>Ver mis sesiones</Text>
           </Link>
         </View>
+      ) : shown.length === 0 ? (
+        <Text style={s.emptyBody}>Nada por aquí con este filtro.</Text>
       ) : (
-        // Newest first, read and unread in one run. Sorting the unread to the
-        // top would move a row under the finger of somebody reading down the
-        // list, and the order things happened in is what makes two avisos
-        // about the same session readable.
-        <View style={s.group}>{rows.map(card)}</View>
+        // Newest first inside each block. «Nuevos» above «Antes» is the
+        // walkthrough's split; a row only moves between them when it is
+        // opened, which takes the person off this screen anyway — or by
+        // «Marcar todo», which is asking for exactly that.
+        <>
+          {fresh.length > 0 && (
+            <View style={s.group}>
+              <Text style={s.overline}>NUEVOS · {fresh.length}</Text>
+              {fresh.map(card)}
+            </View>
+          )}
+          {before.length > 0 && (
+            <View style={s.group}>
+              <Text style={s.overline}>ANTES</Text>
+              {before.map(card)}
+            </View>
+          )}
+        </>
       )}
+
+      <PushSwitch />
     </ScrollView>
   );
 }

@@ -96,6 +96,8 @@ export async function markNotificationRead(
 /** A notification as the screen needs it: one sentence, and somewhere to go. */
 export interface InboxItem {
   id: string;
+  /** The notification's type, for its icon and the inbox filters. */
+  kind: string;
   /** ISO instant. Render in America/Costa_Rica, like every other time. */
   createdAt: string;
   read: boolean;
@@ -146,7 +148,12 @@ const UNNAMED_SESSION = 'la sesión';
  * not understood.
  */
 export function toInboxItem(row: Notification): InboxItem {
-  const base = { id: row.id, createdAt: row.created_at, read: row.read_at !== null };
+  const base = {
+    id: row.id,
+    createdAt: row.created_at,
+    read: row.read_at !== null,
+    kind: row.type,
+  };
   const payload = row.payload ?? {};
   const title = text(payload, 'title') ?? UNNAMED_SESSION;
   const activityId = text(payload, 'activity_id');
@@ -284,6 +291,39 @@ export function toInboxItem(row: Notification): InboxItem {
  * two unrelated fragments — "Avisos", then "2". This is the sentence, and it
  * is also why the badge itself is hidden from assistive technology.
  */
+/** Notices about running something rather than going to it (Avisos v2 filter). */
+const ORGANIZER_KINDS = new Set([
+  'close_reminder',
+  'solo_session_organizer',
+  'activity_cancelled_by_movo',
+  'group_handed_over',
+]);
+
+export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
+
+export function inFilter(item: Pick<InboxItem, 'kind'>, filter: InboxFilter): boolean {
+  if (filter === 'todos') return true;
+  return filter === 'organizar' ? ORGANIZER_KINDS.has(item.kind) : !ORGANIZER_KINDS.has(item.kind);
+}
+
+/** «hace 20 min», «hace 2 h», «ayer», «sáb 31 oct». */
+export function timeAgo(iso: string, now: Date = new Date()): string {
+  const minutes = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60_000));
+  if (minutes < 1) return 'ahora';
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  if (hours < 48) return 'ayer';
+  return new Intl.DateTimeFormat('es-CR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'America/Costa_Rica',
+  })
+    .format(new Date(iso))
+    .replace(/[.,]/g, '');
+}
+
 export function unreadA11yLabel(unread: number): string {
   if (unread <= 0) return 'Avisos. No tienes avisos sin leer.';
   return `Avisos. ${unread} ${unread === 1 ? 'aviso sin leer' : 'avisos sin leer'}.`;

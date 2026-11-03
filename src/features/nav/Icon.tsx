@@ -37,7 +37,10 @@ export type IconName =
   | 'eye'
   | 'hand'
   | 'backspace'
-  | 'car';
+  | 'car'
+  | 'link'
+  | 'close'
+  | 'alert';
 
 interface Props {
   name: IconName;
@@ -177,6 +180,19 @@ export function Icon({ name, color, size = 20, strokeWidth = 1.8 }: Props) {
           <Path {...p} d="M4 15.5V12l2-5h12l2 5v3.5zM4 12h16" />
           <Circle {...p} cx="7.5" cy="16.5" r="1.5" />
           <Circle {...p} cx="16.5" cy="16.5" r="1.5" />
+        </>
+      )}
+      {name === 'link' && (
+        <Path
+          {...p}
+          d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"
+        />
+      )}
+      {name === 'close' && <Path {...p} d="M6 6l12 12M18 6L6 18" />}
+      {name === 'alert' && (
+        <>
+          <Circle {...p} cx="12" cy="12" r="9" />
+          <Path {...p} d="M12 7.5v5.5M12 16.5v.01" />
         </>
       )}
     </Svg>
