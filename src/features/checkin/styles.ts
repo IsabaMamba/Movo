@@ -3,35 +3,121 @@ import { StyleSheet } from 'react-native';
 import { color, radius, size, space, stroke, type } from '../../theme';
 
 /**
- * Asistencia v2 (16 October): «Llegué» on the participant's card, and the
- * code with the live list on the organizer's side. The participant's card
- * carries the Sun edge, like the meeting point: it is the one thing on the
- * screen that needs doing now.
+ * Asistencia v2 and Mis sesiones v4 (2 November walkthrough): «Tu próxima»
+ * carries the Sun edge, like the meeting point — it is the one thing on the
+ * screen that needs doing now — and the organizer's code panel.
  */
 export const checkInStyles = StyleSheet.create({
   next: {
     backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
     borderLeftColor: color.accent.primary,
-    borderLeftWidth: stroke.thick,
+    borderLeftWidth: 4,
     borderRadius: radius.lg,
+    borderWidth: stroke.hair,
     gap: space.sm,
     padding: space.lg,
   },
-  eyebrow: { ...type.label, color: color.text.warm },
-  time: { ...type.display, color: color.text.primary },
-  title: { ...type.title, color: color.text.primary },
-  meta: { ...type.bodySmall, color: color.text.secondary },
+  nextTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  eyebrow: { ...type.label, color: color.accent.primary, letterSpacing: 1 },
+  startsBadge: {
+    backgroundColor: 'rgba(255,197,107,0.16)',
+    borderRadius: radius.full,
+    paddingHorizontal: space.sm,
+    paddingVertical: 3,
+  },
+  startsBadgeText: { ...type.caption, color: color.accent.primary, fontWeight: '600' },
+  nextHead: { alignItems: 'baseline', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  time: { ...type.display, color: color.text.primary, fontVariant: ['tabular-nums'] },
+  title: { ...type.heading, color: color.text.primary, flexShrink: 1 },
+  whereRow: { alignItems: 'center', flexDirection: 'row', gap: space.xs },
+  meta: { ...type.bodySmall, color: color.text.secondary, flexShrink: 1 },
+  facts: { ...type.caption, color: color.text.tertiary },
   note: { ...type.caption, color: color.text.tertiary, textAlign: 'center' },
+
+  peopleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: space.xs,
+  },
+  avatars: { alignItems: 'center', flexDirection: 'row' },
+  avatar: {
+    alignItems: 'center',
+    borderColor: color.bg.surface,
+    borderRadius: 15,
+    borderWidth: 2,
+    height: 30,
+    justifyContent: 'center',
+    width: 30,
+  },
+  avatarText: { ...type.caption, color: color.text.inverse, fontSize: 10, fontWeight: '700' },
+  more: { ...type.caption, color: color.text.tertiary, marginLeft: space.xs },
+  going: { ...type.bodySmall, color: color.text.secondary },
+  goingStrong: { color: color.text.primary, fontWeight: '700' },
 
   arrive: {
     alignItems: 'center',
     backgroundColor: color.accent.primary,
     borderRadius: radius.full,
+    flexDirection: 'row',
+    gap: space.sm,
     justifyContent: 'center',
     minHeight: size.control + 8,
   },
   arriveDisabled: { opacity: 0.4 },
-  arriveText: { ...type.action, color: color.text.inverse },
+  arriveText: { ...type.action, color: color.text.inverse, fontSize: 18 },
+
+  row: { flexDirection: 'row', gap: space.sm },
+  primary: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.full,
+    flexBasis: 0,
+    flexDirection: 'row',
+    flexGrow: 1,
+    gap: space.xs,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  primaryText: { ...type.action, color: color.text.inverse },
+  secondary: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    flexBasis: 0,
+    flexDirection: 'row',
+    flexGrow: 1,
+    gap: space.xs,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  secondaryText: { ...type.action, color: color.text.primary },
+  disabled: { opacity: 0.4 },
+
+  footer: {
+    alignItems: 'center',
+    borderTopColor: color.border.default,
+    borderTopWidth: stroke.hair,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: space.xs,
+    paddingTop: space.md,
+  },
+  footerLink: { alignItems: 'center', flexDirection: 'row', gap: space.xs },
+  footerConfirm: { flexDirection: 'row', gap: space.lg },
+  inviteText: { ...type.bodySmall, color: color.accent.cool, fontWeight: '600' },
+  leaveText: { ...type.bodySmall, color: color.text.secondary, fontWeight: '600' },
+  leaveYes: { ...type.bodySmall, color: color.semantic.dangerOnRaised, fontWeight: '700' },
+
+  keypadSheet: {
+    backgroundColor: color.bg.base,
+    borderRadius: radius.lg,
+    gap: space.md,
+    padding: space.lg,
+  },
+  sheetTitle: { ...type.heading, color: color.text.primary, textAlign: 'center' },
 
   codeInput: {
     ...type.display,
@@ -44,17 +130,6 @@ export const checkInStyles = StyleSheet.create({
     minHeight: size.control + 16,
     textAlign: 'center',
   },
-  row: { flexDirection: 'row', gap: space.md },
-  secondary: {
-    alignItems: 'center',
-    borderColor: color.border.strong,
-    borderRadius: radius.md,
-    borderWidth: stroke.hair,
-    flexGrow: 1,
-    justifyContent: 'center',
-    minHeight: size.control,
-  },
-  secondaryText: { ...type.action, color: color.text.primary },
   ok: { ...type.bodySmall, color: color.semantic.success },
   bad: { ...type.bodySmall, color: color.semantic.dangerOnRaised },
 

@@ -605,7 +605,8 @@ export async function fetchMyParticipation(
 /** A session the caller is on the roster of, with what it takes to find it again. */
 export type MyParticipation = ActivityParticipant & {
   activity: Activity & {
-    location: Pick<Location, 'id' | 'name' | 'district'>;
+    /** geog is hex EWKB from PostgREST; read it with pointOf() (lib/venues). */
+    location: Pick<Location, 'id' | 'name' | 'district'> & { geog?: unknown };
     organizer: { id: string; display_name: string };
   };
 };
@@ -632,7 +633,7 @@ export async function fetchMyParticipations(
     .from('activity_participants')
     .select(
       '*, activity:activities!activity_participants_activity_id_fkey(' +
-        '*, location:locations!activities_location_id_fkey(id, name, district), ' +
+        '*, location:locations!activities_location_id_fkey(id, name, district, geog), ' +
         'organizer:profiles!activities_organizer_id_fkey(id, display_name))',
     )
     .eq('user_id', userId)
