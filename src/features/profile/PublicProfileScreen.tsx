@@ -48,6 +48,7 @@ export function PublicProfileScreen() {
           bio={profile.bio}
           name={profile.display_name}
           since={profile.created_at}
+          sportIds={profile.interests ?? []}
           sports={sportNames}
         />
       )}

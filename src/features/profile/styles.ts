@@ -8,6 +8,21 @@ import { color, radius, size, space, stroke, type } from '../../theme';
  */
 export const profileStyles = StyleSheet.create({
   card: { alignItems: 'center', gap: space.sm, paddingVertical: space.md },
+  avatarWrap: { marginBottom: space.xs },
+  /** Step 22: Sun at the bottom-right of the ring, the way to the photo. */
+  cameraBadge: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderColor: color.bg.base,
+    borderRadius: radius.full,
+    borderWidth: stroke.thick,
+    bottom: -2,
+    height: 36,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: -2,
+    width: 36,
+  },
   avatar: {
     alignItems: 'center',
     backgroundColor: color.accent.deep,
@@ -19,18 +34,23 @@ export const profileStyles = StyleSheet.create({
     width: 96,
   },
   avatarText: { ...type.display, color: color.text.primary },
-  name: { ...type.display, color: color.text.primary, textAlign: 'center' },
+  name: { ...type.title, color: color.text.primary, textAlign: 'center' },
   zone: { ...type.bodySmall, color: color.text.secondary },
   bio: { ...type.body, color: color.text.secondary, maxWidth: 420, textAlign: 'center' },
   since: { ...type.caption, color: color.text.tertiary },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'center' },
   chip: {
+    alignItems: 'center',
+    backgroundColor: color.bg.surface,
     borderColor: color.border.strong,
     borderRadius: radius.full,
     borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.xs,
     paddingHorizontal: space.md,
     paddingVertical: space.xs,
   },
+  chipDot: { borderRadius: radius.full, height: 8, width: 8 },
   chipText: { ...type.caption, color: color.text.primary },
 
   actions: { flexDirection: 'row', gap: space.md },
@@ -40,7 +60,9 @@ export const profileStyles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: stroke.hair,
     flexBasis: 0,
+    flexDirection: 'row',
     flexGrow: 1,
+    gap: space.sm,
     justifyContent: 'center',
     minHeight: size.control,
     minWidth: 0,
@@ -64,8 +86,11 @@ export const profileStyles = StyleSheet.create({
     paddingHorizontal: space.lg,
   },
   rowLast: { borderBottomWidth: 0 },
+  rowIcon: { alignItems: 'center', width: 22 },
   rowText: { ...type.body, color: color.text.primary, flex: 1 },
   rowValue: { ...type.bodySmall, color: color.text.tertiary },
+  rowTextQuiet: { color: color.text.secondary },
+  headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   rowChevron: { ...type.body, color: color.text.tertiary },
 
   notice: {
