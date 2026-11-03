@@ -1,0 +1,125 @@
+/**
+ * Grupos v1 (2 November walkthrough, step 11): «Tus grupos» with each
+ * group's next session, then the open groups with how many sessions they
+ * have this week. Two reads on top of fetchCommunities(): the caller's
+ * memberships, and the upcoming sessions of the groups on screen — which
+ * RLS already filters to what the caller may see (community sessions only
+ * for members).
+ */
+
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { toApiError } from './errors';
+
+export type GroupRole = 'member' | 'organizer' | 'owner';
+
+export async function fetchMyGroupRoles(
+  db: SupabaseClient,
+  userId: string,
+): Promise<Map<string, GroupRole>> {
+  const { data, error } = await db
+    .from('community_members')
+    .select('community_id, role')
+    .eq('user_id', userId);
+  if (error) throw toApiError(error);
+  return new Map(
+    ((data ?? []) as { community_id: string; role: GroupRole }[]).map((r) => [
+      r.community_id,
+      r.role,
+    ]),
+  );
+}
+
+export interface GroupSessionRow {
+  id: string;
+  title: string;
+  starts_at: string;
+  community_id: string;
+}
+
+export async function fetchGroupSessions(
+  db: SupabaseClient,
+  communityIds: readonly string[],
+): Promise<GroupSessionRow[]> {
+  if (communityIds.length === 0) return [];
+  const { data, error } = await db
+    .from('activities')
+    .select('id, title, starts_at, community_id')
+    .in('community_id', communityIds as string[])
+    .in('status', ['published', 'full'])
+    .gt('starts_at', new Date().toISOString())
+    .order('starts_at')
+    .limit(200);
+  if (error) throw toApiError(error);
+  return (data ?? []) as GroupSessionRow[];
+}
+
+export interface GroupAgenda {
+  next: { id: string; title: string; starts_at: string } | null;
+  /** Sessions in the next 7 days. */
+  thisWeek: number;
+}
+
+/** Per group: its next session and how many it has in the coming week. */
+export function groupAgenda(
+  rows: readonly GroupSessionRow[],
+  now: Date = new Date(),
+): Map<string, GroupAgenda> {
+  const week = now.getTime() + 7 * 24 * 60 * 60_000;
+  const out = new Map<string, GroupAgenda>();
+  for (const row of [...rows].sort((a, b) => (a.starts_at < b.starts_at ? -1 : 1))) {
+    const t = new Date(row.starts_at).getTime();
+    if (t <= now.getTime()) continue;
+    const current = out.get(row.community_id) ?? { next: null, thisWeek: 0 };
+    if (current.next === null) {
+      current.next = { id: row.id, title: row.title, starts_at: row.starts_at };
+    }
+    if (t <= week) current.thisWeek += 1;
+    out.set(row.community_id, current);
+  }
+  return out;
+}
+
+/** «organizas» for an owner or organizer, nothing for a member. */
+export function roleWord(role: GroupRole | undefined): string | null {
+  return role === 'owner' || role === 'organizer' ? 'organizas' : null;
+}
+
+/** Two letters for the group's tile: «Corredores de Tibás» → «CT». */
+export function groupInitials(name: string): string {
+  const words = name.split(/\s+/u).filter((w) => w.length > 2 || /^[A-ZÁÉÍÓÚÑ0-9]/u.test(w));
+  const letters = (words.length >= 2 ? [words[0], words[words.length - 1]] : [words[0] ?? name])
+    .map((w) => (w ?? '').charAt(0))
+    .join('');
+  return letters.toUpperCase() || '·';
+}
+
+export interface GroupSession {
+  id: string;
+  title: string;
+  starts_at: string;
+  joined_count: number;
+  max_participants: number | null;
+  series_id: string | null;
+  category_id: string;
+  visibility: string;
+}
+
+/** A group's upcoming sessions for its «Sesiones» tab. RLS decides which. */
+export async function fetchGroupUpcoming(
+  db: SupabaseClient,
+  communityId: string,
+): Promise<GroupSession[]> {
+  const { data, error } = await db
+    .from('activities')
+    .select(
+      'id, title, starts_at, joined_count, max_participants, series_id, category_id, visibility',
+    )
+    .eq('community_id', communityId)
+    .in('status', ['published', 'full'])
+    .gt('starts_at', new Date().toISOString())
+    .order('starts_at')
+    .limit(30);
+  if (error) throw toApiError(error);
+  return (data ?? []) as GroupSession[];
+}
