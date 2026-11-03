@@ -2,59 +2,131 @@ import { StyleSheet } from 'react-native';
 
 import { color, radius, size, space, stroke, type } from '../../theme';
 
+/**
+ * Descubrir v3, as drawn in the 2 November walkthrough: a title row with the
+ * bell, the map with its controls on top, sport chips, and a list of cards
+ * with the date in a column on the left.
+ */
 export const discoverStyles = StyleSheet.create({
-  screen: { backgroundColor: color.bg.base, flex: 1, paddingTop: space.huge },
+  screen: { backgroundColor: color.bg.base, flex: 1, paddingTop: space.xxxl },
 
-  header: { gap: space.xs, paddingHorizontal: space.xl },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: space.md,
+    paddingHorizontal: space.xl,
+  },
   title: { ...type.display, color: color.text.primary },
-  account: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
+  bell: { alignItems: 'center', height: 36, justifyContent: 'center', width: 36 },
+  bellBadge: { position: 'absolute', right: -2, top: -2 },
+  signIn: {
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+    paddingHorizontal: space.lg,
+  },
+  signInText: { ...type.action, color: color.text.inverse },
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
+  gutter: { paddingHorizontal: space.xl, paddingTop: space.sm },
+
+  // Controls laid over the map (or standing alone when signed out).
+  controls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.sm,
+    justifyContent: 'space-between',
+  },
+  controlsBare: { paddingHorizontal: space.xl, paddingTop: space.sm },
+  originPill: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(11,15,31,0.82)',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    flexShrink: 1,
+    gap: space.xs,
+    minHeight: size.controlSm,
+    paddingHorizontal: space.md,
+  },
+  originText: { ...type.label, color: color.text.primary, flexShrink: 1 },
+  originMenu: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    marginHorizontal: space.xl,
+    marginTop: space.sm,
+    overflow: 'hidden',
+  },
+  originMenuItem: {
+    borderBottomColor: color.border.default,
+    borderBottomWidth: stroke.hair,
+    gap: 2,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  originMenuText: { ...type.body, color: color.text.secondary },
+  originMenuTextOn: { color: color.text.primary },
+  segment: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(11,15,31,0.82)',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: 2,
+    padding: 3,
+    paddingRight: space.md,
+  },
+  segmentItem: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    height: 30,
+    justifyContent: 'center',
+    minWidth: 38,
+    paddingHorizontal: space.sm,
+  },
+  segmentItemOn: { backgroundColor: color.accent.primary },
+  segmentText: { ...type.label, color: color.text.secondary },
+  segmentTextOn: { color: color.text.inverse },
+  segmentUnit: { ...type.caption, color: color.text.tertiary, marginLeft: space.xs },
 
   /**
    * flexShrink 0 is the fix, not a detail. The list below is flex: 1, and on
-   * web a horizontal ScrollView shrinks by default — so both chip rows were
-   * squeezed to about half their height and every chip rendered cut in half.
+   * web a horizontal ScrollView shrinks by default — so the chip row was
+   * squeezed to about half its height and every chip rendered cut in half.
    */
   filters: { flexGrow: 0, flexShrink: 0, marginTop: space.lg },
   filterRow: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.xl },
   chip: {
     alignItems: 'center',
-    borderColor: color.border.default,
+    borderColor: color.border.strong,
     borderRadius: radius.full,
     borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.xs,
     justifyContent: 'center',
     minHeight: size.controlSm,
     paddingHorizontal: space.lg,
   },
-  chipOn: { backgroundColor: color.accent.deep, borderColor: color.accent.cool },
-  chipText: { ...type.action, color: color.text.secondary },
-  chipTextOn: { color: color.text.primary },
+  chipOn: { backgroundColor: color.text.primary, borderColor: color.text.primary },
+  chipDot: { borderRadius: 4, height: 8, width: 8 },
+  chipText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
+  chipTextOn: { color: color.text.inverse },
 
-  meta: { ...type.caption, color: color.text.tertiary, paddingBottom: space.sm },
+  meta: { ...type.caption, color: color.text.tertiary },
 
-  /**
-   * The heat scale. ADR 0004: any surface that uses heat has to show the scale
-   * that decodes it, otherwise the colour is decoration pretending to be data.
-   */
-  legend: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: space.sm,
-    paddingHorizontal: space.xl,
-    paddingTop: space.md,
-  },
-  legendLabel: { ...type.caption, color: color.text.tertiary },
-  legendRamp: { borderRadius: radius.sm, flexDirection: 'row', overflow: 'hidden' },
-  legendStop: { height: 6, width: 14 },
-
-  /** The heat band. Height is set by the component, which owns the geometry. */
-  bandWrap: { flexShrink: 0, marginHorizontal: space.xl, marginTop: space.lg },
+  /** The map. Height is set by the component, which owns the geometry. */
+  bandWrap: { flexShrink: 0 },
   band: {
     backgroundColor: color.bg.sunken,
-    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   bandCanvas: { left: 0, position: 'absolute', top: 0 },
+  bandOverlay: { left: space.lg, position: 'absolute', right: space.lg, top: space.md },
   bandCaption: {
     ...type.caption,
     color: color.text.secondary,
@@ -62,6 +134,26 @@ export const discoverStyles = StyleSheet.create({
     position: 'absolute',
     top: space.sm,
   },
+  bandCaptionPill: {
+    backgroundColor: 'rgba(11,15,31,0.82)',
+    borderRadius: radius.full,
+    bottom: space.md,
+    left: space.lg,
+    paddingHorizontal: space.md,
+    paddingVertical: 4,
+    position: 'absolute',
+  },
+  bandCaptionText: { ...type.caption, color: color.text.primary },
+  ringLabel: {
+    backgroundColor: 'rgba(11,15,31,0.9)',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    position: 'absolute',
+  },
+  ringLabelText: { ...type.caption, color: color.text.primary, fontSize: 11 },
   bandMessage: {
     alignItems: 'center',
     bottom: space.xxl,
@@ -73,42 +165,84 @@ export const discoverStyles = StyleSheet.create({
   },
   bandMessageText: { ...type.caption, color: color.text.secondary, textAlign: 'center' },
   bandLegend: {
-    alignItems: 'center',
-    bottom: space.sm,
-    flexDirection: 'row',
-    gap: space.sm,
-    left: space.md,
+    alignItems: 'flex-end',
+    backgroundColor: 'rgba(11,15,31,0.82)',
+    borderRadius: radius.md,
+    bottom: space.md,
+    gap: 2,
+    paddingHorizontal: space.sm,
+    paddingVertical: 4,
     position: 'absolute',
-    right: space.md,
+    right: space.lg,
   },
-  bandScale: { ...type.caption, color: color.text.primary, fontVariant: ['tabular-nums'] },
-  bandRamp: { borderRadius: 2, flex: 1, flexDirection: 'row', height: 6, overflow: 'hidden' },
-  bandStop: { flex: 1 },
-  bandCredit: {
+  bandLegendRow: { alignItems: 'center', flexDirection: 'row', gap: space.xs },
+  bandScale: {
     ...type.caption,
-    color: color.text.tertiary,
-    marginTop: space.xs,
-    textAlign: 'right',
+    color: color.text.primary,
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
   },
+  bandRamp: { borderRadius: 2, flexDirection: 'row', height: 5, overflow: 'hidden', width: 64 },
+  bandStop: { flex: 1 },
+  bandCredit: { ...type.caption, color: color.text.tertiary, fontSize: 10 },
 
-  list: { paddingBottom: space.huge, paddingHorizontal: space.xl, paddingTop: space.lg },
+  listHead: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: space.md,
+    paddingHorizontal: space.xl,
+    paddingTop: space.lg,
+  },
+  listCount: { ...type.bodySmall, color: color.text.secondary },
+  listCountStrong: { ...type.label, color: color.text.primary },
+
+  list: { paddingBottom: space.huge },
   card: {
     backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
     borderRadius: radius.lg,
-    gap: space.xs,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.md,
     marginBottom: space.md,
+    marginHorizontal: space.xl,
     padding: space.lg,
   },
-  cardTop: { alignItems: 'center', flexDirection: 'row', gap: space.md },
-  cardTitle: { ...type.title, color: color.text.primary, flex: 1 },
-  /** Warm fill encodes occupancy density and nothing else. */
-  heatDot: { borderRadius: radius.full, height: 10, width: 10 },
-  cardWhen: { ...type.body, color: color.text.warm },
+  dateCol: { minWidth: 54 },
+  dateWeekday: { ...type.label, color: color.accent.primary, letterSpacing: 0.5 },
+  dateTime: { ...type.title, color: color.text.primary, fontVariant: ['tabular-nums'] },
+  dateDay: { ...type.caption, color: color.text.tertiary },
+  cardBody: { flex: 1, gap: 2, minWidth: 0 },
+  cardTitle: { ...type.heading, color: color.text.primary },
+  cardSport: { ...type.caption, color: color.text.tertiary },
+  /** Cool, not warm: the rhythm of a series says nothing about how full it is. */
+  cardSeries: { ...type.caption, color: color.accent.cool },
   cardWhere: { ...type.bodySmall, color: color.text.secondary },
-  /** Not warm: the rhythm of a series says nothing about how full it is. */
-  cardSeries: { ...type.label, color: color.text.secondary },
-  cardFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, paddingTop: space.xs },
-  fact: { ...type.caption, color: color.text.tertiary },
+  cardBottom: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.md,
+    justifyContent: 'space-between',
+    paddingTop: space.xs,
+  },
+  cardPrice: { ...type.bodySmall, color: color.text.secondary },
+  cardPricePaid: { color: color.text.primary, fontWeight: '600' },
+  occupancy: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
+  occupancyTrack: {
+    backgroundColor: color.bg.raised,
+    borderRadius: radius.full,
+    height: 5,
+    overflow: 'hidden',
+    width: 44,
+  },
+  occupancyFill: { borderRadius: radius.full, height: 5 },
+  occupancyText: {
+    ...type.caption,
+    color: color.text.primary,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '600',
+  },
 
   centred: { alignItems: 'center', gap: space.sm, padding: space.huge },
   emptyTitle: { ...type.heading, color: color.text.primary },
