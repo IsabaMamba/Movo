@@ -55,7 +55,7 @@ export function PublicProfileScreen() {
       <View style={s.hidden}>
         <Text style={s.hiddenText}>
           <Text style={{ fontWeight: '700' }}>No aparece: </Text>
-          tu zona, tu fecha de nacimiento, tu correo ni a qué sesiones vas.
+          tu zona, tu género, tu fecha de nacimiento, tu correo ni a qué sesiones vas.
         </Text>
       </View>
 

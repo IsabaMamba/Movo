@@ -1,11 +1,12 @@
 import { Link, Redirect } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 // The bounds mirror the profiles check constraint, so the fallback name in
 // handle_new_user() never triggers. Mi cuenta uses the same pair.
 import { NAME_MAX, NAME_MIN } from '../../lib/account';
 import { MIN_AGE, parseBirthdate } from '../../lib/age';
+import { GENDER_OPTIONS, GENDER_PURPOSE, type Gender } from '../../lib/gender';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
@@ -19,6 +20,7 @@ export function SignUpScreen() {
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
+  const [gender, setGender] = useState<Gender | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -47,13 +49,14 @@ export function SignUpScreen() {
   const nameValid = trimmedName.length >= NAME_MIN && trimmedName.length <= NAME_MAX;
   const birth = parseBirthdate(day, month, year);
   const birthTouched = day.length > 0 || month.length > 0 || year.length > 0;
-  const canSubmit = nameValid && birth.ok && email.length > 0 && password.length > 0 && !busy;
+  const canSubmit =
+    nameValid && birth.ok && gender !== null && email.length > 0 && password.length > 0 && !busy;
 
   const submit = () => {
-    if (!canSubmit || !birth.ok) return;
+    if (!canSubmit || !birth.ok || gender === null) return;
     setError(null);
     setBusy(true);
-    signUp(email.trim(), password, trimmedName, birth.iso)
+    signUp(email.trim(), password, trimmedName, birth.iso, gender)
       .then((outcome) => {
         // With email confirmation on, signUp returns no session. Redirecting
         // to the app here would land on a screen that cannot read anything.
@@ -76,7 +79,9 @@ export function SignUpScreen() {
   };
 
   return (
-    <View style={s.screen}>
+    // Scrolls: with the date of birth and the gender question the form no
+    // longer fits a phone, and a centred View cuts off its top and bottom.
+    <ScrollView contentContainerStyle={s.scrollContent} style={s.scroll}>
       <Text style={s.title}>Crear cuenta</Text>
       <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
 
@@ -140,6 +145,33 @@ export function SignUpScreen() {
           : `Movo es para personas de ${MIN_AGE} años o más. Solo tú la ves y no se puede cambiar después.`}
       </Text>
 
+      <Text style={s.label}>Tu género</Text>
+      <Text style={s.hint}>{GENDER_PURPOSE}</Text>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Tu género" style={s.genderGroup}>
+        {GENDER_OPTIONS.map((option) => {
+          const on = gender === option.value;
+          return (
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityLabel={option.hint ? `${option.label}. ${option.hint}` : option.label}
+              aria-checked={on}
+              key={option.value}
+              onPress={() => {
+                setGender(option.value);
+              }}
+              style={[s.genderOption, on && s.genderOptionOn]}
+            >
+              <View style={[s.radio, on && s.radioOn]} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.genderLabel}>{option.label}</Text>
+                {option.hint ? <Text style={s.hint}>{option.hint}</Text> : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={s.hint}>Lo puedes cambiar después en Perfil.</Text>
+
       <Text style={s.label}>Correo</Text>
       <TextInput
         accessibilityLabel="Correo"
@@ -201,6 +233,6 @@ export function SignUpScreen() {
       <Link href="/sign-in" style={s.link}>
         <Text style={s.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
       </Link>
-    </View>
+    </ScrollView>
   );
 }

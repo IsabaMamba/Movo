@@ -9,6 +9,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import type { Gender } from '../../lib/gender';
 import { disablePush } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
 import { RULES_VERSION } from '../rules/rules';
@@ -26,6 +27,7 @@ interface AuthValue {
     password: string,
     displayName: string,
     birthdate: string,
+    gender: Gender,
   ) => Promise<SignUpOutcome>;
   signOut: () => Promise<void>;
 }
@@ -71,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       },
-      signUp: async (email, password, displayName, birthdate) => {
+      signUp: async (email, password, displayName, birthdate, gender) => {
         // handle_new_user() reads display_name out of raw_user_meta_data and
         // falls back to 'Nuevo usuario' if it fails the profiles constraint.
         // It also records which version of /normas the form showed (0030):
@@ -82,7 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
-            data: { display_name: displayName, rules_version: RULES_VERSION, birthdate },
+            // 0035: stored in profile_private, readable only by its owner.
+            data: { display_name: displayName, rules_version: RULES_VERSION, birthdate, gender },
           },
         });
         if (error) throw error;
