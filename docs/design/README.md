@@ -17,6 +17,8 @@ component disagrees with the field kit, the field kit is right until an ADR says
 | `roles-ia.html`             | Roles, AI-proposed sessions, open sessions, solo mode                    | Phone |
 | `descubrir-transicion.html` | Descubrir list → full map → zone, playable. Spec in the `.md` beside it  | Phone |
 | `handoff-2026-10-16.md`     | 16 Oct: current boards as images, decisions, backend work in order       | Phone |
+| `handoff-2026-11-02.md`     | 2 Nov: current boards, women-only model, verification, backend in order  | Phone |
+| `mapa.md`                   | The street map: MapLibre + our own Protomaps extract on Supabase, steps  | —     |
 
 ## Reference
 
