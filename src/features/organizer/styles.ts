@@ -162,3 +162,111 @@ export const organizerStyles = StyleSheet.create({
   cancelledTitle: { ...type.heading, color: color.text.primary },
   cancelledBody: { ...type.bodySmall, color: color.text.secondary },
 });
+
+/** The bars of «Cómo va», at their tallest. */
+export const SERIES_BAR_MAX = 64;
+
+/**
+ * Una serie, step 27 of the 2 November walkthrough: what the club looks like
+ * week to week, before the form that changes it.
+ */
+export const seriesStyles = StyleSheet.create({
+  topBar: { alignItems: 'center', flexDirection: 'row', minHeight: size.minTarget },
+  topBack: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: space.xs,
+    minHeight: size.minTarget,
+  },
+  topBackText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
+  topTitle: { ...type.action, color: color.text.primary },
+  topSpacer: { flex: 1 },
+
+  eyebrowRow: { alignItems: 'center', flexDirection: 'row', gap: space.xs },
+  eyebrow: { ...type.label, color: color.accent.cool, letterSpacing: 1 },
+  title: { ...type.title, color: color.text.primary },
+
+  stats: { flexDirection: 'row', gap: space.sm },
+  stat: {
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.md,
+    flex: 1,
+    gap: space.xs,
+    padding: space.md,
+  },
+  statValue: { ...type.title, color: color.text.primary },
+  statGood: { color: color.semantic.success },
+  statLabel: { ...type.caption, color: color.text.secondary },
+
+  card: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    gap: space.md,
+    padding: space.lg,
+  },
+  cardHead: { alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between' },
+  overline: { ...type.label, color: color.text.tertiary, letterSpacing: 1 },
+  cardHint: { ...type.caption, color: color.text.tertiary },
+
+  bars: { flexDirection: 'row', gap: space.sm },
+  barCol: { alignItems: 'center', flex: 1, gap: space.xs },
+  barArea: { height: SERIES_BAR_MAX, justifyContent: 'flex-end', width: '100%' },
+  /** Success, like «Llegó»: the bars count arrivals. Older weeks recede. */
+  bar: {
+    backgroundColor: color.semantic.success,
+    borderTopLeftRadius: radius.sm,
+    borderTopRightRadius: radius.sm,
+    opacity: 0.55,
+    width: '100%',
+  },
+  barLast: { opacity: 1 },
+  barValue: { ...type.caption, color: color.text.secondary },
+  barDate: { ...type.caption, color: color.text.tertiary },
+
+  linkRow: {
+    alignItems: 'center',
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.md,
+    minHeight: size.control + 8,
+    paddingHorizontal: space.lg,
+  },
+  linkText: { flex: 1 },
+  linkTitle: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  linkSub: { ...type.caption, color: color.text.secondary },
+
+  dates: { gap: 0 },
+  dateRow: {
+    alignItems: 'center',
+    borderBottomColor: color.border.default,
+    borderBottomWidth: stroke.hair,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: size.minTarget + 4,
+  },
+  dateDay: { ...type.bodySmall, color: color.text.primary },
+  dateFill: { ...type.caption, color: color.text.secondary },
+  dateFillStrong: { color: color.text.primary, fontWeight: '700' },
+
+  actions: { flexDirection: 'row', gap: space.md },
+  action: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    flex: 1,
+    flexDirection: 'row',
+    gap: space.sm,
+    justifyContent: 'center',
+    minHeight: size.control,
+    paddingHorizontal: space.md,
+  },
+  actionOn: { backgroundColor: color.bg.raised },
+  actionText: { ...type.action, color: color.text.primary },
+});
