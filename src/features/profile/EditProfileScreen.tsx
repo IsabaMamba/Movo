@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { NAME_MAX, nameProblem } from '../../lib/account';
+import { GENDER_OPTIONS, setMyGender, type Gender } from '../../lib/gender';
 import {
   BIO_MAX,
   bioProblem,
@@ -41,6 +42,7 @@ export function EditProfileScreen() {
   const [district, setDistrict] = useState<DistrictOption | null>(null);
   const [query, setQuery] = useState('');
   const [sports, setSports] = useState<string[]>([]);
+  const [gender, setGender] = useState<Gender | null>(null);
   const [options, setOptions] = useState<DistrictOption[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export function EditProfileScreen() {
     setName(profile.display_name);
     setBio(profile.bio ?? '');
     setSports(profile.interests);
+    setGender(profile.gender);
   }, [profile]);
   useEffect(() => {
     if (!profile?.home_district || options.length === 0) return;
@@ -95,6 +98,11 @@ export function EditProfileScreen() {
       homeDistrict: district?.code ?? null,
       interests: sports,
     })
+      // Only when it changed: every change is logged (0035), and an
+      // unchanged answer is not a change.
+      .then(() =>
+        gender !== null && gender !== profile?.gender ? setMyGender(supabase, gender) : undefined,
+      )
       .then(() => {
         router.replace('/cuenta');
       })
@@ -211,6 +219,37 @@ export function EditProfileScreen() {
         <Text style={s.hint}>
           Solo el distrito, nunca tu dirección. No aparece en tu perfil público: sirve para
           mostrarte sesiones cerca.
+        </Text>
+      </View>
+
+      <View style={s.field}>
+        <View style={s.labelRow}>
+          <Text style={s.label}>Tu género</Text>
+          <Text style={s.optional}>solo tú lo ves</Text>
+        </View>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Tu género" style={s.chipRow}>
+          {GENDER_OPTIONS.map((option) => {
+            const on = gender === option.value;
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={option.label}
+                hitSlop={hitSlopFor(size.controlSm)}
+                key={option.value}
+                onPress={() => {
+                  setGender(option.value);
+                }}
+                style={[s.chip, on && s.chipOn]}
+              >
+                <Text style={[s.chipText, on && s.chipTextOn]}>{option.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={s.hint}>
+          Sirve solo para mostrarte lo que es solo para mujeres. No aparece en tu perfil público ni
+          en las listas.
         </Text>
       </View>
 

@@ -24,6 +24,8 @@ export interface MyProfile {
   district_name: string | null;
   canton_name: string | null;
   interests: string[];
+  /** 0035. Owner-only; null for accounts from before it. */
+  gender: 'mujer' | 'hombre' | 'no_dice' | null;
 }
 
 export async function fetchMyProfile(db: SupabaseClient): Promise<MyProfile | null> {
