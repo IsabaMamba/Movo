@@ -83,6 +83,8 @@ export interface Location {
   is_verified: boolean;
   created_by: string | null;
   created_at: string;
+  /** The point, as hex EWKB from PostgREST. Read it with pointOf() (lib/venues). */
+  geog?: unknown;
 }
 
 export interface ActivitySeries {
