@@ -188,6 +188,8 @@ const RETIRED = [
   { pattern: /lleva a tu gente/giu, instead: 'Invita a tus amigos' },
   { pattern: /así te ven/giu, instead: 'Ver perfil público' },
   { pattern: /qué hay cerca/giu, instead: 'Encuentra con quién moverte' },
+  // 2 November handoff: «acá» is regional; the voice is neutral.
+  { pattern: /(?<![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])acá(?![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])/giu, instead: 'aquí' },
 ];
 
 function walk(dir) {

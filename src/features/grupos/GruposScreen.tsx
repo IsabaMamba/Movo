@@ -161,7 +161,7 @@ export function GruposScreen() {
               </View>
               <Text style={s.hint}>
                 {isPublic
-                  ? 'Aparece acá y cualquiera se puede unir.'
+                  ? 'Aparece aquí y cualquiera se puede unir.'
                   : 'No aparece en la lista. Solo quien ya es parte lo ve.'}
               </Text>
             </View>

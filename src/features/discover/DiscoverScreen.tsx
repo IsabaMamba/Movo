@@ -401,7 +401,7 @@ export function DiscoverScreen() {
           }
           ListEmptyComponent={
             <View style={s.centred}>
-              <Text style={s.emptyTitle}>Todavía no hay sesiones acá</Text>
+              <Text style={s.emptyTitle}>Todavía no hay sesiones aquí</Text>
               <Text style={s.emptyBody}>
                 Prueba ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
                 grupos que ya entrenan en la GAM.

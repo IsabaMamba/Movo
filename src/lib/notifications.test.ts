@@ -197,7 +197,7 @@ describe('toInboxItem', () => {
         row({ type: 'close_reminder', payload: { title: 'Trote', activity_id: 'a8' } }),
       );
       expect(item.text).toBe(
-        'Trote ya terminó y sigue abierta. Marca quién llegó y ciérrala: sin eso, la asistencia no cuenta.',
+        'Trote ya terminó y sigue abierta. Revisa quién llegó y ciérrala: sin eso, la asistencia no cuenta.',
       );
       expect(item.activityId).toBe('a8');
       expect(item.opensRoster).toBe(true);

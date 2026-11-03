@@ -216,7 +216,7 @@ export function OrganizerHomeScreen() {
             <View style={{ gap: 12 }}>
               <Text style={s.sectionTitle}>Pendientes de cerrar</Text>
               <Text style={s.hint}>
-                Ya empezaron. Marca quién llegó y cierra la sesión — es lo que convierte una lista
+                Ya empezaron. Revisa quién llegó y cierra la sesión — es lo que convierte una lista
                 en asistencia.
               </Text>
               {needsCloseOut.map(card)}

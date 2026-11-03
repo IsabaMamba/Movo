@@ -241,9 +241,7 @@ export function MyVenuesScreen() {
       {venues === null ? (
         <ActivityIndicator />
       ) : venues.length === 0 ? (
-        <Text style={s.hint}>
-          Todavía no agregaste ningún lugar. Se agregan desde Crear sesión.
-        </Text>
+        <Text style={s.hint}>Todavía no tienes lugares. Se agregan desde Crear sesión.</Text>
       ) : (
         venues.map((venue) => {
           const mismatch = districtMismatch(venue.district, venue.zoneName);

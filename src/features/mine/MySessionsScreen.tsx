@@ -76,7 +76,7 @@ function standingOf(entry: MyParticipation, past: boolean): Standing {
 
   if (entry.status === 'no_show') {
     return {
-      label: 'Marcada como ausente',
+      label: 'No llegaste',
       chip: s.badgeMiss,
       text: s.badgeMissText,
       // Somebody else wrote this about you. Saying who, and that it can be
@@ -210,7 +210,7 @@ export function MySessionsScreen() {
         <View style={s.empty}>
           <Text style={s.sectionTitle}>Todavía no tienes sesiones</Text>
           <Text style={s.emptyBody}>
-            Cuando digas que vas a una sesión, acá la vas a volver a encontrar — incluso después de
+            Cuando digas que vas a una sesión, aquí la vas a volver a encontrar — incluso después de
             que empiece.
           </Text>
           <Link href="/" style={s.back}>

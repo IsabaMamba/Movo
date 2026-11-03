@@ -122,7 +122,7 @@ interface Banner {
 
 const CONFIRM_TEXT: Record<Intent, string> = {
   actioned: `«Actuar» deja registrado que el equipo tomó una decisión sobre esto. Escribe qué se hizo: es lo único que lo va a explicar después. ${RECORD_ONLY} No se puede deshacer.`,
-  dismissed: `«Descartar» deja registrado que no hay nada que hacer acá. La nota es opcional. ${RECORD_ONLY} No se puede deshacer.`,
+  dismissed: `«Descartar» deja registrado que no hay nada que hacer aquí. La nota es opcional. ${RECORD_ONLY} No se puede deshacer.`,
   cancel_session: `${CANCELS} Escribe por qué: la nota solo la ve el equipo. No se puede deshacer.`,
   suspend: `${SUSPENDS} Elige cuánto dura y escribe por qué: la nota solo la ve el equipo. Se puede levantar después, pero las sesiones canceladas no vuelven.`,
 };
@@ -323,7 +323,7 @@ export function ReportQueueScreen() {
           ) : (
             <View style={s.subject}>
               <Text style={s.subjectMissing}>
-                Movo todavía no muestra acá lo que se reportó cuando no es una sesión (
+                Movo todavía no muestra aquí lo que se reportó cuando no es una sesión (
                 {report.subject_id.slice(0, 8)}). Búscalo en el panel.
               </Text>
             </View>
@@ -674,8 +674,8 @@ export function ReportQueueScreen() {
           </Text>
           <Text style={s.emptyBody}>
             Esta pantalla muestra lo que la base de datos te deja leer. Si no estás en el equipo de
-            Movo no vas a ver ningún reporte acá, y tampoco un error: no es una pantalla rota, es el
-            permiso.
+            Movo no vas a ver ningún reporte aquí, y tampoco un error: no es una pantalla rota, es
+            el permiso.
           </Text>
         </View>
       ) : (
