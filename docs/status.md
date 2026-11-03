@@ -72,7 +72,7 @@ column is maintained by hand.
 | `0032_activity_links`          | `activity_links` (up to 2 https links per session, domain stored), `set_activity_links()` for the organizer, `link_domain()` checks; the roster is told when links change; `route_url` leaves Running | yes     |
 | `0033_self_check_in`           | `self_check_in()` with a per-session 4-digit code, 15 min before to 45 after, 5 wrong codes lock; `check_in_code()`, `new_check_in_code()`, `undo_check_in()` for the organizer                       | yes     |
 | `0034_profile_v2`              | `home_district` closed to every client (column grant) and made a distrito code with a foreign key; `my_profile()`; `set_my_interests()`; sports readable where the profile is                         | yes     |
-| `0035_gender`                  | `profile_private.gender` (mujer, hombre, no_dice), owner-only; written at sign-up or by `set_my_gender()`, every change logged in `gender_changes`; `my_profile()` returns it                         | no      |
+| `0035_gender`                  | `profile_private.gender` (mujer, hombre, no_dice), owner-only; written at sign-up or by `set_my_gender()`, every change logged in `gender_changes`; `my_profile()` returns it                         | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -144,7 +144,9 @@ and `check_in_attempts` exist with no client grants, `self_check_in()` is execut
 exposed to clients. No session has a code yet. `0034` was applied the same day:
 `authenticated` can no longer select `profiles.home_district` while `anon` still reads
 `display_name`, `my_profile()` is executable by `authenticated` and not by `anon`, and the
-distrito foreign key and the `user_interests_read_visible` policy are in place. `0022` was applied on 28
+distrito foreign key and the `user_interests_read_visible` policy are in place. `0035` was applied on 2 November: clients
+cannot write `profile_private.gender` or read `gender_changes`, and `set_my_gender()` is
+executable by `authenticated` and not by `anon`. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
