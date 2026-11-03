@@ -3,34 +3,34 @@
  *
  * Descubrir lists what is nearby and still ahead, so a session left reach the
  * moment it started: the one you were on your way to was already gone from
- * the only screen that had ever shown it. Organizar solved that for the
- * person who created the session. This is the same need for everybody else,
- * who are going to be most of the people using Movo.
+ * the only screen that had ever shown it. This is the way back, for everybody
+ * who goes rather than organizes.
  *
- * The screen answers three questions in order, which is why it is split the
- * way it is: what is next, where do I stand in a waitlist, and did the
- * organizer ever record that I showed up.
- *
- * Since Asistencia v2 (0033) it also answers «am I there?»: the session
- * starting soonest is lifted to the top with «Llegué», which marks the
- * person's own arrival with the organizer's code.
+ * Mis sesiones v4, as the 2 November walkthrough draws it (steps 6–8):
+ * «Próximas» and «Pasadas», the week at a glance with a dot on the days you
+ * have something, the next session first as «Tu próxima» — with «Llegué»
+ * when it is time — and the rest grouped by day. Tapping a day shows only
+ * that day. «Pasadas» keeps what happened, including being marked absent:
+ * somebody else wrote that about you, and hiding it would let the two
+ * records disagree with no way to notice.
  */
 
-import { Link, Redirect, useRouter } from 'expo-router';
+import { Link, Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 
-import {
-  fetchMyParticipations,
-  formatSessionTime,
-  type MyParticipation,
-} from '../../lib/activities';
+import { fetchCategories, fetchMyParticipations, type MyParticipation } from '../../lib/activities';
+import { dayHeading, localDay, weekStrip, weekTitle } from '../../lib/agenda';
 import { nextArrival } from '../../lib/checkIn';
 import { supabase } from '../../lib/supabase';
-import { priceLabel } from '../../theme';
+import { color } from '../../theme';
+import { sportColor } from '../../theme/sport';
+import type { Category } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { ArrivalCard } from '../checkin/ArrivalCard';
+import { BellLink } from '../nav/BellLink';
+import { Icon } from '../nav/Icon';
 import { mineStyles as s } from './styles';
 
 interface Standing {
@@ -42,8 +42,8 @@ interface Standing {
 }
 
 function standingOf(entry: MyParticipation, past: boolean): Standing {
-  // Checked first: "Vas" on a session that is not happening is the one
-  // label on this screen that would send somebody somewhere for nothing.
+  // Checked first: «Vas» on a session that is not happening is the one label
+  // on this screen that would send somebody somewhere for nothing.
   if (entry.activity.status === 'cancelled') {
     return {
       label: 'Cancelada',
@@ -56,54 +56,65 @@ function standingOf(entry: MyParticipation, past: boolean): Standing {
           : 'Quien organiza la canceló.',
     };
   }
-
   if (entry.status === 'waitlisted') {
     return {
       label: entry.waitlist_pos === null ? 'En espera' : `En espera · puesto ${entry.waitlist_pos}`,
       chip: s.badgeWait,
       text: s.badgeWaitText,
-      // The position exists nowhere else in the product, and "en espera" on
-      // its own reads as a refusal rather than as a queue that moves.
       note: past
         ? 'No se liberó un lugar a tiempo.'
         : 'Si alguien cancela, entras automáticamente.',
     };
   }
-
   if (entry.status === 'attended') {
     return { label: 'Llegaste', chip: s.badgeDone, text: s.badgeDoneText, note: null };
   }
-
   if (entry.status === 'no_show') {
     return {
       label: 'No llegaste',
       chip: s.badgeMiss,
       text: s.badgeMissText,
-      // Somebody else wrote this about you. Saying who, and that it can be
-      // disputed, is the difference between a record and an accusation.
       note: 'Lo marcó quien organiza al cerrar la sesión. Si no es así, escríbele.',
     };
   }
-
   if (past) {
     return {
       label: 'Sin cerrar',
       chip: s.badgeOpen,
       text: s.badgeOpenText,
-      // Not the participant's problem to solve, but their record is stuck
-      // until somebody else acts, and that should not look like their fault.
       note: 'Ya pasó y quien organiza todavía no registró la asistencia.',
     };
   }
-
-  return { label: 'Vas', chip: s.badgeGoing, text: s.badgeGoingText, note: null };
+  return { label: 'Vas', chip: s.badgeDone, text: s.badgeDoneText, note: null };
 }
+
+const TIME = new Intl.DateTimeFormat('es-CR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: 'America/Costa_Rica',
+});
+
+/** Entries grouped under their day, in the order given. */
+function byDay(entries: readonly MyParticipation[]): [string, MyParticipation[]][] {
+  const groups = new Map<string, MyParticipation[]>();
+  for (const entry of entries) {
+    const day = localDay(entry.activity.starts_at);
+    groups.set(day, [...(groups.get(day) ?? []), entry]);
+  }
+  return [...groups.entries()];
+}
+
+type Tab = 'proximas' | 'pasadas';
 
 export function MySessionsScreen() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [entries, setEntries] = useState<MyParticipation[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('proximas');
+  const [day, setDay] = useState<string | null>(null);
 
   const userId = session?.user.id;
 
@@ -112,91 +123,143 @@ export function MySessionsScreen() {
     setEntries(await fetchMyParticipations(supabase, userId));
   }, [userId]);
 
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      load().catch((cause: unknown) => {
+        if (cancelled) return;
+        setEntries([]);
+        setError(cause instanceof Error ? cause.message : 'No se pudieron cargar tus sesiones.');
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [load]),
+  );
+
   useEffect(() => {
-    let cancelled = false;
-    load().catch((cause: unknown) => {
-      if (cancelled) return;
-      setEntries([]);
-      setError(cause instanceof Error ? cause.message : 'No se pudieron cargar tus sesiones.');
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [load]);
+    void fetchCategories(supabase)
+      .then(setCategories)
+      .catch(() => undefined);
+  }, []);
 
   if (loading) return <ActivityIndicator style={s.screen} />;
-  if (!session) return <Redirect href="/sign-in" />;
+  if (!session || !userId) return <Redirect href="/sign-in" />;
 
-  const now = Date.now();
+  const now = new Date();
   const all = entries ?? [];
-  // Shown once, at the top, not again in the lists below.
-  const next = nextArrival(all);
-  const rows = next ? all.filter((e) => e !== next) : all;
-  const upcoming = rows.filter((e) => new Date(e.activity.starts_at).getTime() > now);
-  // Reversed: the most recent thing you did is the one you might still need
-  // to sort out, and the run from three months ago is not.
-  const past = rows
-    .filter((e) => new Date(e.activity.starts_at).getTime() <= now)
+  const sportName = (id: string) => categories.find((c) => c.id === id)?.name_es;
+
+  // «Próximas» keeps a session for 45 minutes after it starts — as long as
+  // «Llegué» is open — so the card does not vanish while you are walking in.
+  const upcomingAll = all.filter(
+    (e) => new Date(e.activity.starts_at).getTime() > now.getTime() - 45 * 60_000,
+  );
+  const pastAll = all
+    .filter((e) => !upcomingAll.includes(e))
     .slice()
     .reverse();
 
-  const card = (entry: MyParticipation, isPast: boolean) => {
-    const { activity } = entry;
-    const standing = standingOf(entry, isPast);
+  // «Tu próxima» is always first; inside its check-in window it is the one
+  // with «Llegué».
+  const next =
+    nextArrival(upcomingAll) ??
+    upcomingAll.find((e) => e.activity.status !== 'cancelled' && e.status !== 'waitlisted') ??
+    null;
 
+  const week = weekStrip(
+    now,
+    upcomingAll.map((e) => localDay(e.activity.starts_at)),
+  );
+
+  const upcoming = upcomingAll.filter(
+    (e) => e !== next && (day === null || localDay(e.activity.starts_at) === day),
+  );
+  const showNext = next !== null && (day === null || localDay(next.activity.starts_at) === day);
+
+  const row = (entry: MyParticipation, past: boolean) => {
+    const { activity } = entry;
+    const standing = standingOf(entry, past);
     return (
       <Pressable
-        /* The card is one decision — is this still mine to show up to — and
-           the state, the time and the venue only mean that together. */
         accessible
         accessibilityRole="button"
         accessibilityLabel={[
           activity.title,
           standing.label,
-          formatSessionTime(activity.starts_at),
+          TIME.format(new Date(activity.starts_at)),
           activity.location.name,
-          `organiza ${activity.organizer.display_name}`,
         ].join('. ')}
-        accessibilityHint="Abre la sesión, con el punto de encuentro y la opción de salirte."
+        accessibilityHint="Abre la sesión"
         key={`${entry.activity_id}-${entry.user_id}`}
         onPress={() => {
           router.push({ pathname: '/sesion/[id]', params: { id: activity.id } });
         }}
-        style={s.card}
+        style={s.item}
       >
-        <View style={[s.badge, standing.chip]}>
-          <Text style={[s.badgeText, standing.text]}>{standing.label}</Text>
+        <View style={[s.itemBar, { backgroundColor: sportColor(activity.category_id) }]} />
+        <Text style={s.itemTime}>{TIME.format(new Date(activity.starts_at))}</Text>
+        <View style={s.itemBody}>
+          <Text numberOfLines={1} style={s.itemTitle}>
+            {activity.title}
+          </Text>
+          <Text numberOfLines={1} style={s.itemMeta}>
+            {activity.location.name}
+            {activity.location.district ? ` · ${activity.location.district}` : ''}
+          </Text>
+          <View style={[s.badge, standing.chip]}>
+            <Text style={[s.badgeText, standing.text]}>{standing.label}</Text>
+          </View>
+          {standing.note !== null && past && <Text style={s.cardNote}>{standing.note}</Text>}
         </View>
-
-        <Text style={s.cardTitle}>{activity.title}</Text>
-        <Text style={s.cardMeta}>
-          {formatSessionTime(activity.starts_at)} · {activity.location.name}
-          {activity.location.district ? `, ${activity.location.district}` : ''}
-        </Text>
-        <Text style={s.cardMeta}>
-          Organiza {activity.organizer.display_name} ·{' '}
-          {priceLabel(activity.price_minor, activity.currency)}
-        </Text>
-
-        {standing.note !== null && <Text style={s.cardNote}>{standing.note}</Text>}
       </Pressable>
     );
   };
 
+  const groups = (list: readonly MyParticipation[], past: boolean) =>
+    byDay(list).map(([ymd, items]) => {
+      const heading = dayHeading(items[0]!.activity.starts_at, now);
+      return (
+        <View key={ymd} style={s.group}>
+          <View style={s.dayHead}>
+            <Text style={s.dayLabel}>{heading.label}</Text>
+            {heading.relative ? <Text style={s.dayRelative}>{heading.relative}</Text> : null}
+          </View>
+          {items.map((entry) => row(entry, past))}
+        </View>
+      );
+    });
+
   return (
     <ScrollView contentContainerStyle={s.content} style={s.screen}>
-      <View>
-        <Text style={s.title}>Mis sesiones</Text>
-        <Text style={s.subtitle}>
-          Las sesiones a las que te uniste, antes y después de que pasen.
+      <View style={s.headerRow}>
+        <Text accessibilityRole="header" style={s.title}>
+          Mis sesiones
         </Text>
+        <BellLink userId={userId} />
       </View>
 
-      {/* Next to the sessions, because it is made of them: the history is
-          where the attended ones leave a trace, if the person asked for one. */}
-      <Link href="/historial" style={s.back}>
-        <Text style={s.linkText}>Mi historial de asistencia</Text>
-      </Link>
+      <View accessibilityRole="tablist" style={s.segment}>
+        {(
+          [
+            ['proximas', 'Próximas'],
+            ['pasadas', 'Pasadas'],
+          ] as const
+        ).map(([value, label]) => (
+          <Pressable
+            accessibilityRole="tab"
+            aria-selected={tab === value}
+            key={value}
+            onPress={() => {
+              setTab(value);
+              setDay(null);
+            }}
+            style={[s.segmentItem, tab === value && s.segmentItemOn]}
+          >
+            <Text style={[s.segmentText, tab === value && s.segmentTextOn]}>{label}</Text>
+          </Pressable>
+        ))}
+      </View>
 
       {error !== null && (
         <Text accessibilityRole="alert" style={s.error}>
@@ -206,60 +269,90 @@ export function MySessionsScreen() {
 
       {entries === null ? (
         <ActivityIndicator />
-      ) : all.length === 0 ? (
+      ) : tab === 'proximas' ? (
+        upcomingAll.length === 0 ? (
+          <View style={s.empty}>
+            <View style={s.emptyIcon}>
+              <Icon color={color.text.secondary} name="calendar" size={28} />
+            </View>
+            <Text style={s.sectionTitle}>Todavía no tienes sesiones</Text>
+            <Text style={s.emptyBody}>
+              Cuando te unas a una, aparece aquí con su día y su hora, incluso después de que
+              empiece.
+            </Text>
+            <Link href="/" asChild>
+              <Pressable accessibilityRole="link" style={s.emptyButton}>
+                <Text style={s.emptyButtonText}>Encuentra con quién moverte</Text>
+              </Pressable>
+            </Link>
+          </View>
+        ) : (
+          <>
+            <View style={s.weekHead}>
+              <Text style={s.weekTitle}>{weekTitle(now)}</Text>
+              <Text style={s.weekHint}>Toca un día</Text>
+            </View>
+            <View accessibilityRole="radiogroup" accessibilityLabel="Esta semana" style={s.week}>
+              {week.map((d) => {
+                const on = day === d.ymd;
+                return (
+                  <Pressable
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`${d.number}${d.isToday ? ', hoy' : ''}${d.hasSession ? ', tienes una sesión' : ''}`}
+                    key={d.ymd}
+                    onPress={() => {
+                      setDay(on ? null : d.ymd);
+                    }}
+                    style={s.weekDay}
+                  >
+                    <Text style={s.weekLetter}>{d.letter}</Text>
+                    <View
+                      style={[s.weekNumber, d.isToday && s.weekNumberToday, on && s.weekNumberOn]}
+                    >
+                      <Text style={[s.weekNumberText, (d.isToday || on) && s.weekNumberTextOn]}>
+                        {d.number}
+                      </Text>
+                    </View>
+                    <View style={[s.weekDot, d.hasSession && s.weekDotOn]} />
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {showNext && next && (
+              <ArrivalCard
+                entry={next}
+                onChanged={() => {
+                  void load().catch(() => undefined);
+                }}
+                sport={sportName(next.activity.category_id)}
+              />
+            )}
+
+            {groups(upcoming, false)}
+
+            {day !== null && upcoming.length === 0 && !showNext && (
+              <Text style={s.emptyBody}>Ese día no tienes nada.</Text>
+            )}
+          </>
+        )
+      ) : pastAll.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.sectionTitle}>Todavía no tienes sesiones</Text>
-          <Text style={s.emptyBody}>
-            Cuando digas que vas a una sesión, aquí la vas a volver a encontrar — incluso después de
-            que empiece.
-          </Text>
-          <Link href="/" style={s.back}>
-            <Text style={s.linkText}>Encuentra con quién moverte</Text>
-          </Link>
+          <Text style={s.sectionTitle}>Todavía no hay sesiones pasadas</Text>
+          <Text style={s.emptyBody}>Aquí quedan las sesiones a las que fuiste, solo para ti.</Text>
         </View>
       ) : (
         <>
-          {next && (
-            <ArrivalCard
-              entry={next}
-              onChanged={() => {
-                void load().catch(() => undefined);
-              }}
-            />
-          )}
-
-          {upcoming.length > 0 && (
-            <View style={s.group}>
-              <Text style={s.sectionTitle}>Lo que viene</Text>
-              {upcoming.map((entry) => card(entry, false))}
-            </View>
-          )}
-
-          {/* Above the history, not below it: read after the past list, "lo de
-              abajo ya pasó" points at nothing. */}
-          {upcoming.length === 0 && !next && (
-            <View style={s.empty}>
-              <Text style={s.emptyBody}>No tienes nada por delante. Lo de abajo ya pasó.</Text>
-              <Link href="/" style={s.back}>
-                <Text style={s.linkText}>Encuentra con quién moverte</Text>
-              </Link>
-            </View>
-          )}
-
-          {past.length > 0 && (
-            <View style={s.group}>
-              <Text style={s.sectionTitle}>Ya pasaron</Text>
-              {past.map((entry) => card(entry, true))}
-            </View>
-          )}
+          <Text style={s.pastNote}>
+            Solo tú ves esta lista. No se publica ni se usa para recomendarte nada.
+          </Text>
+          {groups(pastAll, true)}
+          <Link href="/historial" style={s.back}>
+            <Text style={s.linkText}>Mi historial de asistencia</Text>
+          </Link>
         </>
       )}
-
-      {/*
-        A session you left is not here, on purpose: leaving is a decision
-        already taken, and the row would only be clutter. Being marked absent
-        stays, because somebody else wrote that about you.
-      */}
     </ScrollView>
   );
 }
