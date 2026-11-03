@@ -38,6 +38,9 @@ export function suspensionLengthsSentence(): string {
   return `${labels.join(', ')} o ${last ?? ''}`;
 }
 
+/** The walkthrough's headline over the intro (step 31). */
+export const RULES_HEADLINE = 'Para llegar aunque no conozcas a nadie';
+
 export const RULES_INTRO =
   'Movo junta a personas que no se conocen para hacer deporte en lugares públicos. Estas normas existen para que llegar sola o solo a una sesión sea seguro, y para que lo publicado sea real. Aplican a todo lo que haces en Movo: sesiones, grupos, lugares, chats y perfiles.';
 
