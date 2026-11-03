@@ -20,48 +20,92 @@ export const inboxStyles = StyleSheet.create({
   },
 
   back: { justifyContent: 'center', minHeight: size.minTarget },
-  backText: { ...type.bodySmall, color: color.accent.cool },
 
-  title: { ...type.display, color: color.text.primary },
-  subtitle: { ...type.bodySmall, color: color.text.secondary },
+  /** Step 20: back arrow, the title, «Marcar todo» on the right. */
+  header: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
+  headerBack: {
+    alignItems: 'center',
+    height: size.controlSm,
+    justifyContent: 'center',
+    marginLeft: -space.sm,
+    width: size.controlSm,
+  },
+  title: { ...type.title, color: color.text.primary, flex: 1 },
+  markAll: { justifyContent: 'center', minHeight: size.controlSm },
+  markAllText: { ...type.bodySmall, color: color.accent.cool, fontWeight: '600' },
+
+  /** The same chips as Grupos: white when on, outlined when off. */
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  chip: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+    paddingHorizontal: space.lg,
+  },
+  chipOn: { backgroundColor: color.text.primary, borderColor: color.text.primary },
+  chipText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
+  chipTextOn: { color: color.text.inverse },
+
   sectionTitle: { ...type.heading, color: color.text.primary },
+  overline: { ...type.label, color: color.text.tertiary, letterSpacing: 1 },
 
-  group: { gap: space.md },
+  group: { gap: space.sm },
 
-  /**
-   * The left border is on every card, not only the unread ones, and matches
-   * the ground when the card is read. Adding the border on unread alone would
-   * shift the text of half the list sideways by two pixels as it was read.
-   */
+  /** A row: icon circle, the sentence over the time, the unread dot. */
   card: {
+    alignItems: 'flex-start',
     backgroundColor: color.bg.surface,
-    borderLeftColor: color.bg.surface,
-    borderLeftWidth: stroke.thick,
+    borderRadius: radius.lg,
+    flexDirection: 'row',
+    gap: space.md,
+    padding: space.lg,
+  },
+  /** The inert card stacks its row over the «Marcar como leído» link. */
+  cardColumn: {
+    backgroundColor: color.bg.surface,
     borderRadius: radius.lg,
     gap: space.xs,
     padding: space.lg,
   },
+  cardInner: { alignItems: 'flex-start', flexDirection: 'row', gap: space.md },
   /** Unread is lifted, not tinted: depth is luminance here as everywhere. */
-  cardUnread: { backgroundColor: color.bg.raised, borderLeftColor: color.accent.cool },
+  cardUnread: { backgroundColor: color.bg.raised },
 
-  cardText: { ...type.body, color: color.text.primary },
+  iconCircle: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    borderWidth: stroke.thick,
+    height: size.controlSm,
+    justifyContent: 'center',
+    width: size.controlSm,
+  },
+  rowText: { flex: 1, gap: space.xs },
+  cardText: { ...type.bodySmall, color: color.text.primary },
+  cardTextRead: { color: color.text.secondary },
   cardWhen: { ...type.caption, color: color.text.tertiary },
 
   /**
-   * Cool, never warm. Warmth encodes occupancy across the whole product
-   * (ADR 0004), and an unread aviso says nothing about how full anything is.
+   * Sun, as in the walkthrough. A dot is not a surface, so it does not read as
+   * occupancy (ADR 0004) or as a button.
    */
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: color.accent.deep,
+  unreadDot: {
+    backgroundColor: color.accent.primary,
     borderRadius: radius.full,
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
+    height: 10,
+    marginTop: space.xs,
+    width: 10,
   },
-  badgeText: { ...type.caption, color: color.text.primary },
 
   /** 36px tall so it does not look like a button; padded to 44 with hitSlop. */
-  markRead: { alignSelf: 'flex-start', justifyContent: 'center', minHeight: size.controlSm },
+  markRead: {
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    marginLeft: size.controlSm + space.md,
+    minHeight: size.controlSm,
+  },
   markReadText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
 
   error: { ...type.bodySmall, color: color.semantic.dangerOnRaised },

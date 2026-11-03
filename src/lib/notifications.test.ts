@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toInboxItem, unreadA11yLabel } from './notifications';
+import { inFilter, timeAgo, toInboxItem, unreadA11yLabel } from './notifications';
 import type { Notification } from '../types/database';
 
 /**
@@ -372,5 +372,25 @@ describe('unreadA11yLabel', () => {
     for (const n of [0, 1, 5]) {
       expect(unreadA11yLabel(n).startsWith('Avisos.')).toBe(true);
     }
+  });
+});
+
+describe('timeAgo', () => {
+  const now = new Date('2026-11-02T16:00:00Z');
+  it('counts minutes, then hours, then says ayer, then the date', () => {
+    expect(timeAgo('2026-11-02T15:59:50Z', now)).toBe('ahora');
+    expect(timeAgo('2026-11-02T15:40:00Z', now)).toBe('hace 20 min');
+    expect(timeAgo('2026-11-02T13:00:00Z', now)).toBe('hace 3 h');
+    expect(timeAgo('2026-11-01T10:00:00Z', now)).toBe('ayer');
+    expect(timeAgo('2026-10-30T18:00:00Z', now)).toMatch(/30 oct/u);
+  });
+});
+
+describe('inFilter', () => {
+  it('splits running a session from going to one', () => {
+    expect(inFilter({ kind: 'close_reminder' }, 'organizar')).toBe(true);
+    expect(inFilter({ kind: 'close_reminder' }, 'sesiones')).toBe(false);
+    expect(inFilter({ kind: 'waitlist_promoted' }, 'sesiones')).toBe(true);
+    expect(inFilter({ kind: 'waitlist_promoted' }, 'todos')).toBe(true);
   });
 });
