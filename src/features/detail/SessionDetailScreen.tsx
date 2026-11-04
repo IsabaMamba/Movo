@@ -32,6 +32,7 @@ import {
 } from 'react-native';
 
 import {
+  enumLabel,
   fetchActivityDetail,
   fetchMyParticipation,
   fetchRoster,
@@ -141,8 +142,13 @@ function attributeTags(
     if (value === true) tags.push(label);
     else if (value === false || value === null || value === undefined) continue;
     else if (Array.isArray(value)) {
-      if (value.length > 0) tags.push(`${label}: ${value.join(', ')}`);
-    } else tags.push(`${label}: ${String(value)}`);
+      if (value.length > 0) {
+        tags.push(`${label}: ${value.map((v) => enumLabel(property, String(v))).join(', ')}`);
+      }
+    } else
+      tags.push(
+        `${label}: ${typeof value === 'string' ? enumLabel(property, value) : String(value)}`,
+      );
   }
   return tags;
 }

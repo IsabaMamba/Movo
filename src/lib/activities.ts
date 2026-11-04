@@ -20,6 +20,7 @@ import type {
   CategoryId,
   CurrencyCode,
   JsonSchemaObject,
+  JsonSchemaProperty,
   Location,
   NearbyActivity,
   ParticipationStatus,
@@ -250,6 +251,35 @@ export interface ValidationIssue {
 }
 
 /**
+ * The fixed rules of a sport (0036): properties marked `readOnly` with a
+ * `const` — the life jacket in the water, the helmet on a bike. Nobody fills
+ * them in; the form shows them and the database writes them.
+ */
+export function fixedRules(schema: JsonSchemaObject): [string, JsonSchemaProperty][] {
+  return Object.entries(schema.properties).filter(
+    ([, prop]) => prop.readOnly === true && prop.const !== undefined,
+  );
+}
+
+/** The attributes with every fixed rule written in, as the database will store them. */
+export function withFixedAttributes(
+  schema: JsonSchemaObject,
+  attributes: Record<string, unknown>,
+): Record<string, unknown> {
+  const out = { ...attributes };
+  for (const [field, prop] of fixedRules(schema)) out[field] = prop.const;
+  return out;
+}
+
+/** «Sintética» for «sintetica»: the schema's `enumNames`, or the value itself. */
+export function enumLabel(prop: JsonSchemaProperty | undefined, value: string): string {
+  const options = prop?.enum ?? prop?.items?.enum;
+  const names = prop?.enumNames ?? prop?.items?.enumNames;
+  const index = options?.indexOf(value) ?? -1;
+  return (index >= 0 ? names?.[index] : undefined) ?? value;
+}
+
+/**
  * Validates `attributes` against the JSON Schema stored on the category.
  * Deliberately small — it covers the subset the seed schemas actually use.
  * Run it on the client for instant feedback and again server-side before
@@ -260,6 +290,12 @@ export function validateAttributes(
   attributes: Record<string, unknown>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+
+  for (const [field, prop] of fixedRules(schema)) {
+    if (field in attributes && attributes[field] !== prop.const) {
+      issues.push({ field, message: 'Es una regla fija de este deporte' });
+    }
+  }
 
   for (const field of schema.required ?? []) {
     if (attributes[field] === undefined || attributes[field] === null) {
@@ -429,7 +465,8 @@ export async function createActivity(
   input: NewActivityInput,
   schema: JsonSchemaObject,
 ): Promise<string> {
-  assertAttributes(schema, input.attributes);
+  const attributes = withFixedAttributes(schema, input.attributes);
+  assertAttributes(schema, attributes);
 
   const endsAt = new Date(input.startsAt.getTime() + input.durationMinutes * 60_000);
 
@@ -448,7 +485,7 @@ export async function createActivity(
       difficulty: input.difficulty,
       price_minor: input.priceMinor,
       currency: input.currency,
-      attributes: input.attributes,
+      attributes,
       visibility: input.visibility,
       status: input.publish ? 'published' : 'draft',
     })
@@ -482,7 +519,8 @@ export async function createSeries(
   schema: JsonSchemaObject,
   until?: Date,
 ): Promise<{ seriesId: string; generated: number }> {
-  assertAttributes(schema, input.attributes);
+  const attributes = withFixedAttributes(schema, input.attributes);
+  assertAttributes(schema, attributes);
 
   const { data, error } = await db
     .from('activity_series')
@@ -501,7 +539,7 @@ export async function createSeries(
       max_participants: input.maxParticipants,
       price_minor: input.priceMinor,
       currency: input.currency,
-      attributes: input.attributes,
+      attributes,
     })
     .select('id')
     .single();

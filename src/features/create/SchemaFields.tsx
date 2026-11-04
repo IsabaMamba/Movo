@@ -8,6 +8,11 @@
  * The design marks the boundary with an aqua rule for exactly that reason. It
  * is a signal to whoever reads the screen next that nothing inside is hand
  * written.
+ *
+ * Since 0036 two more things come from the schema: the words on each option
+ * (`enumNames`), and the fixed rules of a sport — the life jacket in the
+ * water, the helmet on a bike — shown as a box the organizer reads but
+ * cannot change, as on Deportes v1 · 5.
  */
 
 import { useState } from 'react';
@@ -15,7 +20,8 @@ import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 
 import { color, hitSlopFor, size } from '../../theme';
 import type { JsonSchemaObject, JsonSchemaProperty } from '../../types/database';
-import type { ValidationIssue } from '../../lib/activities';
+import { enumLabel, fixedRules, type ValidationIssue } from '../../lib/activities';
+import { Icon } from '../nav/Icon';
 import { createStyles as s } from './styles';
 
 interface Props {
@@ -38,6 +44,7 @@ function orderedFields(schema: JsonSchemaObject): [string, JsonSchemaProperty][]
     .sort((a, b) => a.localeCompare(b, 'es'));
 
   return [...required, ...rest]
+    .filter((key) => schema.properties[key]?.readOnly !== true)
     .map((key) => [key, schema.properties[key]] as [string, JsonSchemaProperty | undefined])
     .filter((entry): entry is [string, JsonSchemaProperty] => entry[1] !== undefined);
 }
@@ -71,12 +78,31 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
   // states a controlled numeric input has to survive without snapping back.
   const [draft, setDraft] = useState<Record<string, string>>({});
   const fields = orderedFields(schema);
+  const fixed = fixedRules(schema);
   const required = new Set(schema.required ?? []);
 
   const issueFor = (field: string) => issues.find((issue) => issue.field === field)?.message;
 
   return (
     <View style={s.schemaBlock}>
+      {fixed.length > 0 && (
+        <View
+          accessible
+          accessibilityLabel={`Siempre, en este deporte: ${fixed.map(([key, p]) => p.title ?? key).join('. ')}`}
+          style={s.fixedBox}
+        >
+          <Text style={s.fixedTitle}>Siempre, en este deporte</Text>
+          {fixed.map(([key, p]) => (
+            <View key={key} style={s.fixedRow}>
+              <View style={s.fixedCheck}>
+                <Icon color={color.text.inverse} name="check" size={12} strokeWidth={2.6} />
+              </View>
+              <Text style={s.fixedText}>{p.title ?? key}</Text>
+            </View>
+          ))}
+          <Text style={s.hint}>Fijo para este deporte. No se puede quitar.</Text>
+        </View>
+      )}
       {fields.map(([key, property]) => {
         const label = property.title ?? key;
         const isRequired = required.has(key);
@@ -107,7 +133,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                   return (
                     <Pressable
                       accessibilityRole="radio"
-                      accessibilityLabel={option}
+                      accessibilityLabel={enumLabel(property, option)}
                       aria-checked={on}
                       hitSlop={CHIP_HIT_SLOP}
                       key={option}
@@ -116,7 +142,9 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                       }}
                       style={[s.chip, on && s.chipOn]}
                     >
-                      <Text style={[s.chipText, on && s.chipTextOn]}>{option}</Text>
+                      <Text style={[s.chipText, on && s.chipTextOn]}>
+                        {enumLabel(property, option)}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -133,7 +161,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                   return (
                     <Pressable
                       accessibilityRole="checkbox"
-                      accessibilityLabel={`${label}: ${option}`}
+                      accessibilityLabel={`${label}: ${enumLabel(property, option)}`}
                       aria-checked={on}
                       hitSlop={CHIP_HIT_SLOP}
                       key={option}
@@ -145,7 +173,9 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
                       }}
                       style={[s.chip, on && s.chipOn]}
                     >
-                      <Text style={[s.chipText, on && s.chipTextOn]}>{option}</Text>
+                      <Text style={[s.chipText, on && s.chipTextOn]}>
+                        {enumLabel(property, option)}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -194,7 +224,7 @@ export function SchemaFields({ schema, values, onChange, issues }: Props) {
         );
       })}
 
-      {fields.length === 0 && (
+      {fields.length === 0 && fixed.length === 0 && (
         <Text style={s.emptyNote}>Esta categoría no pide detalles extra.</Text>
       )}
     </View>

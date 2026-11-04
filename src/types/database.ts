@@ -62,11 +62,15 @@ export interface ProfilePrivate {
   locale: string;
 }
 
+export type SportFamily = 'correr' | 'montana' | 'balon' | 'ruedas' | 'entrenar' | 'agua';
+
 export interface Category {
   id: CategoryId;
   name_es: string;
   name_en: string;
   icon: string | null;
+  /** One of six; one colour per family on the client (0036). */
+  family: SportFamily;
   /** JSON Schema subset describing `Activity.attributes` for this category. */
   attribute_schema: JsonSchemaObject;
   is_active: boolean;
@@ -385,6 +389,11 @@ export interface JsonSchemaProperty {
   maximum?: number;
   default?: unknown;
   items?: JsonSchemaProperty;
+  /** The words for each `enum` value, same order (0036). */
+  enumNames?: string[];
+  /** With `readOnly`: a fixed rule of the sport, written by the database (0036). */
+  const?: unknown;
+  readOnly?: boolean;
 }
 
 export interface JsonSchemaObject {
