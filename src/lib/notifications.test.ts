@@ -247,6 +247,120 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('somebody you blocked is going', () => {
+    it('says so without naming them, and opens the session', () => {
+      const item = toInboxItem(
+        row({ type: 'blocked_person_going', payload: { activity_id: 'a9', title: 'Trote 38' } }),
+      );
+      expect(item.text).toBe(
+        'Alguien que bloqueaste se unió a Trote 38. No sabe que vas y no ve tus mensajes. Tú decides si sigues yendo.',
+      );
+      expect(item.activityId).toBe('a9');
+    });
+  });
+
+  describe('the chat', () => {
+    it('names who replied and where, and opens the chat', () => {
+      const item = toInboxItem(
+        row({
+          type: 'chat_reply',
+          payload: { community_id: 'g1', title: 'Corredores de Tibás', name: 'Luis A.' },
+        }),
+      );
+      expect(item.text).toBe('Luis A. respondió a tu mensaje en el chat de Corredores de Tibás.');
+      expect(item.opensChat).toBe(true);
+      expect(item.communityId).toBe('g1');
+      expect(item.activityId).toBeNull();
+    });
+
+    it("marks an organizer's message as the organizer's", () => {
+      const item = toInboxItem(
+        row({
+          type: 'chat_organizer',
+          payload: { activity_id: 'a1', title: 'Trote suave', name: 'Sofía V.' },
+        }),
+      );
+      expect(item.text).toBe('Sofía V., que organiza, escribió en el chat de Trote suave.');
+      expect(item.activityId).toBe('a1');
+    });
+
+    it('says the rule when a message was removed, and never who removed it', () => {
+      const item = toInboxItem(
+        row({
+          type: 'chat_message_removed',
+          payload: { community_id: 'g2', title: 'Senderistas', reason: 'Norma 12 · Nada de spam' },
+        }),
+      );
+      expect(item.text).toBe(
+        'Quien organiza Senderistas quitó un mensaje tuyo del chat porque no cumple: «Norma 12 · Nada de spam».',
+      );
+    });
+  });
+
+  describe('a water session cancelled for a CNE alert', () => {
+    it('quotes the alert and says the rule is fixed', () => {
+      const item = toInboxItem(
+        row({
+          type: 'activity_cancelled_weather',
+          payload: {
+            activity_id: 'a5',
+            title: 'Remada a Isla Venado',
+            alert: 'alerta amarilla en el Golfo de Nicoya',
+          },
+        }),
+      );
+      expect(item.text).toBe(
+        'Remada a Isla Venado se canceló: la CNE declaró alerta amarilla en el Golfo de Nicoya. En el agua es una regla fija.',
+      );
+      expect(item.activityId).toBe('a5');
+    });
+
+    it('still reads without the alert', () => {
+      const item = toInboxItem(
+        row({ type: 'activity_cancelled_weather', payload: { activity_id: 'a5', title: 'Surf' } }),
+      );
+      expect(item.text).toBe(
+        'Surf se canceló por una alerta de la CNE. En el agua es una regla fija.',
+      );
+    });
+  });
+
+  describe('a venue handed back', () => {
+    it('quotes what to correct', () => {
+      const item = toInboxItem(
+        row({
+          type: 'venue_returned',
+          payload: { location_id: 'l1', name: 'Cancha 3', note: 'Mueve el punto a la entrada' },
+        }),
+      );
+      expect(item.text).toBe(
+        'El equipo te devolvió Cancha 3 para corregirlo: «Mueve el punto a la entrada». Mientras tanto no se puede elegir en Crear.',
+      );
+      expect(item.activityId).toBeNull();
+    });
+  });
+
+  describe('updated terms', () => {
+    it('says which document and from when', () => {
+      const item = toInboxItem(
+        row({ type: 'terms_updated', payload: { document: 'terms', version: '2026-11-04' } }),
+      );
+      expect(item.text).toBe(
+        'Actualizamos los términos, del 4 de noviembre. Lee el resumen de qué cambió.',
+      );
+      expect(item.activityId).toBeNull();
+    });
+
+    it('reads the privacy notice too', () => {
+      const item = toInboxItem(
+        row({ type: 'terms_updated', payload: { document: 'privacy', version: 'v2' } }),
+      );
+      expect(item.text).toBe(
+        'Actualizamos el aviso de privacidad, del v2. Lee el resumen de qué cambió.',
+      );
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.

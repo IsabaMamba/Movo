@@ -17,7 +17,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { toApiError } from './errors';
 
-export type ConsentPurpose = 'rules' | 'location' | 'push' | 'attendance_history';
+/** `terms` and `privacy` since 0044. */
+export type ConsentPurpose =
+  'rules' | 'location' | 'push' | 'attendance_history' | 'terms' | 'privacy';
 
 export interface ConsentRow {
   purpose: ConsentPurpose;
@@ -56,7 +58,7 @@ export async function fetchMyConsents(db: SupabaseClient): Promise<ConsentRow[]>
  */
 export async function recordConsent(
   db: SupabaseClient,
-  purpose: 'location' | 'push' | 'rules',
+  purpose: Exclude<ConsentPurpose, 'attendance_history'>,
   version: string | null,
   granted: boolean,
 ): Promise<boolean> {

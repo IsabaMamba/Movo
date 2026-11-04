@@ -110,6 +110,12 @@ export interface InboxItem {
    * for notices that ask the organizer to do something the roster is for.
    */
   opensRoster?: true;
+  /**
+   * Open a chat rather than a session page (0040): the session's chat when
+   * `activityId` is set, or this group's chat.
+   */
+  opensChat?: true;
+  communityId?: string;
 }
 
 /**
@@ -192,6 +198,20 @@ export function toInboxItem(row: Notification): InboxItem {
       };
     }
 
+    // Written by cancel_for_weather() and cancel_water_sessions_in_zone()
+    // (0041). The alert is the CNE's words; the rule is fixed for water.
+    case 'activity_cancelled_weather': {
+      const alert = text(payload, 'alert');
+      return {
+        ...base,
+        text:
+          alert === null
+            ? `${title} se canceló por una alerta de la CNE. En el agua es una regla fija.`
+            : `${title} se canceló: la CNE declaró ${alert}. En el agua es una regla fija.`,
+        activityId,
+      };
+    }
+
     case 'activity_cancelled_by_movo':
       // To the organizer. Says the rule, not the report: who reported is
       // exactly what this sentence must not let them work out.
@@ -269,6 +289,75 @@ export function toInboxItem(row: Notification): InboxItem {
       };
     }
 
+    // Written by notify_blocked_person_going() (0039), only to the person who
+    // blocked. Never names who: they know, and nobody else is told anything.
+    case 'blocked_person_going':
+      return {
+        ...base,
+        text: `Alguien que bloqueaste se unió a ${title}. No sabe que vas y no ve tus mensajes. Tú decides si sigues yendo.`,
+        activityId,
+      };
+
+    // Written by send_message() and remove_message() (0040). Never the text of
+    // a message: who wrote, and where. Each opens the chat it is about.
+    case 'chat_reply':
+    case 'chat_organizer':
+    case 'chat_message':
+    case 'chat_message_removed': {
+      const communityId = text(payload, 'community_id');
+      const where = text(payload, 'title') ?? 'tu chat';
+      const name = text(payload, 'name') ?? 'Alguien';
+      const reason = text(payload, 'reason');
+      const sentence =
+        row.type === 'chat_reply'
+          ? `${name} respondió a tu mensaje en el chat de ${where}.`
+          : row.type === 'chat_organizer'
+            ? `${name}, que organiza, escribió en el chat de ${where}.`
+            : row.type === 'chat_message'
+              ? `Hay mensajes nuevos en el chat de ${where}.`
+              : reason === null
+                ? `Quien organiza ${where} quitó un mensaje tuyo del chat porque no cumple las reglas.`
+                : `Quien organiza ${where} quitó un mensaje tuyo del chat porque no cumple: «${reason}».`;
+      return {
+        ...base,
+        text: sentence,
+        activityId,
+        opensChat: true,
+        ...(communityId === null ? {} : { communityId }),
+      };
+    }
+
+    // Written by return_location() (0043) to whoever added the venue.
+    case 'venue_returned': {
+      const name = text(payload, 'name') ?? 'tu lugar';
+      const note = text(payload, 'note');
+      return {
+        ...base,
+        text:
+          note === null
+            ? `El equipo te devolvió ${name} para corregirlo. Mientras tanto no se puede elegir en Crear.`
+            : `El equipo te devolvió ${name} para corregirlo: «${note}». Mientras tanto no se puede elegir en Crear.`,
+        activityId: null,
+      };
+    }
+
+    // Written by publish_legal_version() (0044) to every account.
+    case 'terms_updated': {
+      const doc = text(payload, 'document');
+      const what =
+        doc === 'privacy'
+          ? 'el aviso de privacidad'
+          : doc === 'terms'
+            ? 'los términos'
+            : 'los términos y el aviso de privacidad';
+      const version = text(payload, 'version');
+      return {
+        ...base,
+        text: `Actualizamos ${what}${version ? `, del ${legalDate(version)}` : ''}. Lee el resumen de qué cambió.`,
+        activityId: null,
+      };
+    }
+
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes
       // nothing else, because what was decided about another person is not the
@@ -282,6 +371,27 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId: null,
       };
   }
+}
+
+/** «2026-11-04» → «4 de noviembre». A version that is not a date is shown as written. */
+function legalDate(version: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(version);
+  if (!m) return version;
+  const months = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+  return `${Number(m[3])} de ${months[Number(m[2]) - 1] ?? m[2]}`;
 }
 
 /**

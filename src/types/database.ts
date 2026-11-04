@@ -164,6 +164,8 @@ export interface ActivityParticipant {
   cancelled_at: string | null;
   checked_in_at: string | null;
   checked_in_by: string | null;
+  /** Added in 0042. A self check-in sent after the fact, until the organizer confirms it. */
+  check_in_offline: boolean;
 }
 
 export interface Message {
@@ -174,6 +176,14 @@ export interface Message {
   body: string;
   created_at: string;
   deleted_at: string | null;
+  /** Added in 0040. The message this one answers, in the same chat. */
+  reply_to: string | null;
+  /** Added in 0040. Set by remove_message(); never shown to the author. */
+  removed_by: string | null;
+  removed_reason: string | null;
+  /** Added in 0040. At most three pinned per chat. */
+  pinned_at: string | null;
+  pinned_by: string | null;
 }
 
 /**
@@ -223,6 +233,8 @@ export interface Community {
   rules: string | null;
   is_public: boolean;
   created_by: string | null;
+  /** Added in 0040. Who writes in the group chat. */
+  chat_mode: 'everyone' | 'organizers';
 }
 
 export interface Report {
@@ -248,6 +260,13 @@ export interface Report {
   reviewed_at: string | null;
   action_taken: string | null;
   created_at: string;
+  /** Added in 0039. The session where a report about a person or message happened. */
+  context_activity_id: string | null;
+  /**
+   * Added in 0039, generated from `reason`: 0 safety now, 1 identity and
+   * truth, 2 the rest. Never written by a client.
+   */
+  priority: number;
 }
 
 /**

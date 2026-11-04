@@ -6,6 +6,7 @@ import {
   formatSessionTime,
   validateAttributes,
   withFixedAttributes,
+  reportReasonsFor,
 } from './activities';
 import type { JsonSchemaObject } from '../types/database';
 
@@ -73,5 +74,20 @@ describe('fixed rules and option labels', () => {
     expect(enumLabel(kayak.properties.water, 'rio')).toBe('Río');
     expect(enumLabel(kayak.properties.water, 'mar')).toBe('mar');
     expect(enumLabel(undefined, 'x')).toBe('x');
+  });
+});
+
+describe('reportReasonsFor', () => {
+  it('offers «no debería estar aquí» only in women-only spaces', () => {
+    const mixed = reportReasonsFor({ womenOnly: false }).map((o) => o.value);
+    const women = reportReasonsFor({ womenOnly: true }).map((o) => o.value);
+    expect(mixed).not.toContain('not_eligible');
+    expect(women).toContain('not_eligible');
+    expect(mixed).toContain('suplantacion');
+  });
+
+  it('keeps «otra cosa» last in both', () => {
+    expect(reportReasonsFor({ womenOnly: false }).at(-1)?.value).toBe('otro');
+    expect(reportReasonsFor({ womenOnly: true }).at(-1)?.value).toBe('otro');
   });
 });
