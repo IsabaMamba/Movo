@@ -41,7 +41,7 @@ import {
   joinActivity,
   leaveActivity,
   createReport,
-  REPORT_REASONS,
+  reportReasonsFor,
   type ActivityDetail,
   type SeriesOccurrence,
   type ReportReason,
@@ -608,7 +608,7 @@ export function SessionDetailScreen() {
               accessibilityLabel="Motivo del reporte"
               style={s.reasonRow}
             >
-              {REPORT_REASONS.map((option) => {
+              {reportReasonsFor({ womenOnly: false }).map((option) => {
                 const on = reason === option.value;
                 return (
                   <Pressable

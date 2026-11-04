@@ -269,6 +269,15 @@ export function toInboxItem(row: Notification): InboxItem {
       };
     }
 
+    // Written by notify_blocked_person_going() (0039), only to the person who
+    // blocked. Never names who: they know, and nobody else is told anything.
+    case 'blocked_person_going':
+      return {
+        ...base,
+        text: `Alguien que bloqueaste se unió a ${title}. No sabe que vas y no ve tus mensajes. Tú decides si sigues yendo.`,
+        activityId,
+      };
+
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes
       // nothing else, because what was decided about another person is not the

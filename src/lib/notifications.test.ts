@@ -247,6 +247,18 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('somebody you blocked is going', () => {
+    it('says so without naming them, and opens the session', () => {
+      const item = toInboxItem(
+        row({ type: 'blocked_person_going', payload: { activity_id: 'a9', title: 'Trote 38' } }),
+      );
+      expect(item.text).toBe(
+        'Alguien que bloqueaste se unió a Trote 38. No sabe que vas y no ve tus mensajes. Tú decides si sigues yendo.',
+      );
+      expect(item.activityId).toBe('a9');
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.

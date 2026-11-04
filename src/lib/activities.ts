@@ -904,10 +904,35 @@ export const REPORT_REASONS = [
   // 0032. A session's links go somewhere Movo has no say; a bad one is
   // reported on the session, with this reason, into the same queue.
   { value: 'enlace', label: 'Un enlace es engañoso o peligroso' },
+  // 0039. Somebody using another person's name or photo, or a club's.
+  { value: 'suplantacion', label: 'Se hace pasar por otra persona' },
+  // 0039. Offered only inside women-only spaces (Mujeres v1): elsewhere the
+  // sentence is meaningless, and a reason that does not apply is a reason
+  // somebody picks by mistake.
+  { value: 'not_eligible', label: 'No debería estar en un espacio solo para mujeres' },
   { value: 'otro', label: 'Otra cosa' },
 ] as const;
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
+
+/** Reasons that only make sense in some places. */
+const WOMEN_ONLY_REASONS: ReadonlySet<ReportReason> = new Set(['not_eligible']);
+
+/**
+ * The reasons to offer for one report, in the list's order.
+ *
+ * `womenOnly` is whether the session or group where it happened is
+ * women-only. The audience columns arrive with the women-only backend; until
+ * then every caller passes false and the list is what it was, plus
+ * suplantación.
+ */
+export function reportReasonsFor(context: {
+  womenOnly: boolean;
+}): (typeof REPORT_REASONS)[number][] {
+  return REPORT_REASONS.filter(
+    (option) => context.womenOnly || !WOMEN_ONLY_REASONS.has(option.value),
+  );
+}
 
 /**
  * File a report.
@@ -927,6 +952,12 @@ export async function createReport(
   subjectId: string,
   reason: ReportReason,
   details?: string,
+  /**
+   * The session where it happened, for a report about a person or a message
+   * (0039). A reviewer reading «comportamiento» about a name needs to know
+   * which Saturday.
+   */
+  contextActivityId?: string,
 ): Promise<string> {
   const { data, error } = await db
     .from('reports')
@@ -936,6 +967,7 @@ export async function createReport(
       subject_id: subjectId,
       reason,
       details: details?.trim() || null,
+      context_activity_id: contextActivityId ?? null,
     })
     .select('id')
     .single();

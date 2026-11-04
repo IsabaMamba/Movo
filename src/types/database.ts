@@ -248,6 +248,13 @@ export interface Report {
   reviewed_at: string | null;
   action_taken: string | null;
   created_at: string;
+  /** Added in 0039. The session where a report about a person or message happened. */
+  context_activity_id: string | null;
+  /**
+   * Added in 0039, generated from `reason`: 0 safety now, 1 identity and
+   * truth, 2 the rest. Never written by a client.
+   */
+  priority: number;
 }
 
 /**
