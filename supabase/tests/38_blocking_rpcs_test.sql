@@ -90,7 +90,7 @@ begin
      or v -> 0 ->> 'display_name' <> 'Beto' then
     raise exception 'FAIL: the Bloqueos list was %', v;
   end if;
-  if (select array_agg(k order by k) from jsonb_object_keys(v -> 0) k)
+  if (select array_agg(k order by k collate "C") from jsonb_object_keys(v -> 0) k)
      <> array['avatar_url', 'blocked_at', 'display_name', 'id'] then
     raise exception 'FAIL: the Bloqueos list returns more than the public name: %', v -> 0;
   end if;

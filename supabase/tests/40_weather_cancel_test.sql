@@ -136,7 +136,9 @@ do $$
 declare
   v_status text[];
 begin
-  select array_agg(title || ':' || status order by title) into v_status
+  -- collate "C": CI's database sorts by en_US rules, which put «diciembre»
+  -- before «Jacó»; byte order is the same everywhere.
+  select array_agg(title || ':' || status order by title collate "C") into v_status
     from public.activities where id::text like 'c4000000-%';
   if v_status <> array['Kayak en La Sabana:cancelled', 'Kayak en Paquera:cancelled',
                        'Surf en Jacó:cancelled', 'Surf en diciembre:published',

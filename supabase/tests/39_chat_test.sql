@@ -248,7 +248,7 @@ declare
   v_rows text[];
 begin
   select array_agg(u.raw_user_meta_data ->> 'display_name' || ':' || n.type
-                   order by u.raw_user_meta_data ->> 'display_name', n.type)
+                   order by u.raw_user_meta_data ->> 'display_name' collate "C", n.type)
     into v_rows
     from public.notifications n
     join auth.users u on u.id = n.user_id
