@@ -25,6 +25,12 @@ import {
   outcomeText,
   selfCheckIn,
 } from '../../lib/checkIn';
+import {
+  isDecision,
+  loadPending,
+  queueCheckIn,
+  syncPendingCheckIns,
+} from '../../lib/pendingCheckIns';
 import { initials } from '../../lib/profile';
 import { supabase } from '../../lib/supabase';
 import { pointOf } from '../../lib/venues';
@@ -38,6 +44,16 @@ interface Props {
   /** Sport name for «Running · Principiante · Gratis». */
   sport?: string;
   onChanged: () => void;
+}
+
+/** «06:58», Costa Rica time. */
+function clockOf(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone: 'America/Costa_Rica',
+  }).format(new Date(iso));
 }
 
 const AVATAR_TINTS = ['#FFC56B', '#FF9F45', '#F3E6D2', '#F0644F'];
@@ -57,6 +73,8 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
   const [leaving, setLeaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [people, setPeople] = useState<string[]>([]);
+  /** 0042: a «Llegué» kept on the phone because there was no signal. */
+  const [queuedAt, setQueuedAt] = useState<string | null>(null);
 
   // The window opens while the screen is open; re-read the clock.
   useEffect(() => {
@@ -67,6 +85,49 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
       clearInterval(timer);
     };
   }, []);
+
+  // A tap kept without signal: show it, and send it whenever we can. The
+  // server judges it by the time of the tap, not the time it arrives.
+  useEffect(() => {
+    let cancelled = false;
+    const sync = () => {
+      void loadPending()
+        .then((queue) => {
+          if (cancelled) return;
+          setQueuedAt(queue.find((q) => q.activityId === activity.id)?.tappedAt ?? null);
+          if (queue.length === 0) return;
+          return syncPendingCheckIns(supabase).then((results) => {
+            if (cancelled) return;
+            const mine = results.find((r) => r.activityId === activity.id);
+            if (!mine) return;
+            setQueuedAt(null);
+            if ('refused' in mine) {
+              setMessage({ text: mine.refused, ok: false });
+            } else {
+              setMessage({
+                text:
+                  mine.outcome === 'checked_in' || mine.outcome === 'already'
+                    ? 'Llegó tu «Llegué» de cuando no había señal. Quien organiza lo confirma.'
+                    : outcomeText(mine.outcome),
+                ok: mine.outcome === 'checked_in' || mine.outcome === 'already',
+              });
+              if (mine.outcome === 'checked_in' || mine.outcome === 'already') onChanged();
+            }
+          });
+        })
+        .catch(() => undefined);
+    };
+    sync();
+    const online = globalThis as {
+      addEventListener?: (e: string, f: () => void) => void;
+      removeEventListener?: (e: string, f: () => void) => void;
+    };
+    online.addEventListener?.('online', sync);
+    return () => {
+      cancelled = true;
+      online.removeEventListener?.('online', sync);
+    };
+  }, [activity.id, onChanged]);
 
   // Who is going: initials only, the way the board draws them. The roster is
   // readable by whoever is on it (activities_read / roster policy).
@@ -115,6 +176,27 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
       })
       .catch((cause: unknown) => {
         setCode('');
+        // No signal (anything that is not the server deciding): keep the tap
+        // with its time and send it later, instead of losing the arrival.
+        if (!isDecision(cause)) {
+          const tappedAt = new Date().toISOString();
+          void queueCheckIn({ activityId: activity.id, code: value, tappedAt })
+            .then(() => {
+              setQueuedAt(tappedAt);
+              setTyping(false);
+              setMessage({
+                text: 'No hay señal. Guardamos tu llegada con la hora de ahora y la enviamos cuando vuelva.',
+                ok: true,
+              });
+            })
+            .catch(() => {
+              setMessage({
+                text: 'No hay señal. Vuelve a marcar cuando tengas conexión.',
+                ok: false,
+              });
+            });
+          return;
+        }
         setMessage({
           text: cause instanceof Error ? cause.message : 'No se pudo marcar tu llegada.',
           ok: false,
@@ -241,6 +323,10 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
         <Text accessibilityRole="alert" style={s.ok}>
           ✓ Tu llegada quedó marcada.
         </Text>
+      ) : queuedAt ? (
+        <Text accessibilityRole="alert" style={s.note}>
+          Tu llegada quedó guardada a las {clockOf(queuedAt)}, sin señal. La enviamos cuando vuelva.
+        </Text>
       ) : showArrive && !typing ? (
         <Pressable
           accessibilityRole="button"
@@ -257,7 +343,7 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
         </Pressable>
       ) : null}
 
-      {showArrive && !typing && (
+      {showArrive && !typing && !queuedAt && (
         <Text style={s.note}>
           Disponible desde {OPENS_MINUTES_BEFORE} minutos antes hasta {CLOSES_MINUTES_AFTER} minutos
           después del inicio.
