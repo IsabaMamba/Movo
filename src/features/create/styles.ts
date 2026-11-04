@@ -73,6 +73,27 @@ export const createStyles = StyleSheet.create({
     paddingLeft: space.lg,
   },
 
+  /** A sport's fixed rules (0036): read, never edited. Success, like a met condition. */
+  fixedBox: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.md,
+    borderWidth: stroke.hair,
+    gap: space.sm,
+    padding: space.md,
+  },
+  fixedTitle: { ...type.label, color: color.text.primary },
+  fixedRow: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
+  fixedCheck: {
+    alignItems: 'center',
+    backgroundColor: color.semantic.success,
+    borderRadius: radius.sm,
+    height: 18,
+    justifyContent: 'center',
+    width: 18,
+  },
+  fixedText: { ...type.bodySmall, color: color.text.primary, flex: 1 },
+
   row: { flexDirection: 'row', gap: space.md },
   rowItem: { flex: 1, gap: space.sm },
 

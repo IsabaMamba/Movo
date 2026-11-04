@@ -101,7 +101,7 @@ export function AttendanceHistoryScreen() {
             ? ' '
             : on
               ? 'Está activado.'
-              : 'Está apagado. Movo no guarda a dónde vas.'}
+              : 'Está apagado. Tus sesiones quedan en «Pasadas», solo para ti: no se publican ni se usan para recomendarte.'}
         </Text>
       </View>
 
@@ -220,7 +220,7 @@ export function AttendanceHistoryScreen() {
                         } else {
                           run(async () => {
                             await disableAttendanceHistory(supabase);
-                            return 'Historial apagado y borrado. Movo ya no guarda a dónde vas.';
+                            return 'Historial apagado y borrado. Tus sesiones quedan en «Pasadas», solo para ti: no se publican ni se usan para recomendarte.';
                           });
                         }
                       }}
