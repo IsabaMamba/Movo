@@ -46,6 +46,15 @@ import { sportColor } from '../../theme/sport';
 import type { Category, Community } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { dateColumn } from '../discover/format';
+import {
+  fetchChat,
+  fetchMyChats,
+  lastLine,
+  setChatMode,
+  type ChatMessage,
+  type ChatMode,
+  type ChatSummary,
+} from '../../lib/chat';
 import { Icon } from '../nav/Icon';
 import { gruposStyles as s } from './styles';
 
@@ -55,7 +64,7 @@ const ROLE_LABEL: Record<string, string> = {
   member: 'Miembro',
 };
 
-type Tab = 'sesiones' | 'personas' | 'reglas';
+type Tab = 'sesiones' | 'chat' | 'personas' | 'reglas';
 
 export function GrupoDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -69,6 +78,10 @@ export function GrupoDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<Tab>('sesiones');
+  /** Grupos v6 · the Chat tab: the latest line, the unread count, the pins. */
+  const [chat, setChat] = useState<ChatSummary | null>(null);
+  const [pinned, setPinned] = useState<ChatMessage[]>([]);
+  const [modeBusy, setModeBusy] = useState(false);
 
   const userId = session?.user.id;
 
@@ -85,6 +98,14 @@ export function GrupoDetailScreen() {
     ]);
     setMembers(roll);
     setSessions(upcoming);
+
+    // Only members read the chat (0040); for anybody else both fail, quietly.
+    const [mine, page] = await Promise.all([
+      fetchMyChats(supabase).catch((): ChatSummary[] => []),
+      fetchChat(supabase, { communityId: found.id }).catch(() => null),
+    ]);
+    setChat(mine.find((c) => 'communityId' in c.scope && c.scope.communityId === found.id) ?? null);
+    setPinned(page?.pinned ?? []);
   }, [slug]);
 
   useEffect(() => {
@@ -120,6 +141,20 @@ export function GrupoDetailScreen() {
   }
 
   const mine = members.find((m) => m.user_id === userId) ?? null;
+
+  /** «Todo el grupo» or «Solo quienes organizan» (0040, set_chat_mode). */
+  const changeMode = (mode: ChatMode) => {
+    setModeBusy(true);
+    setError(null);
+    setChatMode(supabase, community.id, mode)
+      .then(() => load())
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : 'No se pudo cambiar quién escribe.');
+      })
+      .finally(() => {
+        setModeBusy(false);
+      });
+  };
   const isMember = mine !== null;
   const tint = sportColor(community.category_id ?? '', color.accent.primary);
   // Every sport of the group (0037), in its order: «Running, Trail running».
@@ -242,29 +277,11 @@ export function GrupoDetailScreen() {
 
         {community.description ? <Text style={s.cardBody}>{community.description}</Text> : null}
 
-        {/* Grupos v5 · 3: the group's chat lives in Movo, for members only. */}
-        {isMember && (
-          <Pressable
-            accessibilityHint="Abre el chat del grupo"
-            accessibilityRole="link"
-            onPress={() => {
-              router.push({ pathname: '/chat/grupo/[id]', params: { id: community.id } });
-            }}
-            style={s.chatCard}
-          >
-            <Icon color={color.accent.cool} name="chat" size={20} />
-            <View style={s.cardText}>
-              <Text style={s.chatCardTitle}>Chat del grupo</Text>
-              <Text style={s.chatCardSub}>Dentro de Movo: nadie ve el número de nadie.</Text>
-            </View>
-            <Icon color={color.text.tertiary} name="chevronRight" size={16} />
-          </Pressable>
-        )}
-
         <View accessibilityRole="tablist" style={s.tabs}>
           {(
             [
               ['sesiones', 'Sesiones'],
+              ...(isMember ? ([['chat', 'Chat']] as const) : []),
               ['personas', 'Personas'],
               ['reglas', 'Reglas'],
             ] as const
@@ -279,6 +296,11 @@ export function GrupoDetailScreen() {
               style={[s.tab, tab === value && s.tabOn]}
             >
               <Text style={[s.tabText, tab === value && s.tabTextOn]}>{label}</Text>
+              {value === 'chat' && chat && chat.unread > 0 && chat.notify !== 'muted' && (
+                <View aria-hidden style={s.tabBadge}>
+                  <Text style={s.tabBadgeText}>{chat.unread > 99 ? '99+' : chat.unread}</Text>
+                </View>
+              )}
             </Pressable>
           ))}
         </View>
@@ -369,6 +391,98 @@ export function GrupoDetailScreen() {
                 {session
                   ? 'La lista es visible para quienes ya son parte del grupo.'
                   : 'Inicia sesión para ver quién está.'}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {tab === 'chat' && isMember && (
+          <View style={s.chatTab}>
+            <Pressable
+              accessibilityHint="Abre el chat del grupo"
+              accessibilityRole="link"
+              onPress={() => {
+                router.push({ pathname: '/chat/grupo/[id]', params: { id: community.id } });
+              }}
+              style={s.chatCard}
+            >
+              <Icon color={color.accent.cool} name="chat" size={20} />
+              <View style={s.cardText}>
+                <Text style={s.chatCardTitle}>
+                  Chat del grupo
+                  {chat && chat.unread > 0
+                    ? ` · ${chat.unread} ${chat.unread === 1 ? 'nuevo' : 'nuevos'}`
+                    : ''}
+                </Text>
+                <Text numberOfLines={1} style={s.chatCardSub}>
+                  {chat?.last ? lastLine(chat.last) : 'Todavía no hay mensajes. Saluda.'}
+                </Text>
+              </View>
+              <Icon color={color.text.tertiary} name="chevronRight" size={16} />
+            </Pressable>
+
+            {pinned.some((m) => !m.removed) && (
+              <View style={s.chatSection}>
+                <Text style={s.rulesLabel}>Mensajes fijados</Text>
+                {pinned.map((m) =>
+                  m.removed ? null : (
+                    <View key={m.id} style={s.pinnedRow}>
+                      <Icon color={color.accent.primary} name="pinned" size={14} />
+                      <Text numberOfLines={2} style={s.pinnedText}>
+                        {m.author?.displayName ? `${m.author.displayName}: ` : ''}
+                        {m.body}
+                      </Text>
+                    </View>
+                  ),
+                )}
+              </View>
+            )}
+
+            {mine?.role !== 'member' ? (
+              <View style={s.chatSection}>
+                <Text style={s.rulesLabel}>Quién escribe</Text>
+                <View
+                  accessibilityLabel="Quién escribe en el chat"
+                  accessibilityRole="radiogroup"
+                  style={s.chipRow}
+                >
+                  {(
+                    [
+                      ['everyone', 'Todo el grupo'],
+                      ['organizers', 'Solo quienes organizan'],
+                    ] as const
+                  ).map(([mode, label]) => {
+                    const on = community.chat_mode === mode;
+                    return (
+                      <Pressable
+                        accessibilityRole="radio"
+                        aria-checked={on}
+                        aria-disabled={modeBusy}
+                        disabled={modeBusy}
+                        key={mode}
+                        onPress={() => {
+                          if (on) return;
+                          changeMode(mode);
+                        }}
+                        style={[s.filterChip, on && s.filterChipOn]}
+                      >
+                        <Text style={[s.filterChipText, on && s.filterChipTextOn]}>
+                          {on ? '✓ ' : ''}
+                          {label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={s.hint}>
+                  {community.chat_mode === 'organizers'
+                    ? 'Todo el grupo lee; solo quienes organizan escriben. Sirve para avisos.'
+                    : 'Todo el grupo lee y escribe. Quien organiza puede fijar hasta 3 mensajes y quitar los que no cumplen las reglas.'}
+                </Text>
+              </View>
+            ) : (
+              <Text style={s.hint}>
+                Dentro de Movo: nadie ve el número de nadie. Solo quienes son del grupo lo leen.
               </Text>
             )}
           </View>
