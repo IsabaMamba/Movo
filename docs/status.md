@@ -73,7 +73,7 @@ column is maintained by hand.
 | `0033_self_check_in`           | `self_check_in()` with a per-session 4-digit code, 15 min before to 45 after, 5 wrong codes lock; `check_in_code()`, `new_check_in_code()`, `undo_check_in()` for the organizer                                                     | yes     |
 | `0034_profile_v2`              | `home_district` closed to every client (column grant) and made a distrito code with a foreign key; `my_profile()`; `set_my_interests()`; sports readable where the profile is                                                       | yes     |
 | `0035_gender`                  | `profile_private.gender` (mujer, hombre, no_dice), owner-only; written at sign-up or by `set_my_gender()`, every change logged in `gender_changes`; `my_profile()` returns it                                                       | yes     |
-| `0036_sports_catalog`          | `categories.family`; 16 new sports (19 in six families) with their attribute schemas, `enumNames` for option words; `apply_fixed_attributes()` trigger writes the fixed rules (water, helmets, no contact) on activities and series | no      |
+| `0036_sports_catalog`          | `categories.family`; 16 new sports (19 in six families) with their attribute schemas, `enumNames` for option words; `apply_fixed_attributes()` trigger writes the fixed rules (water, helmets, no contact) on activities and series | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
