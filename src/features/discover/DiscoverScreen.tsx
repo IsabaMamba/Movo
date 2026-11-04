@@ -400,8 +400,8 @@ export function DiscoverScreen() {
                 Prueba ampliar el radio o quitar el filtro de deporte. Estamos sumando sesiones de
                 grupos que ya entrenan en la GAM.
               </Text>
-              <Link href="/solo">
-                <Text style={s.linkText}>Igual puedes ir — modo solo</Text>
+              <Link href="/crear">
+                <Text style={s.linkText}>Organiza la primera</Text>
               </Link>
             </View>
           }
