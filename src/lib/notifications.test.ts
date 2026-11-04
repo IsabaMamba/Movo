@@ -259,6 +259,44 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('the chat', () => {
+    it('names who replied and where, and opens the chat', () => {
+      const item = toInboxItem(
+        row({
+          type: 'chat_reply',
+          payload: { community_id: 'g1', title: 'Corredores de Tibás', name: 'Luis A.' },
+        }),
+      );
+      expect(item.text).toBe('Luis A. respondió a tu mensaje en el chat de Corredores de Tibás.');
+      expect(item.opensChat).toBe(true);
+      expect(item.communityId).toBe('g1');
+      expect(item.activityId).toBeNull();
+    });
+
+    it("marks an organizer's message as the organizer's", () => {
+      const item = toInboxItem(
+        row({
+          type: 'chat_organizer',
+          payload: { activity_id: 'a1', title: 'Trote suave', name: 'Sofía V.' },
+        }),
+      );
+      expect(item.text).toBe('Sofía V., que organiza, escribió en el chat de Trote suave.');
+      expect(item.activityId).toBe('a1');
+    });
+
+    it('says the rule when a message was removed, and never who removed it', () => {
+      const item = toInboxItem(
+        row({
+          type: 'chat_message_removed',
+          payload: { community_id: 'g2', title: 'Senderistas', reason: 'Norma 12 · Nada de spam' },
+        }),
+      );
+      expect(item.text).toBe(
+        'Quien organiza Senderistas quitó un mensaje tuyo del chat porque no cumple: «Norma 12 · Nada de spam».',
+      );
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.

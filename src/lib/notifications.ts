@@ -110,6 +110,12 @@ export interface InboxItem {
    * for notices that ask the organizer to do something the roster is for.
    */
   opensRoster?: true;
+  /**
+   * Open a chat rather than a session page (0040): the session's chat when
+   * `activityId` is set, or this group's chat.
+   */
+  opensChat?: true;
+  communityId?: string;
 }
 
 /**
@@ -277,6 +283,35 @@ export function toInboxItem(row: Notification): InboxItem {
         text: `Alguien que bloqueaste se unió a ${title}. No sabe que vas y no ve tus mensajes. Tú decides si sigues yendo.`,
         activityId,
       };
+
+    // Written by send_message() and remove_message() (0040). Never the text of
+    // a message: who wrote, and where. Each opens the chat it is about.
+    case 'chat_reply':
+    case 'chat_organizer':
+    case 'chat_message':
+    case 'chat_message_removed': {
+      const communityId = text(payload, 'community_id');
+      const where = text(payload, 'title') ?? 'tu chat';
+      const name = text(payload, 'name') ?? 'Alguien';
+      const reason = text(payload, 'reason');
+      const sentence =
+        row.type === 'chat_reply'
+          ? `${name} respondió a tu mensaje en el chat de ${where}.`
+          : row.type === 'chat_organizer'
+            ? `${name}, que organiza, escribió en el chat de ${where}.`
+            : row.type === 'chat_message'
+              ? `Hay mensajes nuevos en el chat de ${where}.`
+              : reason === null
+                ? `Quien organiza ${where} quitó un mensaje tuyo del chat porque no cumple las reglas.`
+                : `Quien organiza ${where} quitó un mensaje tuyo del chat porque no cumple: «${reason}».`;
+      return {
+        ...base,
+        text: sentence,
+        activityId,
+        opensChat: true,
+        ...(communityId === null ? {} : { communityId }),
+      };
+    }
 
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes

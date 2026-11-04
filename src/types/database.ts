@@ -174,6 +174,14 @@ export interface Message {
   body: string;
   created_at: string;
   deleted_at: string | null;
+  /** Added in 0040. The message this one answers, in the same chat. */
+  reply_to: string | null;
+  /** Added in 0040. Set by remove_message(); never shown to the author. */
+  removed_by: string | null;
+  removed_reason: string | null;
+  /** Added in 0040. At most three pinned per chat. */
+  pinned_at: string | null;
+  pinned_by: string | null;
 }
 
 /**
@@ -223,6 +231,8 @@ export interface Community {
   rules: string | null;
   is_public: boolean;
   created_by: string | null;
+  /** Added in 0040. Who writes in the group chat. */
+  chat_mode: 'everyone' | 'organizers';
 }
 
 export interface Report {
