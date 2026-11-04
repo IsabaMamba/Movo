@@ -20,7 +20,7 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { checkedInBy, undoCheckIn } from '../../lib/checkIn';
+import { checkedInBy, confirmOfflineCheckIn, undoCheckIn } from '../../lib/checkIn';
 import {
   cancelActivity,
   checkIn,
@@ -179,6 +179,20 @@ export function RosterScreen() {
       .then(() => load())
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : 'No se pudo deshacer la llegada.');
+      })
+      .finally(() => {
+        setPending(null);
+      });
+  };
+
+  /** 0042: a «Llegué» sent after reconnecting stays «sin señal» until confirmed here. */
+  const confirmOffline = (userId: string) => {
+    setPending(userId);
+    setError(null);
+    confirmOfflineCheckIn(supabase, activity.id, userId)
+      .then(() => load())
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : 'No se pudo confirmar la llegada.');
       })
       .finally(() => {
         setPending(null);
@@ -404,7 +418,22 @@ export function RosterScreen() {
                     {checkedInBy(person.user_id, person.checked_in_by) === 'self'
                       ? 'con código'
                       : 'por ti'}
+                    {person.check_in_offline ? ' · sin señal' : ''}
                   </Text>
+                )}
+                {done && person.check_in_offline && isOrganizer && !closed && !cancelled && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Confirmar la llegada de ${name}`}
+                    accessibilityHint="Marcó sin señal. Confírmala si de verdad llegó."
+                    disabled={pending === person.user_id}
+                    hitSlop={CHECK_HIT_SLOP}
+                    onPress={() => {
+                      confirmOffline(person.user_id);
+                    }}
+                  >
+                    <Text style={cs.confirmOffline}>Confirmar</Text>
+                  </Pressable>
                 )}
                 {done && isOrganizer && !closed && !cancelled && (
                   <Pressable

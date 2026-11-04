@@ -174,5 +174,6 @@ export const checkInStyles = StyleSheet.create({
   filterText: { ...type.caption, color: color.text.secondary },
   filterTextOn: { color: color.text.primary },
   how: { ...type.caption, color: color.semantic.success },
+  confirmOffline: { ...type.bodySmall, color: color.accent.cool, fontWeight: '700' },
   undo: { ...type.caption, color: color.text.tertiary, textDecorationLine: 'underline' },
 });
