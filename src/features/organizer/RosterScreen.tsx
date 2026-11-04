@@ -32,6 +32,7 @@ import {
   type RosterEntry,
 } from '../../lib/activities';
 import { supabase } from '../../lib/supabase';
+import { cancelForWeather, cancelsForWeather } from '../../lib/weather';
 import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
 import { CodePanel } from '../checkin/CodePanel';
@@ -81,6 +82,8 @@ export function RosterScreen() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [reason, setReason] = useState('');
+  /** Water only (0041): the third fixed rule, cancelling for a CNE alert. */
+  const [forWeather, setForWeather] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
 
   const load = useCallback(async () => {
@@ -213,12 +216,18 @@ export function RosterScreen() {
 
   const onRoster = expected + waiting + attended;
 
+  const water = cancelsForWeather(activity.category_id);
+
   const cancel = () => {
     setCancelBusy(true);
     setError(null);
-    cancelActivity(supabase, activity.id, reason)
+    (water && forWeather
+      ? cancelForWeather(supabase, activity.id, reason)
+      : cancelActivity(supabase, activity.id, reason)
+    )
       .then((count) => {
         setCancelling(false);
+        setForWeather(false);
         setReason('');
         // Honest about the channel: the inbox row exists, but nothing
         // delivers it to a phone yet.
@@ -522,12 +531,54 @@ export function RosterScreen() {
                   : `${onRoster} ${onRoster === 1 ? 'persona la va' : 'personas la van'} a ver cancelada en Mis sesiones. Movo todavía no manda avisos al teléfono: escríbeles tú.`}{' '}
                 No se puede deshacer.
               </Text>
+              {water && (
+                <View
+                  accessibilityRole="radiogroup"
+                  accessibilityLabel="Por qué"
+                  style={s.reasonRow}
+                >
+                  {(
+                    [
+                      [false, 'Otro motivo'],
+                      [true, 'Alerta de la CNE'],
+                    ] as const
+                  ).map(([weather, label]) => {
+                    const on = forWeather === weather;
+                    return (
+                      <Pressable
+                        accessibilityRole="radio"
+                        aria-checked={on}
+                        hitSlop={CHECK_HIT_SLOP}
+                        key={label}
+                        onPress={() => {
+                          setForWeather(weather);
+                        }}
+                        style={[s.reasonChip, on && s.reasonChipOn]}
+                      >
+                        <Text style={[s.reasonChipText, on && s.reasonChipTextOn]}>{label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+              {water && forWeather && (
+                <Text style={s.hint}>
+                  Es una regla fija en el agua: si la CNE declara alerta para la zona, la sesión se
+                  cancela. Escribe la alerta como la dice la CNE; es lo que leen quienes iban.
+                </Text>
+              )}
               <TextInput
-                accessibilityLabel="Motivo, opcional"
+                accessibilityLabel={
+                  water && forWeather ? 'La alerta de la CNE' : 'Motivo, opcional'
+                }
                 accessibilityHint="Lo ven todas las personas que van."
                 maxLength={280}
                 onChangeText={setReason}
-                placeholder="Motivo (opcional): llueve, cancha cerrada…"
+                placeholder={
+                  water && forWeather
+                    ? 'Alerta amarilla en el Golfo de Nicoya'
+                    : 'Motivo (opcional): llueve, cancha cerrada…'
+                }
                 placeholderTextColor={color.text.tertiary}
                 style={s.input}
                 value={reason}

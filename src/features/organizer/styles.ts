@@ -8,6 +8,20 @@ import { color, radius, size, space, stroke, type } from '../../theme';
  * so rows wrap rather than scroll sideways.
  */
 export const organizerStyles = StyleSheet.create({
+  /** Water sessions: «Otro motivo» or «Alerta de la CNE» (0041). */
+  reasonRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  reasonChip: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+    paddingHorizontal: space.md,
+  },
+  reasonChipOn: { backgroundColor: color.text.primary, borderColor: color.text.primary },
+  reasonChipText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
+  reasonChipTextOn: { color: color.text.inverse },
   screen: { backgroundColor: color.bg.base, flex: 1 },
   content: {
     gap: space.xl,

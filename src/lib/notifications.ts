@@ -407,6 +407,7 @@ const ORGANIZER_KINDS = new Set([
   'solo_session_organizer',
   'activity_cancelled_by_movo',
   'group_handed_over',
+  'venue_returned',
 ]);
 
 export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
