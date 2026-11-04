@@ -164,6 +164,8 @@ export interface ActivityParticipant {
   cancelled_at: string | null;
   checked_in_at: string | null;
   checked_in_by: string | null;
+  /** Added in 0042. A self check-in sent after the fact, until the organizer confirms it. */
+  check_in_offline: boolean;
 }
 
 export interface Message {
