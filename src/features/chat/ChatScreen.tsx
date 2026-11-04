@@ -41,6 +41,7 @@ import {
   type ChatPage,
   type ChatScope,
 } from '../../lib/chat';
+import { blockPerson } from '../../lib/blocks';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
 import { useAuth } from '../auth/AuthProvider';
@@ -81,6 +82,7 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
   const [menuFor, setMenuFor] = useState<Shown | null>(null);
   const [removing, setRemoving] = useState(false);
   const [settings, setSettings] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const loadingOlder = useRef(false);
 
   const load = useCallback(async () => {
@@ -291,6 +293,11 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
         </View>
       )}
 
+      {notice !== null && (
+        <Text accessibilityRole="alert" style={s.notice}>
+          {notice}
+        </Text>
+      )}
       {error !== null && (
         <Text accessibilityRole="alert" style={s.error}>
           {error}
@@ -446,11 +453,23 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
                   <Text style={s.sheetRowHint}>Le decimos la regla, nunca quién lo quitó</Text>
                 </Pressable>
               )}
-              {!menuFor.isMe && !page?.isOrganizer && (
-                <Text style={s.sheetRowHint}>
-                  Para reportar o bloquear a esta persona, abre su perfil desde la lista de la
-                  sesión.
-                </Text>
+              {!menuFor.isMe && menuFor.author && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    const who = menuFor.author;
+                    if (!who) return;
+                    act(() =>
+                      blockPerson(supabase, who.id).then(() => {
+                        setNotice(`Bloqueaste a ${who.displayName}. No le avisamos.`);
+                      }),
+                    );
+                  }}
+                  style={s.sheetRow}
+                >
+                  <Text style={s.sheetRowDanger}>Bloquear a {menuFor.author.displayName}</Text>
+                  <Text style={s.sheetRowHint}>Dejas de ver sus mensajes. No le avisamos.</Text>
+                </Pressable>
               )}
             </>
           )}

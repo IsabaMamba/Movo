@@ -49,6 +49,7 @@ import {
 import { directionsUrl, inviteText } from '../../lib/agenda';
 import { fetchActivityLinks, type ActivityLink } from '../../lib/links';
 import { pointOf } from '../../lib/venues';
+import { blockedPersonGoing } from '../../lib/blocks';
 import { supabase } from '../../lib/supabase';
 import {
   color,
@@ -172,6 +173,7 @@ export function SessionDetailScreen() {
   const [reportBusy, setReportBusy] = useState(false);
   const [otherDates, setOtherDates] = useState<SeriesOccurrence[]>([]);
   const [links, setLinks] = useState<ActivityLink[]>([]);
+  const [blockedGoing, setBlockedGoing] = useState(false);
 
   const userId = session?.user.id;
 
@@ -196,12 +198,15 @@ export function SessionDetailScreen() {
     if (userId) {
       // Both are permitted to fail quietly: the roster is organizer- and
       // participant-only by policy, so a stranger legitimately gets nothing.
-      const [r, m] = await Promise.all([
+      const [r, m, blocked] = await Promise.all([
         fetchRoster(supabase, id).catch((): Roster => []),
         fetchMyParticipation(supabase, id, userId).catch(() => null),
+        // 0039: a yes or no, never who. Fails as «no».
+        blockedPersonGoing(supabase, id),
       ]);
       setRoster(r);
       setMine(m);
+      setBlockedGoing(blocked);
     }
   }, [id, userId]);
 
@@ -450,6 +455,16 @@ export function SessionDetailScreen() {
             <InfoRow icon="check" sub={activity.equipment.join(' · ')} title="Lleva" />
           )}
         </View>
+
+        {blockedGoing && (
+          <View accessibilityRole="alert" style={s.blockedNotice}>
+            <Icon color={color.text.secondary} name="hand" size={18} />
+            <Text style={s.blockedNoticeText}>
+              Alguien que bloqueaste va a esta sesión. No se ven en la lista ni en el chat, pero sí
+              en persona.
+            </Text>
+          </View>
+        )}
 
         {/* Chat v1 · 1 and Sesión v2 · 9–10: only whoever goes or organizes
             reads the session chat, so only they see the way in. */}
