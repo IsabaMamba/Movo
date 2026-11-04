@@ -451,6 +451,26 @@ export function SessionDetailScreen() {
           )}
         </View>
 
+        {/* Chat v1 · 1 and Sesión v2 · 9–10: only whoever goes or organizes
+            reads the session chat, so only they see the way in. */}
+        {(going || activity.organizer.id === userId) && (
+          <Pressable
+            accessibilityHint="Abre el chat de la sesión"
+            accessibilityRole="link"
+            onPress={() => {
+              router.push({ pathname: '/chat/sesion/[id]', params: { id: activity.id } });
+            }}
+            style={s.chatRow}
+          >
+            <Icon color={color.accent.cool} name="chat" size={20} />
+            <View style={s.infoBody}>
+              <Text style={s.infoTitle}>Chat de la sesión</Text>
+              <Text style={s.infoSub}>Solo quienes van lo leen. Nadie ve tu número.</Text>
+            </View>
+            <Icon color={color.text.tertiary} name="chevronRight" size={16} />
+          </Pressable>
+        )}
+
         <View style={s.goingBlock}>
           <View style={s.goingTop}>
             {goingPeople.length > 0 ? (

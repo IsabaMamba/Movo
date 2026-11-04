@@ -242,6 +242,25 @@ export function GrupoDetailScreen() {
 
         {community.description ? <Text style={s.cardBody}>{community.description}</Text> : null}
 
+        {/* Grupos v5 · 3: the group's chat lives in Movo, for members only. */}
+        {isMember && (
+          <Pressable
+            accessibilityHint="Abre el chat del grupo"
+            accessibilityRole="link"
+            onPress={() => {
+              router.push({ pathname: '/chat/grupo/[id]', params: { id: community.id } });
+            }}
+            style={s.chatCard}
+          >
+            <Icon color={color.accent.cool} name="chat" size={20} />
+            <View style={s.cardText}>
+              <Text style={s.chatCardTitle}>Chat del grupo</Text>
+              <Text style={s.chatCardSub}>Dentro de Movo: nadie ve el número de nadie.</Text>
+            </View>
+            <Icon color={color.text.tertiary} name="chevronRight" size={16} />
+          </Pressable>
+        )}
+
         <View accessibilityRole="tablist" style={s.tabs}>
           {(
             [

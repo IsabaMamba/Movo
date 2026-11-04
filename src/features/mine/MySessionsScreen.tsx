@@ -30,6 +30,7 @@ import type { Category } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { ArrivalCard } from '../checkin/ArrivalCard';
 import { BellLink } from '../nav/BellLink';
+import { ChatLink } from '../nav/ChatLink';
 import { Icon } from '../nav/Icon';
 import { mineStyles as s } from './styles';
 
@@ -236,7 +237,10 @@ export function MySessionsScreen() {
         <Text accessibilityRole="header" style={s.title}>
           Mis sesiones
         </Text>
-        <BellLink userId={userId} />
+        <View style={s.headerIcons}>
+          <ChatLink />
+          <BellLink userId={userId} />
+        </View>
       </View>
 
       <View accessibilityRole="tablist" style={s.segment}>
