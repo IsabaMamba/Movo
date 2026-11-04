@@ -198,6 +198,20 @@ export function toInboxItem(row: Notification): InboxItem {
       };
     }
 
+    // Written by cancel_for_weather() and cancel_water_sessions_in_zone()
+    // (0041). The alert is the CNE's words; the rule is fixed for water.
+    case 'activity_cancelled_weather': {
+      const alert = text(payload, 'alert');
+      return {
+        ...base,
+        text:
+          alert === null
+            ? `${title} se canceló por una alerta de la CNE. En el agua es una regla fija.`
+            : `${title} se canceló: la CNE declaró ${alert}. En el agua es una regla fija.`,
+        activityId,
+      };
+    }
+
     case 'activity_cancelled_by_movo':
       // To the organizer. Says the rule, not the report: who reported is
       // exactly what this sentence must not let them work out.

@@ -297,6 +297,34 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('a water session cancelled for a CNE alert', () => {
+    it('quotes the alert and says the rule is fixed', () => {
+      const item = toInboxItem(
+        row({
+          type: 'activity_cancelled_weather',
+          payload: {
+            activity_id: 'a5',
+            title: 'Remada a Isla Venado',
+            alert: 'alerta amarilla en el Golfo de Nicoya',
+          },
+        }),
+      );
+      expect(item.text).toBe(
+        'Remada a Isla Venado se canceló: la CNE declaró alerta amarilla en el Golfo de Nicoya. En el agua es una regla fija.',
+      );
+      expect(item.activityId).toBe('a5');
+    });
+
+    it('still reads without the alert', () => {
+      const item = toInboxItem(
+        row({ type: 'activity_cancelled_weather', payload: { activity_id: 'a5', title: 'Surf' } }),
+      );
+      expect(item.text).toBe(
+        'Surf se canceló por una alerta de la CNE. En el agua es una regla fija.',
+      );
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.
