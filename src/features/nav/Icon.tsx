@@ -40,7 +40,11 @@ export type IconName =
   | 'car'
   | 'link'
   | 'close'
-  | 'alert';
+  | 'alert'
+  | 'chat'
+  | 'send'
+  | 'more'
+  | 'pinned';
 
 interface Props {
   name: IconName;
@@ -189,6 +193,18 @@ export function Icon({ name, color, size = 20, strokeWidth = 1.8 }: Props) {
         />
       )}
       {name === 'close' && <Path {...p} d="M6 6l12 12M18 6L6 18" />}
+      {name === 'chat' && (
+        <Path {...p} d="M5 18.5V7.5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9z" />
+      )}
+      {name === 'send' && <Path {...p} d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5" />}
+      {name === 'more' && (
+        <>
+          <Circle cx="6" cy="12" fill={color} r="1.4" />
+          <Circle cx="12" cy="12" fill={color} r="1.4" />
+          <Circle cx="18" cy="12" fill={color} r="1.4" />
+        </>
+      )}
+      {name === 'pinned' && <Path {...p} d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7" />}
       {name === 'alert' && (
         <>
           <Circle {...p} cx="12" cy="12" r="9" />

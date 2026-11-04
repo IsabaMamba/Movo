@@ -22,6 +22,7 @@ export const mineStyles = StyleSheet.create({
   backText: { ...type.bodySmall, color: color.accent.cool },
 
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  headerIcons: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
   title: { ...type.display, color: color.text.primary },
   subtitle: { ...type.bodySmall, color: color.text.secondary },
   sectionTitle: { ...type.heading, color: color.text.primary, textAlign: 'center' },
