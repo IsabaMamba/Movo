@@ -46,9 +46,11 @@ import {
   exportFileName,
   exportMyData,
 } from '../../lib/account';
+import { levelLabel, mySports } from '../../lib/profile';
 import { disablePush, getPushState, type PushState } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
 import { color } from '../../theme';
+import { sportColor } from '../../theme/sport';
 import { useAuth } from '../auth/AuthProvider';
 import { createStyles as s } from '../create/styles';
 import { BellLink } from '../nav/BellLink';
@@ -152,7 +154,8 @@ export function AccountScreen() {
   }, []);
 
   const userId = session?.user.id;
-  const { profile, sportNames, zone, error: loadError, reload } = useMyProfile(userId);
+  const { profile, categories, zone, error: loadError, reload } = useMyProfile(userId);
+  const categoryName = (id: string) => categories.find((k) => k.id === id)?.name_es ?? id;
 
   // Back from Editar perfil, the card should show what was just saved.
   useFocusEffect(
@@ -227,8 +230,9 @@ export function AccountScreen() {
           onPhoto={() => {
             router.push('/perfil/editar');
           }}
-          sportIds={profile.interests ?? []}
-          sports={sportNames}
+          // The sports are a section of their own here, with a level each
+          // (Deportes v2 · 3); the card keeps them for the public preview.
+          sports={[]}
           zone={zone}
         />
       )}
@@ -247,6 +251,39 @@ export function AccountScreen() {
           </Pressable>
         </Link>
       </View>
+
+      {profile ? (
+        <View style={s.section}>
+          <View style={p.headerRow}>
+            <Text style={p.groupLabel}>TUS DEPORTES</Text>
+            <Link href="/perfil/deportes" style={p.sectionLink}>
+              <Text style={p.sectionLinkText}>
+                {mySports(profile).length > 0 ? 'Editar' : 'Elegir'}
+              </Text>
+            </Link>
+          </View>
+          {mySports(profile).length === 0 ? (
+            <Text style={s.hint}>Elige tus deportes y tu nivel en cada uno.</Text>
+          ) : (
+            <View style={p.group}>
+              {mySports(profile).map((sport, i, all) => (
+                <View
+                  accessible
+                  accessibilityLabel={`${categoryName(sport.category)}, ${levelLabel(sport.level)}`}
+                  key={sport.category}
+                  style={[p.row, i === all.length - 1 && p.rowLast]}
+                >
+                  <View aria-hidden style={p.rowIcon}>
+                    <View style={[p.chipDot, { backgroundColor: sportColor(sport.category) }]} />
+                  </View>
+                  <Text style={p.rowText}>{categoryName(sport.category)}</Text>
+                  <Text style={p.rowValue}>{levelLabel(sport.level)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      ) : null}
 
       {notice !== null && (
         <View style={[s.banner, s.bannerOk]}>
