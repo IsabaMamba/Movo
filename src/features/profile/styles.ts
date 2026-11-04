@@ -51,6 +51,7 @@ export const profileStyles = StyleSheet.create({
     paddingVertical: space.xs,
   },
   chipDot: { borderRadius: radius.full, height: 8, width: 8 },
+  chipLevel: { color: color.text.secondary },
   chipText: { ...type.caption, color: color.text.primary },
 
   actions: { flexDirection: 'row', gap: space.md },
@@ -87,6 +88,8 @@ export const profileStyles = StyleSheet.create({
   },
   rowLast: { borderBottomWidth: 0 },
   rowIcon: { alignItems: 'center', width: 22 },
+  sectionLink: { justifyContent: 'center', minHeight: size.controlSm },
+  sectionLinkText: { ...type.bodySmall, color: color.accent.cool, fontWeight: '600' },
   rowText: { ...type.body, color: color.text.primary, flex: 1 },
   rowValue: { ...type.bodySmall, color: color.text.tertiary },
   rowTextQuiet: { color: color.text.secondary },
@@ -109,4 +112,83 @@ export const profileStyles = StyleSheet.create({
     padding: space.md,
   },
   hiddenText: { ...type.bodySmall, color: color.text.secondary },
+});
+
+/** Tus deportes (Deportes v2 · 4): a card per sport, three levels in a segment. */
+export const sportsEditStyles = StyleSheet.create({
+  topBar: { alignItems: 'center', flexDirection: 'row', minHeight: size.minTarget },
+  topAction: { flex: 1, justifyContent: 'center', minHeight: size.minTarget },
+  topActionEnd: { alignItems: 'flex-end' },
+  topCancel: { ...type.bodySmall, color: color.text.secondary },
+  topTitle: { ...type.action, color: color.text.primary },
+  topSave: { ...type.action, color: color.accent.primary },
+
+  card: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    gap: space.md,
+    padding: space.lg,
+  },
+  cardHead: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
+  cardTitle: { ...type.action, color: color.text.primary, flex: 1 },
+  dot: { borderRadius: radius.full, height: 8, width: 8 },
+  remove: {
+    alignItems: 'center',
+    height: size.controlSm,
+    justifyContent: 'center',
+    width: size.controlSm,
+  },
+
+  segment: {
+    backgroundColor: color.bg.base,
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    padding: 3,
+  },
+  segmentItem: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+  },
+  segmentItemOn: { backgroundColor: color.accent.primary },
+  segmentText: { ...type.bodySmall, color: color.text.secondary },
+  segmentTextOn: { color: color.text.inverse, fontWeight: '700' },
+
+  addRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.sm,
+    minHeight: size.minTarget,
+  },
+  addRowText: { ...type.bodySmall, color: color.accent.cool, fontWeight: '600' },
+
+  picker: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    gap: space.md,
+    padding: space.lg,
+  },
+  pickerHead: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  pickerTitle: { ...type.action, color: color.text.primary },
+  family: { gap: space.sm },
+  familyName: { ...type.label, letterSpacing: 1 },
+  addChip: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.xs,
+    minHeight: size.controlSm,
+    paddingHorizontal: space.md,
+  },
+  addChipText: { ...type.bodySmall, color: color.text.primary },
 });

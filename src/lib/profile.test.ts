@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { bioProblem, districtOptions, initials, searchDistricts, sinceLabel } from './profile';
+import {
+  bioProblem,
+  districtOptions,
+  initials,
+  levelLabel,
+  mySports,
+  searchDistricts,
+  sinceLabel,
+} from './profile';
 
 const ROWS = [
   { code: '113', kind: 'canton', name: 'Tibás', parent_code: '1' },
@@ -62,5 +70,22 @@ describe('bioProblem', () => {
   it('allows up to 160 characters', () => {
     expect(bioProblem('a'.repeat(160))).toBeNull();
     expect(bioProblem('a'.repeat(161))).toBe('Hasta 160 caracteres.');
+  });
+});
+
+/** Deportes v2 · 4: three levels in words, and older profiles start at the first. */
+describe('a level per sport', () => {
+  it('names the three levels', () => {
+    expect(levelLabel('beginner')).toBe('Empezando');
+    expect(levelLabel('intermediate')).toBe('Intermedio');
+    expect(levelLabel('advanced')).toBe('Avanzado');
+    expect(levelLabel('any')).toBe('Empezando');
+  });
+
+  it('reads the levels, or starts older profiles at «Empezando»', () => {
+    expect(
+      mySports({ interests: ['running'], sports: [{ category: 'running', level: 'advanced' }] }),
+    ).toEqual([{ category: 'running', level: 'advanced' }]);
+    expect(mySports({ interests: ['yoga'] })).toEqual([{ category: 'yoga', level: 'beginner' }]);
   });
 });
