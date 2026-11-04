@@ -12,6 +12,10 @@
  * Layout from the 2 November walkthrough (step 11, Grupos v1): search and «+»
  * in the header, «Tus grupos» with each group's next session, then the open
  * groups with a sport filter and how many sessions they have this week.
+ *
+ * Since 0037 a group plays up to three of the nineteen sports (Grupos v5 · 5):
+ * the form picks them, the filter matches any of them, and the cards name
+ * them all. The tile keeps the colour of the first.
  */
 
 import { Link, useRouter } from 'expo-router';
@@ -31,7 +35,10 @@ import {
   fetchMyGroupRoles,
   groupAgenda,
   groupInitials,
+  groupSports,
+  MAX_GROUP_SPORTS,
   roleWord,
+  toggleSport,
   type GroupAgenda,
   type GroupRole,
 } from '../../lib/groups';
@@ -60,6 +67,7 @@ export function GruposScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
+  const [sportIds, setSportIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [roles, setRoles] = useState<Map<string, GroupRole>>(new Map());
@@ -104,11 +112,18 @@ export function GruposScreen() {
     if (!canCreate || !session) return;
     setBusy(true);
     setError(null);
-    createCommunity(supabase, session.user.id, { name, slug, description, isPublic })
+    createCommunity(supabase, session.user.id, {
+      name,
+      slug,
+      description,
+      isPublic,
+      categoryIds: sportIds,
+    })
       .then((community) => {
         setCreating(false);
         setName('');
         setDescription('');
+        setSportIds([]);
         router.push({ pathname: '/grupos/[slug]', params: { slug: community.slug } });
       })
       .catch((cause: unknown) => {
@@ -140,6 +155,43 @@ export function GruposScreen() {
           value={name}
         />
         {slug.length > 0 && <Text style={s.hint}>movo.cr/grupos/{slug}</Text>}
+      </View>
+
+      <View style={s.field}>
+        <View style={s.labelRow}>
+          <Text style={s.label}>Deporte</Text>
+          <Text style={s.hint}>
+            {sportIds.length}/{MAX_GROUP_SPORTS}
+          </Text>
+        </View>
+        <View accessibilityLabel="Deportes del grupo, hasta tres" style={s.chipRow}>
+          {categories.map((cat) => {
+            const on = sportIds.includes(cat.id);
+            const full = !on && sportIds.length >= MAX_GROUP_SPORTS;
+            return (
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityLabel={cat.name_es}
+                aria-checked={on}
+                aria-disabled={full}
+                disabled={full}
+                hitSlop={CHIP_HIT_SLOP}
+                key={cat.id}
+                onPress={() => {
+                  setSportIds((current) => toggleSport(current, cat.id));
+                }}
+                style={[s.filterChip, on && s.filterChipOn, full && s.chipFull]}
+              >
+                {!on && <View style={[s.dot, { backgroundColor: sportColor(cat.id) }]} />}
+                <Text style={[s.filterChipText, on && s.filterChipTextOn]}>
+                  {on ? '✓ ' : ''}
+                  {cat.name_es}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={s.hint}>Hasta 3, de los 19 deportes.</Text>
       </View>
 
       <View style={s.field}>
@@ -226,14 +278,20 @@ export function GruposScreen() {
   const q = query.trim().toLowerCase();
   const visible = (communities ?? []).filter(
     (c) =>
-      (q === '' || c.name.toLowerCase().includes(q)) && (sport === null || c.category_id === sport),
+      (q === '' || c.name.toLowerCase().includes(q)) &&
+      (sport === null || groupSports(c).includes(sport)),
   );
   const mine = visible.filter((c) => roles.has(c.id));
   const others = visible.filter((c) => !roles.has(c.id));
   const sportsShown = categories.filter((cat) =>
-    (communities ?? []).some((c) => !roles.has(c.id) && c.category_id === cat.id),
+    (communities ?? []).some((c) => !roles.has(c.id) && groupSports(c).includes(cat.id)),
   );
-  const sportOf = (id: string | null) => categories.find((c) => c.id === id)?.name_es ?? null;
+  /** «Running, Trail running» — every sport of the group, in its order. */
+  const sportsOf = (community: CommunityWithCount) =>
+    groupSports(community)
+      .map((id) => categories.find((c) => c.id === id)?.name_es)
+      .filter(Boolean)
+      .join(', ') || null;
 
   const tile = (community: CommunityWithCount, big = false) => (
     <View
@@ -327,7 +385,7 @@ export function GruposScreen() {
               {mine.map((community) => {
                 const next = agenda.get(community.id)?.next ?? null;
                 const facts = [
-                  sportOf(community.category_id),
+                  sportsOf(community),
                   people(community),
                   roleWord(roles.get(community.id)),
                 ]
@@ -448,7 +506,7 @@ export function GruposScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={[
                         community.name,
-                        sportOf(community.category_id),
+                        sportsOf(community),
                         second,
                         community.description,
                       ]
@@ -474,7 +532,7 @@ export function GruposScreen() {
                                 { backgroundColor: sportColor(community.category_id) },
                               ]}
                             />
-                            <Text style={s.cardFacts}>{sportOf(community.category_id)}</Text>
+                            <Text style={s.cardFacts}>{sportsOf(community)}</Text>
                           </View>
                         )}
                         {second ? <Text style={s.rowMeta}>{second}</Text> : null}

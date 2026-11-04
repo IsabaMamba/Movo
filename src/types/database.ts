@@ -217,6 +217,8 @@ export interface Community {
   name: string;
   description: string | null;
   category_id: CategoryId | null;
+  /** Up to three, in the group's order; category_id is the first (0037). */
+  category_ids: CategoryId[];
   cover_url: string | null;
   rules: string | null;
   is_public: boolean;
