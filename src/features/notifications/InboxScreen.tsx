@@ -53,6 +53,7 @@ function kindIcon(kind: string): { name: IconName; tint: string } {
     case 'account_restored':
       return { name: 'check', tint: color.semantic.success };
     case 'activity_cancelled':
+    case 'activity_cancelled_weather':
     case 'activity_cancelled_by_movo':
       return { name: 'close', tint: color.semantic.dangerOnRaised };
     case 'account_suspended':
@@ -67,6 +68,18 @@ function kindIcon(kind: string): { name: IconName; tint: string } {
       return { name: 'people', tint: color.accent.cool };
     case 'report_resolved':
       return { name: 'flag', tint: color.accent.cool };
+    case 'chat_reply':
+    case 'chat_organizer':
+    case 'chat_message':
+      return { name: 'chat', tint: color.accent.cool };
+    case 'chat_message_removed':
+      return { name: 'alert', tint: color.semantic.dangerOnRaised };
+    case 'blocked_person_going':
+      return { name: 'hand', tint: color.text.secondary };
+    case 'venue_returned':
+      return { name: 'pin', tint: color.accent.primary };
+    case 'terms_updated':
+      return { name: 'book', tint: color.accent.cool };
     default:
       return { name: 'bell', tint: color.accent.cool };
   }
