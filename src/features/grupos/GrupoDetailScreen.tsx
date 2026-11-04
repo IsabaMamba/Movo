@@ -33,7 +33,13 @@ import {
   leaveCommunity,
   type CommunityMemberEntry,
 } from '../../lib/activities';
-import { fetchGroupUpcoming, groupInitials, roleWord, type GroupSession } from '../../lib/groups';
+import {
+  fetchGroupUpcoming,
+  groupInitials,
+  groupSports,
+  roleWord,
+  type GroupSession,
+} from '../../lib/groups';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor } from '../../theme';
 import { sportColor } from '../../theme/sport';
@@ -116,7 +122,12 @@ export function GrupoDetailScreen() {
   const mine = members.find((m) => m.user_id === userId) ?? null;
   const isMember = mine !== null;
   const tint = sportColor(community.category_id ?? '', color.accent.primary);
-  const sport = categories.find((c) => c.id === community.category_id)?.name_es ?? null;
+  // Every sport of the group (0037), in its order: «Running, Trail running».
+  const sport =
+    groupSports(community)
+      .map((id) => categories.find((c) => c.id === id)?.name_es)
+      .filter(Boolean)
+      .join(', ') || null;
   const facts = [
     sport,
     members.length > 0

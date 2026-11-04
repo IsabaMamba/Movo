@@ -180,6 +180,9 @@ export const gruposStyles = StyleSheet.create({
     minHeight: size.controlSm,
     paddingHorizontal: space.lg,
   },
+  /** The fourth sport cannot be picked; the chip says so by receding. */
+  chipFull: { opacity: 0.4 },
+  labelRow: { alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between' },
   filterChipOn: { backgroundColor: color.text.primary, borderColor: color.text.primary },
   filterChipText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
   filterChipTextOn: { color: color.text.inverse },

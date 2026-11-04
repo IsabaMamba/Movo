@@ -831,7 +831,8 @@ export interface NewCommunityInput {
   slug: string;
   description?: string | null;
   rules?: string | null;
-  categoryId?: CategoryId | null;
+  /** Up to three; the database checks them and sets category_id to the first (0037). */
+  categoryIds?: CategoryId[];
   isPublic: boolean;
 }
 
@@ -852,7 +853,7 @@ export async function createCommunity(
       name: input.name.trim(),
       description: input.description?.trim() || null,
       rules: input.rules?.trim() || null,
-      category_id: input.categoryId ?? null,
+      category_ids: input.categoryIds ?? [],
       is_public: input.isPublic,
       created_by: creatorId,
     })

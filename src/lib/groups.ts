@@ -123,3 +123,25 @@ export async function fetchGroupUpcoming(
   if (error) throw toApiError(error);
   return (data ?? []) as GroupSession[];
 }
+
+// ------------------------------------------------- up to three sports (0037)
+
+export const MAX_GROUP_SPORTS = 3;
+
+/**
+ * A group's sports, in its order. Rows read before 0037 reached the client
+ * carry only category_id, so that is the fallback.
+ */
+export function groupSports(group: {
+  category_id: string | null;
+  category_ids?: readonly string[] | null;
+}): string[] {
+  if (group.category_ids && group.category_ids.length > 0) return [...group.category_ids];
+  return group.category_id ? [group.category_id] : [];
+}
+
+/** Tap a sport chip: off if it was on, on if there is room; the fourth does nothing. */
+export function toggleSport(selected: readonly string[], id: string): string[] {
+  if (selected.includes(id)) return selected.filter((s) => s !== id);
+  return selected.length >= MAX_GROUP_SPORTS ? [...selected] : [...selected, id];
+}

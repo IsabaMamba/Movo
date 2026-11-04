@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupAgenda, groupInitials, roleWord } from './groups';
+import { groupAgenda, groupInitials, groupSports, roleWord, toggleSport } from './groups';
 
 const NOW = new Date('2026-11-02T16:00:00Z');
 
@@ -37,5 +37,21 @@ describe('groupInitials', () => {
     expect(groupInitials('Corredores de Tibás')).toBe('CT');
     expect(groupInitials('Fútbol 5 La Sabana')).toBe('FS');
     expect(groupInitials('Mejengueros')).toBe('M');
+  });
+});
+
+describe('group sports', () => {
+  it('reads the list, or the single sport of an older row', () => {
+    expect(
+      groupSports({ category_id: 'running', category_ids: ['running', 'trail_running'] }),
+    ).toEqual(['running', 'trail_running']);
+    expect(groupSports({ category_id: 'football' })).toEqual(['football']);
+    expect(groupSports({ category_id: null, category_ids: [] })).toEqual([]);
+  });
+
+  it('toggles a chip and stops at three', () => {
+    expect(toggleSport([], 'yoga')).toEqual(['yoga']);
+    expect(toggleSport(['yoga', 'surf'], 'yoga')).toEqual(['surf']);
+    expect(toggleSport(['a', 'b', 'c'], 'd')).toEqual(['a', 'b', 'c']);
   });
 });
