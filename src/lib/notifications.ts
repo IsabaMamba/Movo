@@ -327,6 +327,20 @@ export function toInboxItem(row: Notification): InboxItem {
       };
     }
 
+    // Written by return_location() (0043) to whoever added the venue.
+    case 'venue_returned': {
+      const name = text(payload, 'name') ?? 'tu lugar';
+      const note = text(payload, 'note');
+      return {
+        ...base,
+        text:
+          note === null
+            ? `El equipo te devolvió ${name} para corregirlo. Mientras tanto no se puede elegir en Crear.`
+            : `El equipo te devolvió ${name} para corregirlo: «${note}». Mientras tanto no se puede elegir en Crear.`,
+        activityId: null,
+      };
+    }
+
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes
       // nothing else, because what was decided about another person is not the

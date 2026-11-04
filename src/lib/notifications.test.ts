@@ -325,6 +325,21 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('a venue handed back', () => {
+    it('quotes what to correct', () => {
+      const item = toInboxItem(
+        row({
+          type: 'venue_returned',
+          payload: { location_id: 'l1', name: 'Cancha 3', note: 'Mueve el punto a la entrada' },
+        }),
+      );
+      expect(item.text).toBe(
+        'El equipo te devolvió Cancha 3 para corregirlo: «Mueve el punto a la entrada». Mientras tanto no se puede elegir en Crear.',
+      );
+      expect(item.activityId).toBeNull();
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.
