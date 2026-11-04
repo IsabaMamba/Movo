@@ -305,6 +305,16 @@ export const detailStyles = StyleSheet.create({
     gap: space.md,
     paddingVertical: space.md,
   },
+  blockedNotice: {
+    alignItems: 'flex-start',
+    borderColor: color.border.strong,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.sm,
+    padding: space.md,
+  },
+  blockedNoticeText: { ...type.bodySmall, color: color.text.secondary, flex: 1 },
   chatRow: {
     alignItems: 'center',
     backgroundColor: color.bg.surface,

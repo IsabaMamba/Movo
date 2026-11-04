@@ -59,7 +59,14 @@ import { ProfileCard } from '../profile/ProfileCard';
 import { profileStyles as p } from '../profile/styles';
 import { useMyProfile } from '../profile/useMyProfile';
 
-type RowHref = '/historial' | '/organizar' | '/avisos' | '/permisos' | '/normas' | '/mis-sesiones';
+type RowHref =
+  | '/historial'
+  | '/organizar'
+  | '/avisos'
+  | '/permisos'
+  | '/normas'
+  | '/mis-sesiones'
+  | '/perfil/bloqueos';
 
 /** The inside of a settings row: icon, label, optional value, chevron. */
 function RowBody({
@@ -316,6 +323,7 @@ export function AccountScreen() {
         <View style={p.group}>
           <Row href="/avisos" icon="bell" label="Avisos" value={pushValue(push)} />
           <Row href="/permisos" icon="shield" label="Tus permisos" />
+          <Row href="/perfil/bloqueos" icon="hand" label="Bloqueos" />
           <Row href="/normas" icon="book" label="Normas de la comunidad" last />
         </View>
       </View>

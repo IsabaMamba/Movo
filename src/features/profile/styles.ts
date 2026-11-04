@@ -192,3 +192,63 @@ export const sportsEditStyles = StyleSheet.create({
   },
   addChipText: { ...type.bodySmall, color: color.text.primary },
 });
+
+/** Perfil › Bloqueos (Perfil v3). */
+export const blocksStyles = StyleSheet.create({
+  topBar: { alignItems: 'center', flexDirection: 'row', gap: space.sm, minHeight: size.minTarget },
+  topButton: {
+    alignItems: 'center',
+    height: size.minTarget,
+    justifyContent: 'center',
+    marginLeft: -space.md,
+    width: size.minTarget,
+  },
+  title: { ...type.title, color: color.text.primary },
+  empty: { gap: space.sm, paddingVertical: space.xl },
+  emptyTitle: { ...type.heading, color: color.text.primary },
+  list: {
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  row: {
+    borderBottomColor: color.border.default,
+    borderBottomWidth: stroke.hair,
+    gap: space.sm,
+    padding: space.lg,
+  },
+  rowTop: { alignItems: 'center', flexDirection: 'row', gap: space.md },
+  avatar: {
+    alignItems: 'center',
+    backgroundColor: color.bg.raised,
+    borderRadius: radius.full,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  avatarText: { ...type.caption, color: color.text.secondary, fontWeight: '700' },
+  rowText: { flex: 1 },
+  name: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  since: { ...type.caption, color: color.text.tertiary },
+  unblock: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+    paddingHorizontal: space.md,
+  },
+  unblockText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
+  confirm: { gap: space.sm },
+  confirmActions: { flexDirection: 'row', gap: space.sm },
+  confirmYes: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    minHeight: size.controlSm,
+    paddingHorizontal: space.lg,
+  },
+  confirmYesText: { ...type.bodySmall, color: color.text.inverse, fontWeight: '700' },
+});

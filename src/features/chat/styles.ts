@@ -47,6 +47,12 @@ export const chatStyles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingTop: space.sm,
   },
+  notice: {
+    ...type.bodySmall,
+    color: color.text.secondary,
+    paddingHorizontal: space.lg,
+    paddingTop: space.sm,
+  },
   list: { gap: space.md, padding: space.lg },
   empty: { ...type.bodySmall, color: color.text.tertiary, padding: space.xl, textAlign: 'center' },
 
