@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 
 import { NAME_MAX, NAME_MIN } from '../../lib/account';
 import { MIN_AGE, parseBirthdate } from '../../lib/age';
 import { GENDER_OPTIONS, GENDER_PURPOSE, type Gender } from '../../lib/gender';
+import { passwordOk, passwordProblem } from '../../lib/password';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
@@ -50,7 +51,8 @@ export function SignUpScreen() {
   const birth = parseBirthdate(day, month, year);
   const birthTouched = day.length > 0 || month.length > 0 || year.length > 0;
   const canSubmit =
-    nameValid && birth.ok && gender !== null && email.length > 0 && password.length > 0 && !busy;
+    nameValid && birth.ok && gender !== null && email.length > 0 && passwordOk(password) && !busy;
+  const passwordHint = passwordProblem(password);
 
   const submit = () => {
     if (!canSubmit || !birth.ok || gender === null) return;
@@ -190,17 +192,22 @@ export function SignUpScreen() {
         accessibilityLabel="Contraseña"
         /* The minimum only exists in the placeholder, which is gone as soon as
            there is a character in the field. */
-        accessibilityHint="Mínimo 6 caracteres."
+        accessibilityHint="Mínimo 8 caracteres."
         autoCapitalize="none"
         autoComplete="new-password"
         onChangeText={setPassword}
         onSubmitEditing={submit}
-        placeholder="Mínimo 6 caracteres"
+        placeholder="Mínimo 8 caracteres"
         placeholderTextColor={color.text.tertiary}
         secureTextEntry
         style={s.input}
         value={password}
       />
+      {passwordHint ? (
+        <Text accessibilityLiveRegion="polite" style={s.hint}>
+          {passwordHint}
+        </Text>
+      ) : null}
 
       {/* The only feedback a failed signup has. It appears below the field the
           user just left, so without a role it lands silently. */}
