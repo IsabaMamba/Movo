@@ -341,6 +341,23 @@ export function toInboxItem(row: Notification): InboxItem {
       };
     }
 
+    // Written by publish_legal_version() (0044) to every account.
+    case 'terms_updated': {
+      const doc = text(payload, 'document');
+      const what =
+        doc === 'privacy'
+          ? 'el aviso de privacidad'
+          : doc === 'terms'
+            ? 'los términos'
+            : 'los términos y el aviso de privacidad';
+      const version = text(payload, 'version');
+      return {
+        ...base,
+        text: `Actualizamos ${what}${version ? `, del ${legalDate(version)}` : ''}. Lee el resumen de qué cambió.`,
+        activityId: null,
+      };
+    }
+
     case 'report_resolved':
       // Deliberately says only that it was reviewed — resolve_report() writes
       // nothing else, because what was decided about another person is not the
@@ -354,6 +371,27 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId: null,
       };
   }
+}
+
+/** «2026-11-04» → «4 de noviembre». A version that is not a date is shown as written. */
+function legalDate(version: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(version);
+  if (!m) return version;
+  const months = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+  return `${Number(m[3])} de ${months[Number(m[2]) - 1] ?? m[2]}`;
 }
 
 /**

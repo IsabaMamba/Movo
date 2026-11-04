@@ -340,6 +340,27 @@ describe('toInboxItem', () => {
     });
   });
 
+  describe('updated terms', () => {
+    it('says which document and from when', () => {
+      const item = toInboxItem(
+        row({ type: 'terms_updated', payload: { document: 'terms', version: '2026-11-04' } }),
+      );
+      expect(item.text).toBe(
+        'Actualizamos los términos, del 4 de noviembre. Lee el resumen de qué cambió.',
+      );
+      expect(item.activityId).toBeNull();
+    });
+
+    it('reads the privacy notice too', () => {
+      const item = toInboxItem(
+        row({ type: 'terms_updated', payload: { document: 'privacy', version: 'v2' } }),
+      );
+      expect(item.text).toBe(
+        'Actualizamos el aviso de privacidad, del v2. Lee el resumen de qué cambió.',
+      );
+    });
+  });
+
   describe('a report was resolved', () => {
     it('confirms it was read and says nothing about the outcome', () => {
       // What was decided about another person is not the reporter's to receive.
