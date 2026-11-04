@@ -75,7 +75,7 @@ column is maintained by hand.
 | `0035_gender`                  | `profile_private.gender` (mujer, hombre, no_dice), owner-only; written at sign-up or by `set_my_gender()`, every change logged in `gender_changes`; `my_profile()` returns it                                                       | yes     |
 | `0036_sports_catalog`          | `categories.family`; 16 new sports (19 in six families) with their attribute schemas, `enumNames` for option words; `apply_fixed_attributes()` trigger writes the fixed rules (water, helmets, no contact) on activities and series | yes     |
 | `0037_group_sports`            | `communities.category_ids` (up to three sports, GIN-indexed); `communities_sports()` trigger validates them and keeps `category_id` as the first                                                                                    | yes     |
-| `0038_sport_levels`            | `set_my_sports(jsonb)` replaces the caller's sports with a level each (beginner, intermediate, advanced; at most ten); `my_profile()` also returns `sports` with levels                                                             | no      |
+| `0038_sport_levels`            | `set_my_sports(jsonb)` replaces the caller's sports with a level each (beginner, intermediate, advanced; at most ten); `my_profile()` also returns `sports` with levels                                                             | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -152,7 +152,9 @@ cannot write `profile_private.gender` or read `gender_changes`, and `set_my_gend
 executable by `authenticated` and not by `anon`. `0036` was applied on 4 November: 19 sports in
 six families, both `*_fixed_attributes` triggers in place, and no session points at a missing
 sport. `0037` was applied the same day: the `communities_sports` trigger is in place, no client
-can call it, and every group's `category_id` equals the first of `category_ids`. `0022` was applied on 28
+can call it, and every group's `category_id` equals the first of `category_ids`. `0038` was
+applied the same day: `set_my_sports()` is executable by `authenticated` and not by `anon`, and
+`my_profile()` returns `sports`. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
