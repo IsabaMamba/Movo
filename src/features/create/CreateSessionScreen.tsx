@@ -34,6 +34,7 @@ import {
 } from '../../lib/activities';
 import { linksProblem, setActivityLinks } from '../../lib/links';
 import { projectRef, supabase } from '../../lib/supabase';
+import { fetchMyProfile } from '../../lib/profile';
 import { weekdayPlural } from '../../lib/series';
 import {
   color,
@@ -46,6 +47,7 @@ import {
 import type { Category, Location, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { LinkFields } from '../links/LinkFields';
+import { SportPicker } from '../sports/SportPicker';
 import { AddVenue } from '../venues/AddVenue';
 import { SchemaFields } from './SchemaFields';
 import { createStyles as s } from './styles';
@@ -82,6 +84,7 @@ export function CreateSessionScreen() {
   const router = useRouter();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [mine, setMine] = useState<string[]>([]);
   const [venues, setVenues] = useState<Location[] | null>(null);
 
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -124,10 +127,16 @@ export function CreateSessionScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchCategories(supabase), fetchPublicVenues(supabase)])
-      .then(([cats, locs]) => {
+    Promise.all([
+      fetchCategories(supabase),
+      fetchPublicVenues(supabase),
+      // Only to put the person's sports first; the form works without it.
+      fetchMyProfile(supabase).catch(() => null),
+    ])
+      .then(([cats, locs, profile]) => {
         if (cancelled) return;
         setCategories(cats);
+        setMine(profile?.interests ?? []);
         setVenues(locs);
         if (locs.length === 1 && locs[0]) setVenueId(locs[0].id);
       })
@@ -313,31 +322,21 @@ export function CreateSessionScreen() {
           <Text style={s.sectionNumber}>01</Text>
           <Text style={s.sectionTitle}>¿Qué vas a hacer?</Text>
         </View>
-        <View accessibilityRole="radiogroup" accessibilityLabel="Categoría" style={s.chipRow}>
-          {categories.map((c) => {
-            const on = categoryId === c.id;
-            return (
-              <Pressable
-                accessibilityRole="radio"
-                accessibilityLabel={c.name_es}
-                aria-checked={on}
-                /* Changing category clears section 04 and any errors in it, which
-                   nothing on the chip says. */
-                accessibilityHint="Cambia los detalles que pide el formulario"
-                hitSlop={CHIP_HIT_SLOP}
-                key={c.id}
-                onPress={() => {
-                  setCategoryId(c.id);
-                  setAttributes({});
-                  setIssues([]);
-                }}
-                style={[s.chip, on && s.chipOn]}
-              >
-                <Text style={[s.chipText, on && s.chipTextOn]}>{c.name_es}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* Sesión v2 · 1: your sports first, search, the 19 by family.
+            Changing sport clears section 04 and its errors, which the chip
+            itself does not say, so the hint does. */}
+        <SportPicker
+          categories={categories}
+          hint="Cambia los detalles que pide el formulario"
+          mine={mine}
+          onSelect={(id) => {
+            if (id === categoryId) return;
+            setCategoryId(id);
+            setAttributes({});
+            setIssues([]);
+          }}
+          selected={categoryId}
+        />
 
         <View style={s.field}>
           <Text style={s.label}>Título</Text>
