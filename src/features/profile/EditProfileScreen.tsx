@@ -1,6 +1,7 @@
 /**
  * Editar perfil (Perfil v2, phone 2): name, «Sobre ti», your zone and your
- * sports, saved together.
+ * gender, saved together. Your sports moved to their own screen with a
+ * level each (Deportes v2 · 4, /perfil/deportes); this one links to it.
  *
  * The zone is chosen from the distritos Movo already has — typed to search,
  * never typed as an address — and the hint says what it is for and what it
@@ -16,11 +17,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { NAME_MAX, nameProblem } from '../../lib/account';
+import { GENDER_OPTIONS, setMyGender, type Gender } from '../../lib/gender';
 import {
   BIO_MAX,
   bioProblem,
   fetchDistrictOptions,
-  MAX_SPORTS,
   saveMyProfile,
   searchDistricts,
   type DistrictOption,
@@ -34,13 +35,13 @@ import { useMyProfile } from './useMyProfile';
 export function EditProfileScreen() {
   const { session, loading } = useAuth();
   const userId = session?.user.id;
-  const { profile, categories, error: loadError } = useMyProfile(userId);
+  const { profile, error: loadError } = useMyProfile(userId);
 
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [district, setDistrict] = useState<DistrictOption | null>(null);
   const [query, setQuery] = useState('');
-  const [sports, setSports] = useState<string[]>([]);
+  const [gender, setGender] = useState<Gender | null>(null);
   const [options, setOptions] = useState<DistrictOption[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export function EditProfileScreen() {
     if (!profile) return;
     setName(profile.display_name);
     setBio(profile.bio ?? '');
-    setSports(profile.interests);
+    setGender(profile.gender);
   }, [profile]);
   useEffect(() => {
     if (!profile?.home_district || options.length === 0) return;
@@ -74,16 +75,6 @@ export function EditProfileScreen() {
   const problem = nameProblem(name) ?? bioProblem(bio);
   const canSave = !busy && problem === null && profile !== null;
 
-  const toggleSport = (id: string) => {
-    setSports((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : prev.length >= MAX_SPORTS
-          ? prev
-          : [...prev, id],
-    );
-  };
-
   const save = () => {
     if (!canSave) return;
     setBusy(true);
@@ -93,8 +84,12 @@ export function EditProfileScreen() {
       displayName: name,
       bio,
       homeDistrict: district?.code ?? null,
-      interests: sports,
     })
+      // Only when it changed: every change is logged (0035), and an
+      // unchanged answer is not a change.
+      .then(() =>
+        gender !== null && gender !== profile?.gender ? setMyGender(supabase, gender) : undefined,
+      )
       .then(() => {
         router.replace('/cuenta');
       })
@@ -215,30 +210,41 @@ export function EditProfileScreen() {
       </View>
 
       <View style={s.field}>
-        <Text style={s.label}>Tus deportes</Text>
-        <View style={s.chipRow}>
-          {categories.map((category) => {
-            const on = sports.includes(category.id);
+        <View style={s.labelRow}>
+          <Text style={s.label}>Tu género</Text>
+          <Text style={s.optional}>solo tú lo ves</Text>
+        </View>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Tu género" style={s.chipRow}>
+          {GENDER_OPTIONS.map((option) => {
+            const on = gender === option.value;
             return (
               <Pressable
-                accessibilityRole="checkbox"
+                accessibilityRole="radio"
                 aria-checked={on}
-                accessibilityLabel={category.name_es}
+                accessibilityLabel={option.label}
                 hitSlop={hitSlopFor(size.controlSm)}
-                key={category.id}
+                key={option.value}
                 onPress={() => {
-                  toggleSport(category.id);
+                  setGender(option.value);
                 }}
                 style={[s.chip, on && s.chipOn]}
               >
-                <Text style={[s.chipText, on && s.chipTextOn]}>
-                  {on ? '✓ ' : ''}
-                  {category.name_es}
-                </Text>
+                <Text style={[s.chipText, on && s.chipTextOn]}>{option.label}</Text>
               </Pressable>
             );
           })}
         </View>
+        <Text style={s.hint}>
+          Sirve solo para mostrarte lo que es solo para mujeres. No aparece en tu perfil público ni
+          en las listas.
+        </Text>
+      </View>
+
+      <View style={s.field}>
+        <Text style={s.label}>Tus deportes</Text>
+        <Link href="/perfil/deportes" style={s.link}>
+          <Text style={s.linkText}>Elegir tus deportes y tu nivel en cada uno</Text>
+        </Link>
         <Text style={s.hint}>Se ven en tu perfil público.</Text>
       </View>
 

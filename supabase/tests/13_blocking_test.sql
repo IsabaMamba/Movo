@@ -87,8 +87,8 @@ end $$;
 select set_config('request.jwt.claim.sub', '11100000-0000-0000-0000-0000000000a1', true);
 set local role authenticated;
 
-insert into public.blocks (blocker_id, blocked_id)
-values ('11100000-0000-0000-0000-0000000000a1', '11100000-0000-0000-0000-0000000000b1');
+-- Through the RPC: since 0039 it is the only way to write a block.
+select public.block_user('11100000-0000-0000-0000-0000000000b1');
 
 -- ------------------------------------------------- the predicate is symmetric
 
@@ -210,18 +210,22 @@ begin
   end;
 end $$;
 
--- Beto cannot undo the block by deleting the row: blocks_own scopes to the
--- blocker, so the person being blocked has no say in it.
+-- Beto cannot undo the block. Since 0039 there is no DELETE grant at all, and
+-- unblock_user() only ever removes the caller's own blocks.
 do $$
-declare
-  v_rows integer;
 begin
-  delete from public.blocks
-   where blocker_id = '11100000-0000-0000-0000-0000000000a1'
-     and blocked_id = '11100000-0000-0000-0000-0000000000b1';
-  get diagnostics v_rows = row_count;
-  if v_rows <> 0 then
-    raise exception 'FAIL: the blocked person deleted the block';
+  begin
+    delete from public.blocks
+     where blocker_id = '11100000-0000-0000-0000-0000000000a1'
+       and blocked_id = '11100000-0000-0000-0000-0000000000b1';
+    raise exception 'FAIL: a client could delete from blocks directly';
+  exception when insufficient_privilege then null;
+  end;
+
+  perform public.unblock_user('11100000-0000-0000-0000-0000000000a1');
+  if not public.is_blocked('11100000-0000-0000-0000-0000000000a1',
+                           '11100000-0000-0000-0000-0000000000b1') then
+    raise exception 'FAIL: the blocked person removed the block';
   end if;
 end $$;
 
@@ -251,9 +255,7 @@ reset role;
 select set_config('request.jwt.claim.sub', '11100000-0000-0000-0000-0000000000a1', true);
 set local role authenticated;
 
-delete from public.blocks
- where blocker_id = '11100000-0000-0000-0000-0000000000a1'
-   and blocked_id = '11100000-0000-0000-0000-0000000000b1';
+select public.unblock_user('11100000-0000-0000-0000-0000000000b1');
 
 do $$ begin
   if not exists (

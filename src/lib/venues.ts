@@ -28,6 +28,11 @@ export interface MyVenue {
   lng: number;
   /** The distrito the point falls in, by the map. Null when outside every zone. */
   zoneName: string | null;
+  /**
+   * What the team asked to correct (0043), while the venue is handed back.
+   * Null otherwise. While set, Crear cannot use the venue.
+   */
+  returnedNote: string | null;
 }
 
 interface VenueRow {
@@ -38,6 +43,7 @@ interface VenueRow {
   is_verified: boolean;
   geog: unknown;
   zone: { name: string } | null;
+  returned_note: string | null;
 }
 
 /**
@@ -89,7 +95,7 @@ function pointFromEwkbHex(hex: string): Coordinates | null {
 export async function fetchMyVenues(db: SupabaseClient, userId: string): Promise<MyVenue[]> {
   const { data, error } = await db
     .from('locations')
-    .select('id, name, district, address, is_verified, geog, zone:zones(name)')
+    .select('id, name, district, address, is_verified, geog, returned_note, zone:zones(name)')
     .eq('created_by', userId)
     .order('created_at', { ascending: false });
   if (error) throw toApiError(error);
@@ -107,6 +113,7 @@ export async function fetchMyVenues(db: SupabaseClient, userId: string): Promise
         lat: point.lat,
         lng: point.lng,
         zoneName: row.zone?.name ?? null,
+        returnedNote: row.returned_note,
       },
     ];
   });
@@ -190,7 +197,7 @@ export async function fetchVenuesForReview(db: SupabaseClient): Promise<StaffVen
   const { data, error } = await db
     .from('locations')
     .select(
-      'id, name, district, address, is_verified, geog, created_by, verified_at, verified_note, ' +
+      'id, name, district, address, is_verified, geog, returned_note, created_by, verified_at, verified_note, ' +
         'zone:zones(name), creator:profiles!locations_created_by_fkey(display_name)',
     )
     .order('is_verified', { ascending: true })
@@ -214,6 +221,7 @@ export async function fetchVenuesForReview(db: SupabaseClient): Promise<StaffVen
         creatorName: row.creator?.display_name ?? null,
         verifiedAt: row.verified_at,
         verifiedNote: row.verified_note,
+        returnedNote: row.returned_note,
       },
     ];
   });
@@ -226,6 +234,23 @@ export async function verifyVenue(
   note: string,
 ): Promise<void> {
   const { error } = await db.rpc('verify_location', {
+    p_location_id: venueId,
+    p_note: note.trim(),
+  });
+  if (error) throw toApiError(error);
+}
+
+/**
+ * Staff only (0043). «Devolver para corregir»: the creator is told the note,
+ * the venue is unverified, and Crear cannot use it until it is corrected or
+ * verified. Sessions already planned there stay.
+ */
+export async function returnVenue(
+  db: SupabaseClient,
+  venueId: string,
+  note: string,
+): Promise<void> {
+  const { error } = await db.rpc('return_location', {
     p_location_id: venueId,
     p_note: note.trim(),
   });

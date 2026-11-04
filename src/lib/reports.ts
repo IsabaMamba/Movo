@@ -105,7 +105,8 @@ const VIEW_STATUSES: Record<QueueView, ReportStatus[]> = {
 /**
  * One page of the queue.
  *
- * `pending` is ordered oldest first, which is the opposite of every other list
+ * `pending` is ordered by priority (0039: safety first, then identity, then
+ * the rest), and inside each priority oldest first, which is the opposite of every other list
  * in the product. A feed is sorted by recency because the newest session is
  * the most useful one; a safety queue is sorted by age because the report that
  * has waited longest is the one somebody is still waiting on. `reports` has
@@ -129,7 +130,7 @@ export async function fetchReportQueue(
 
   const { data, error } =
     view === 'pending'
-      ? await query.order('created_at', { ascending: true })
+      ? await query.order('priority', { ascending: true }).order('created_at', { ascending: true })
       : await query.order('reviewed_at', { ascending: false, nullsFirst: false });
 
   if (error) throw toApiError(error);

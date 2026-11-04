@@ -13,13 +13,14 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthProvider';
 import { createStyles as c } from '../create/styles';
+import { levelLabel, mySports } from '../../lib/profile';
 import { ProfileCard } from './ProfileCard';
 import { profileStyles as s } from './styles';
 import { useMyProfile } from './useMyProfile';
 
 export function PublicProfileScreen() {
   const { session, loading } = useAuth();
-  const { profile, sportNames, error } = useMyProfile(session?.user.id);
+  const { profile, categories, error } = useMyProfile(session?.user.id);
 
   if (loading) return <ActivityIndicator style={c.screen} />;
   if (!session) return <Redirect href="/sign-in" />;
@@ -48,14 +49,18 @@ export function PublicProfileScreen() {
           bio={profile.bio}
           name={profile.display_name}
           since={profile.created_at}
-          sports={sportNames}
+          levels={mySports(profile).map((x) => levelLabel(x.level))}
+          sportIds={mySports(profile).map((x) => x.category)}
+          sports={mySports(profile).map(
+            (x) => categories.find((k) => k.id === x.category)?.name_es ?? x.category,
+          )}
         />
       )}
 
       <View style={s.hidden}>
         <Text style={s.hiddenText}>
           <Text style={{ fontWeight: '700' }}>No aparece: </Text>
-          tu zona, tu fecha de nacimiento, tu correo ni a qué sesiones vas.
+          tu zona, tu género, tu fecha de nacimiento, tu correo ni a qué sesiones vas.
         </Text>
       </View>
 

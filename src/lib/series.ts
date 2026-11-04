@@ -229,3 +229,136 @@ export function groupUpcoming<A extends GroupableActivity>(
 
   return entries;
 }
+
+// ------------------------------------------------- Serie v2 (2 November walkthrough, step 27)
+
+/** A date that already happened: who was on its list, and who arrived. */
+export interface SeriesPastDate {
+  id: string;
+  starts_at: string;
+  /** Marked «Llegó», by code or by the organizer. */
+  arrived: number;
+  /** Everybody the date was counting on: arrived, no-show, or never marked. */
+  expected: number;
+}
+
+const PAST_SHOWN = 6;
+
+/**
+ * The last dates of the series that were held, oldest first, with their
+ * attendance. Two reads: the dates, then their participations, which RLS
+ * lets the organizer see.
+ */
+export async function fetchSeriesHistory(
+  db: SupabaseClient,
+  seriesId: string,
+  now: Date = new Date(),
+): Promise<SeriesPastDate[]> {
+  const dates = await db
+    .from('activities')
+    .select('id, starts_at')
+    .eq('series_id', seriesId)
+    .lt('starts_at', now.toISOString())
+    .in('status', ['published', 'full', 'completed'])
+    .order('starts_at', { ascending: false })
+    .limit(PAST_SHOWN);
+  if (dates.error) throw toApiError(dates.error);
+  const rows = (dates.data ?? []) as { id: string; starts_at: string }[];
+  if (rows.length === 0) return [];
+
+  const people = await db
+    .from('activity_participants')
+    .select('activity_id, status')
+    .in(
+      'activity_id',
+      rows.map((r) => r.id),
+    );
+  if (people.error) throw toApiError(people.error);
+
+  return pastAttendance(rows, (people.data ?? []) as { activity_id: string; status: string }[]);
+}
+
+/** Count each date's list, oldest first. Pure, for the test. */
+export function pastAttendance(
+  dates: readonly { id: string; starts_at: string }[],
+  people: readonly { activity_id: string; status: string }[],
+): SeriesPastDate[] {
+  return [...dates]
+    .sort((a, b) => (a.starts_at < b.starts_at ? -1 : 1))
+    .slice(-PAST_SHOWN)
+    .map((d) => {
+      const mine = people.filter((p) => p.activity_id === d.id);
+      const arrived = mine.filter((p) => p.status === 'attended').length;
+      const expected = mine.filter(
+        (p) => p.status === 'attended' || p.status === 'no_show' || p.status === 'joined',
+      ).length;
+      return { id: d.id, starts_at: d.starts_at, arrived, expected };
+    });
+}
+
+export interface SeriesStats {
+  /** Share of the expected who arrived, 0–100; null before any data. */
+  rate: number | null;
+  upcoming: number;
+  lastDate: string | null;
+  /** Weeks in a row with a date held, counting back from the latest. */
+  streak: number;
+}
+
+/** A week plus a day of slack, so a date moved by an hour still counts. */
+const WEEK_SLACK_MS = 8 * 24 * 60 * 60_000;
+
+export function seriesStats(
+  past: readonly SeriesPastDate[],
+  upcoming: readonly SeriesDate[],
+): SeriesStats {
+  const expected = past.reduce((n, d) => n + d.expected, 0);
+  const arrived = past.reduce((n, d) => n + d.arrived, 0);
+  let streak = past.length > 0 ? 1 : 0;
+  for (let i = past.length - 1; i > 0; i -= 1) {
+    const later = new Date(past[i]?.starts_at ?? 0).getTime();
+    const earlier = new Date(past[i - 1]?.starts_at ?? 0).getTime();
+    if (later - earlier > WEEK_SLACK_MS) break;
+    streak += 1;
+  }
+  return {
+    rate: expected === 0 ? null : Math.round((arrived / expected) * 100),
+    upcoming: upcoming.length,
+    lastDate: upcoming[upcoming.length - 1]?.starts_at ?? null,
+    streak,
+  };
+}
+
+/** «Mar 20 oct», in Costa Rica time. */
+export function seriesDay(iso: string): string {
+  const text = new Intl.DateTimeFormat('es-CR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'America/Costa_Rica',
+  })
+    .format(new Date(iso))
+    .replace(/[.,]/g, '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** «8 dic», for the chart and the stat captions. */
+export function seriesShortDate(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'America/Costa_Rica',
+  })
+    .format(new Date(iso))
+    .replace(/\./g, '');
+}
+
+/** «11 de 12 · queda 1 lugar», «9 de 12», «12 de 12 · llena», «7 van». */
+export function seriesDateFill(d: SeriesDate): string {
+  if (d.max_participants === null) return `${d.joined_count} van`;
+  const left = d.max_participants - d.joined_count;
+  const base = `${d.joined_count} de ${d.max_participants}`;
+  if (left <= 0) return `${base} · llena`;
+  if (left <= 2) return `${base} · ${left === 1 ? 'queda 1 lugar' : `quedan ${left} lugares`}`;
+  return base;
+}

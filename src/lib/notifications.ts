@@ -96,6 +96,8 @@ export async function markNotificationRead(
 /** A notification as the screen needs it: one sentence, and somewhere to go. */
 export interface InboxItem {
   id: string;
+  /** The notification's type, for its icon and the inbox filters. */
+  kind: string;
   /** ISO instant. Render in America/Costa_Rica, like every other time. */
   createdAt: string;
   read: boolean;
@@ -108,6 +110,12 @@ export interface InboxItem {
    * for notices that ask the organizer to do something the roster is for.
    */
   opensRoster?: true;
+  /**
+   * Open a chat rather than a session page (0040): the session's chat when
+   * `activityId` is set, or this group's chat.
+   */
+  opensChat?: true;
+  communityId?: string;
 }
 
 /**
@@ -146,7 +154,12 @@ const UNNAMED_SESSION = 'la sesión';
  * not understood.
  */
 export function toInboxItem(row: Notification): InboxItem {
-  const base = { id: row.id, createdAt: row.created_at, read: row.read_at !== null };
+  const base = {
+    id: row.id,
+    createdAt: row.created_at,
+    read: row.read_at !== null,
+    kind: row.type,
+  };
   const payload = row.payload ?? {};
   const title = text(payload, 'title') ?? UNNAMED_SESSION;
   const activityId = text(payload, 'activity_id');
@@ -181,6 +194,20 @@ export function toInboxItem(row: Notification): InboxItem {
         // Still openable: activities_read lets somebody who was on the roster
         // read a cancelled session, and the detail screen is where the reason
         // and the rest of the roster are.
+        activityId,
+      };
+    }
+
+    // Written by cancel_for_weather() and cancel_water_sessions_in_zone()
+    // (0041). The alert is the CNE's words; the rule is fixed for water.
+    case 'activity_cancelled_weather': {
+      const alert = text(payload, 'alert');
+      return {
+        ...base,
+        text:
+          alert === null
+            ? `${title} se canceló por una alerta de la CNE. En el agua es una regla fija.`
+            : `${title} se canceló: la CNE declaró ${alert}. En el agua es una regla fija.`,
         activityId,
       };
     }
@@ -244,7 +271,7 @@ export function toInboxItem(row: Notification): InboxItem {
     case 'close_reminder':
       return {
         ...base,
-        text: `${title} ya terminó y sigue abierta. Marca quién llegó y ciérrala: sin eso, la asistencia no cuenta.`,
+        text: `${title} ya terminó y sigue abierta. Revisa quién llegó y ciérrala: sin eso, la asistencia no cuenta.`,
         activityId,
         opensRoster: true,
       };
@@ -258,6 +285,75 @@ export function toInboxItem(row: Notification): InboxItem {
           name === null
             ? 'Ahora administras un grupo: quien lo creó ya no está en Movo.'
             : `Ahora administras el grupo ${name}: quien lo creó ya no está en Movo.`,
+        activityId: null,
+      };
+    }
+
+    // Written by notify_blocked_person_going() (0039), only to the person who
+    // blocked. Never names who: they know, and nobody else is told anything.
+    case 'blocked_person_going':
+      return {
+        ...base,
+        text: `Alguien que bloqueaste se unió a ${title}. No sabe que vas y no ve tus mensajes. Tú decides si sigues yendo.`,
+        activityId,
+      };
+
+    // Written by send_message() and remove_message() (0040). Never the text of
+    // a message: who wrote, and where. Each opens the chat it is about.
+    case 'chat_reply':
+    case 'chat_organizer':
+    case 'chat_message':
+    case 'chat_message_removed': {
+      const communityId = text(payload, 'community_id');
+      const where = text(payload, 'title') ?? 'tu chat';
+      const name = text(payload, 'name') ?? 'Alguien';
+      const reason = text(payload, 'reason');
+      const sentence =
+        row.type === 'chat_reply'
+          ? `${name} respondió a tu mensaje en el chat de ${where}.`
+          : row.type === 'chat_organizer'
+            ? `${name}, que organiza, escribió en el chat de ${where}.`
+            : row.type === 'chat_message'
+              ? `Hay mensajes nuevos en el chat de ${where}.`
+              : reason === null
+                ? `Quien organiza ${where} quitó un mensaje tuyo del chat porque no cumple las reglas.`
+                : `Quien organiza ${where} quitó un mensaje tuyo del chat porque no cumple: «${reason}».`;
+      return {
+        ...base,
+        text: sentence,
+        activityId,
+        opensChat: true,
+        ...(communityId === null ? {} : { communityId }),
+      };
+    }
+
+    // Written by return_location() (0043) to whoever added the venue.
+    case 'venue_returned': {
+      const name = text(payload, 'name') ?? 'tu lugar';
+      const note = text(payload, 'note');
+      return {
+        ...base,
+        text:
+          note === null
+            ? `El equipo te devolvió ${name} para corregirlo. Mientras tanto no se puede elegir en Crear.`
+            : `El equipo te devolvió ${name} para corregirlo: «${note}». Mientras tanto no se puede elegir en Crear.`,
+        activityId: null,
+      };
+    }
+
+    // Written by publish_legal_version() (0044) to every account.
+    case 'terms_updated': {
+      const doc = text(payload, 'document');
+      const what =
+        doc === 'privacy'
+          ? 'el aviso de privacidad'
+          : doc === 'terms'
+            ? 'los términos'
+            : 'los términos y el aviso de privacidad';
+      const version = text(payload, 'version');
+      return {
+        ...base,
+        text: `Actualizamos ${what}${version ? `, del ${legalDate(version)}` : ''}. Lee el resumen de qué cambió.`,
         activityId: null,
       };
     }
@@ -277,6 +373,27 @@ export function toInboxItem(row: Notification): InboxItem {
   }
 }
 
+/** «2026-11-04» → «4 de noviembre». A version that is not a date is shown as written. */
+function legalDate(version: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(version);
+  if (!m) return version;
+  const months = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+  return `${Number(m[3])} de ${months[Number(m[2]) - 1] ?? m[2]}`;
+}
+
 /**
  * The unread count, spoken.
  *
@@ -284,6 +401,40 @@ export function toInboxItem(row: Notification): InboxItem {
  * two unrelated fragments — "Avisos", then "2". This is the sentence, and it
  * is also why the badge itself is hidden from assistive technology.
  */
+/** Notices about running something rather than going to it (Avisos v2 filter). */
+const ORGANIZER_KINDS = new Set([
+  'close_reminder',
+  'solo_session_organizer',
+  'activity_cancelled_by_movo',
+  'group_handed_over',
+  'venue_returned',
+]);
+
+export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
+
+export function inFilter(item: Pick<InboxItem, 'kind'>, filter: InboxFilter): boolean {
+  if (filter === 'todos') return true;
+  return filter === 'organizar' ? ORGANIZER_KINDS.has(item.kind) : !ORGANIZER_KINDS.has(item.kind);
+}
+
+/** «hace 20 min», «hace 2 h», «ayer», «sáb 31 oct». */
+export function timeAgo(iso: string, now: Date = new Date()): string {
+  const minutes = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60_000));
+  if (minutes < 1) return 'ahora';
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  if (hours < 48) return 'ayer';
+  return new Intl.DateTimeFormat('es-CR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'America/Costa_Rica',
+  })
+    .format(new Date(iso))
+    .replace(/[.,]/g, '');
+}
+
 export function unreadA11yLabel(unread: number): string {
   if (unread <= 0) return 'Avisos. No tienes avisos sin leer.';
   return `Avisos. ${unread} ${unread === 1 ? 'aviso sin leer' : 'avisos sin leer'}.`;

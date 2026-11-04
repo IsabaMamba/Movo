@@ -5,9 +5,16 @@
  * community-only sessions never appear for non-members. That is also why this
  * screen does not require a session: showing real sessions before signup is
  * the cold-start argument in docs/architecture.md.
+ *
+ * Layout from the 2 November walkthrough (Descubrir v3, step 2): «Descubrir»
+ * with the bell, the map with its controls laid over it, the category chips,
+ * then the list as a sheet — «9 sesiones a menos de 15 km» — of cards with
+ * the date in a column on the left and the occupancy as a bar on the right.
+ * The full-screen map, search, 100 km and País are not built yet: they wait
+ * for the street map (docs/design/mapa.md) and zone_summary().
  */
 
-import { Link, useFocusEffect, useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -28,22 +35,23 @@ import {
   requestCoarseOrigin,
   type Point,
 } from '../../lib/location';
-import { countUnreadNotifications, unreadA11yLabel } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
-import { unreadLinkStyles as u } from '../notifications/styles';
 import {
   densityOf,
+  color,
   heatColor,
-  heatStops,
   hitSlopFor,
   occupancyA11yLabel,
   occupancyLabel,
   priceLabel,
   size,
 } from '../../theme';
-import { formatDistance } from './format';
+import { sportColor } from '../../theme/sport';
+import { BellLink } from '../nav/BellLink';
+import { Icon } from '../nav/Icon';
+import { dateColumn, formatDistance, nearbyCount, seriesShort } from './format';
 import { HeatBand } from './HeatBand';
 import { discoverStyles as s } from './styles';
 
@@ -86,6 +94,11 @@ function seriesLine(startsAt: string, upcoming: number): string {
 
 const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
 
+const sportDot = (id: string) => sportColor(id, color.accent.cool);
+
+/** Taller than the original band: on the boards the map is the first thing. */
+const MAP_HEIGHT = 300;
+
 export function DiscoverScreen() {
   const { session } = useAuth();
   const router = useRouter();
@@ -95,41 +108,12 @@ export function DiscoverScreen() {
   const [activities, setActivities] = useState<NearbyActivity[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [unread, setUnread] = useState(0);
   // Where the search starts. The GAM until the person asks for otherwise:
   // opening the app never triggers a permission prompt. See lib/location.ts.
   const [origin, setOrigin] = useState<Point>(GAM_CENTRE);
   const [originMode, setOriginMode] = useState<'gam' | 'mine' | 'locating'>('gam');
   const [originNote, setOriginNote] = useState<string | null>(null);
-
-  const userId = session?.user.id;
-
-  /**
-   * On focus, not on mount. Descubrir stays mounted underneath /avisos, so a
-   * count read once would still say 2 after both avisos had been read — and a
-   * badge that outlives what it counts teaches people to ignore it.
-   */
-  useFocusEffect(
-    useCallback(() => {
-      if (!userId) {
-        setUnread(0);
-        return;
-      }
-      let cancelled = false;
-
-      countUnreadNotifications(supabase, userId)
-        .then((count) => {
-          if (!cancelled) setUnread(count);
-        })
-        .catch(() => {
-          // A failed count must not blank the sessions below it.
-        });
-
-      return () => {
-        cancelled = true;
-      };
-    }, [userId]),
-  );
+  const [originMenu, setOriginMenu] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,55 +197,115 @@ export function DiscoverScreen() {
       });
   };
 
-  return (
-    <View style={s.screen}>
-      <View style={s.header}>
-        <Text style={s.title}>Movo</Text>
-        <View style={s.account}>
-          {session ? (
-            <>
-              {/* Before Mis sesiones: an aviso is something that happened to a
-                  plan you already made, and a list of plans can wait. */}
-              <Link href="/avisos" asChild>
-                <Pressable
-                  /* The word and the number are one thing to say, not a label
-                     followed by a loose digit — hence one composed label, and
-                     hence the badge itself hidden from assistive technology. */
-                  accessible
-                  accessibilityRole="link"
-                  accessibilityLabel={unreadA11yLabel(unread)}
-                  aria-live="polite"
-                  hitSlop={hitSlopFor(size.controlSm)}
-                  style={u.link}
-                >
-                  <Text style={s.linkText}>Avisos</Text>
-                  {unread > 0 && (
-                    <View aria-hidden style={u.badge}>
-                      <Text style={u.badgeText}>{unread > 99 ? '99+' : unread}</Text>
-                    </View>
-                  )}
-                </Pressable>
-              </Link>
-              {/* Mis sesiones, Crear, Grupos and Perfil are tabs now; Organizar
-                  is a row inside Perfil. Avisos stays here, with its count. */}
-            </>
-          ) : (
-            <>
-              <Link href="/sign-in">
-                <Text style={s.linkText}>Iniciar sesión</Text>
-              </Link>
-            </>
-          )}
-        </View>
-      </View>
+  const radiusKm = radiusM / 1000;
+  const selectedName = categories.find((c) => c.id === selected)?.name_es ?? 'Todo';
 
-      {/* Above the filters, as designed: it summarises the week before the
-          chips narrow it. Signed-in only — zone_heat() is not granted to anon. */}
-      {session ? <HeatBand centre={origin} radiusM={radiusM} /> : null}
+  const originControl = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Buscar desde: ${originMode === 'mine' ? 'cerca de mí' : 'centro de la GAM'}`}
+      accessibilityHint="Cambia desde dónde se busca"
+      aria-busy={originMode === 'locating'}
+      hitSlop={CHIP_HIT_SLOP}
+      onPress={() => {
+        setOriginMenu((open) => !open);
+      }}
+      style={s.originPill}
+    >
+      <Icon color={color.text.primary} name="crosshair" size={16} />
+      <Text style={s.originText}>
+        {originMode === 'locating'
+          ? 'Buscando…'
+          : originMode === 'mine'
+            ? 'Cerca de mí'
+            : 'Centro de la GAM'}
+      </Text>
+      <Icon color={color.text.secondary} name="chevronDown" size={14} />
+    </Pressable>
+  );
+
+  const radiusControl = (
+    <View accessibilityRole="radiogroup" accessibilityLabel="Radio de búsqueda" style={s.segment}>
+      {RADIUS_OPTIONS.map((metres) => {
+        const on = radiusM === metres;
+        return (
+          <Pressable
+            accessibilityRole="radio"
+            accessibilityLabel={`${metres / 1000} kilómetros a la redonda`}
+            aria-checked={on}
+            hitSlop={CHIP_HIT_SLOP}
+            key={metres}
+            onPress={() => {
+              setRadiusM(metres);
+            }}
+            style={[s.segmentItem, on && s.segmentItemOn]}
+          >
+            <Text style={[s.segmentText, on && s.segmentTextOn]}>{metres / 1000}</Text>
+          </Pressable>
+        );
+      })}
+      <Text style={s.segmentUnit}>km</Text>
+    </View>
+  );
+
+  const controls = (
+    <View style={s.controls}>
+      {originControl}
+      {radiusControl}
+    </View>
+  );
+
+  const header = (
+    <View>
+      {session ? (
+        <HeatBand
+          caption={`${selectedName} · próximos 7 días`}
+          centre={origin}
+          height={MAP_HEIGHT}
+          overlay={controls}
+          radiusM={radiusM}
+        />
+      ) : (
+        <View style={s.controlsBare}>{controls}</View>
+      )}
+
+      {originMenu && (
+        <View accessibilityRole="menu" style={s.originMenu}>
+          {(
+            [
+              ['gam', 'Centro de la GAM', 'Busca desde San José'],
+              ['mine', 'Cerca de mí', 'Tu ubicación aproximada. No se guarda.'],
+            ] as const
+          ).map(([mode, label, hint]) => (
+            <Pressable
+              accessibilityRole="menuitem"
+              accessibilityLabel={label}
+              key={mode}
+              onPress={() => {
+                setOriginMenu(false);
+                if (mode === 'gam') pickGam();
+                else pickMine();
+              }}
+              style={s.originMenuItem}
+            >
+              <Text style={[s.originMenuText, originMode === mode && s.originMenuTextOn]}>
+                {originMode === mode ? '✓ ' : ''}
+                {label}
+              </Text>
+              <Text style={s.meta}>{hint}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {originNote !== null && (
+        <Text aria-live="polite" style={[s.meta, s.gutter]}>
+          {originNote}
+        </Text>
+      )}
 
       <ScrollView
         accessibilityRole="radiogroup"
-        accessibilityLabel="Filtrar por categoría"
+        accessibilityLabel="Filtrar por deporte"
         horizontal
         showsHorizontalScrollIndicator={false}
         style={s.filters}
@@ -269,7 +313,7 @@ export function DiscoverScreen() {
         <View style={s.filterRow}>
           <Pressable
             accessibilityRole="radio"
-            accessibilityLabel="Todas las categorías"
+            accessibilityLabel="Todos los deportes"
             aria-checked={selected === null}
             hitSlop={CHIP_HIT_SLOP}
             onPress={() => {
@@ -277,7 +321,9 @@ export function DiscoverScreen() {
             }}
             style={[s.chip, selected === null && s.chipOn]}
           >
-            <Text style={[s.chipText, selected === null && s.chipTextOn]}>Todo</Text>
+            <Text style={[s.chipText, selected === null && s.chipTextOn]}>
+              {selected === null ? '✓ ' : ''}Todo
+            </Text>
           </Pressable>
           {categories.map((category) => {
             const on = selected === category.id;
@@ -293,126 +339,78 @@ export function DiscoverScreen() {
                 }}
                 style={[s.chip, on && s.chipOn]}
               >
-                <Text style={[s.chipText, on && s.chipTextOn]}>{category.name_es}</Text>
+                {!on && <View style={[s.chipDot, { backgroundColor: sportDot(category.id) }]} />}
+                <Text style={[s.chipText, on && s.chipTextOn]}>
+                  {on ? '✓ ' : ''}
+                  {category.name_es}
+                </Text>
               </Pressable>
             );
           })}
         </View>
       </ScrollView>
-
-      <View accessibilityRole="radiogroup" accessibilityLabel="Buscar desde" style={s.filters}>
-        <View style={s.filterRow}>
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityLabel="Desde el centro de la GAM"
-            aria-checked={originMode === 'gam'}
-            hitSlop={CHIP_HIT_SLOP}
-            onPress={pickGam}
-            style={[s.chip, originMode === 'gam' && s.chipOn]}
-          >
-            <Text style={[s.chipText, originMode === 'gam' && s.chipTextOn]}>Centro de la GAM</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityLabel="Cerca de mí"
-            accessibilityHint="Pide permiso para usar tu ubicación aproximada. No se guarda."
-            aria-busy={originMode === 'locating'}
-            aria-checked={originMode === 'mine'}
-            disabled={originMode === 'locating'}
-            hitSlop={CHIP_HIT_SLOP}
-            onPress={pickMine}
-            style={[s.chip, originMode === 'mine' && s.chipOn]}
-          >
-            <Text style={[s.chipText, originMode === 'mine' && s.chipTextOn]}>
-              {originMode === 'locating' ? 'Buscando…' : 'Cerca de mí'}
-            </Text>
-          </Pressable>
-        </View>
-        {originNote !== null && (
-          <Text aria-live="polite" style={s.meta}>
-            {originNote}
-          </Text>
-        )}
-      </View>
-
-      <ScrollView
-        accessibilityRole="radiogroup"
-        accessibilityLabel="Radio de búsqueda"
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={s.filters}
-      >
-        <View style={s.filterRow}>
-          {RADIUS_OPTIONS.map((metres) => {
-            const on = radiusM === metres;
-            return (
-              <Pressable
-                accessibilityRole="radio"
-                accessibilityLabel={`Buscar en ${metres / 1000} kilómetros a la redonda`}
-                aria-checked={on}
-                hitSlop={CHIP_HIT_SLOP}
-                key={metres}
-                onPress={() => {
-                  setRadiusM(metres);
-                }}
-                style={[s.chip, on && s.chipOn]}
-              >
-                <Text style={[s.chipText, on && s.chipTextOn]}>{metres / 1000} km</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </ScrollView>
-
-      {/* One label for the whole ramp. Read stop by stop it is eight
-          unpronounceable colour swatches; the scale is what carries meaning,
-          and each card states its own occupancy in words anyway. */}
-      <View
-        accessible
-        accessibilityRole="image"
-        accessibilityLabel="Escala de ocupación: de vacío, en azul, a lleno, en naranja"
-        style={s.legend}
-      >
-        <Text style={s.legendLabel}>vacío</Text>
-        <View style={s.legendRamp}>
-          {heatStops().map((stop) => (
-            <View key={stop} style={[s.legendStop, { backgroundColor: stop }]} />
-          ))}
-        </View>
-        <Text style={s.legendLabel}>lleno</Text>
-      </View>
 
       {error ? <Text style={s.error}>{error}</Text> : null}
 
+      {activities !== null && activities.length > 0 && (
+        <View style={s.listHead}>
+          <Text style={s.listCount}>
+            <Text style={s.listCountStrong}>{nearbyCount(activities.length, radiusKm).count}</Text>
+            {nearbyCount(activities.length, radiusKm).rest}
+          </Text>
+          <Text style={s.meta}>por hora</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <View style={s.screen}>
+      <View style={s.header}>
+        <Text accessibilityRole="header" style={s.title}>
+          Descubrir
+        </Text>
+        {session ? (
+          <BellLink userId={session.user.id} />
+        ) : (
+          <Link href="/sign-in" asChild>
+            <Pressable accessibilityRole="link" style={s.signIn}>
+              <Text style={s.signInText}>Iniciar sesión</Text>
+            </Pressable>
+          </Link>
+        )}
+      </View>
+
       {activities === null ? (
-        <ActivityIndicator style={s.centred} />
+        <>
+          {header}
+          <ActivityIndicator style={s.centred} />
+        </>
       ) : (
         <FlatList
           contentContainerStyle={s.list}
           data={activities}
           keyExtractor={(activity) => activity.id}
           refreshControl={<RefreshControl onRefresh={refresh} refreshing={refreshing} />}
-          ListHeaderComponent={
-            activities.length > 0 ? (
-              <Text style={s.meta}>
-                {activities.length} {activities.length === 1 ? 'sesión' : 'sesiones'} cerca
-              </Text>
-            ) : null
-          }
+          ListHeaderComponent={header}
           ListEmptyComponent={
             <View style={s.centred}>
-              <Text style={s.emptyTitle}>Todavía no hay sesiones acá</Text>
+              <Text style={s.emptyTitle}>Todavía no hay sesiones aquí</Text>
               <Text style={s.emptyBody}>
-                Prueba ampliar el radio o quitar el filtro de categoría. Estamos sumando sesiones de
+                Prueba ampliar el radio o quitar el filtro de deporte. Estamos sumando sesiones de
                 grupos que ya entrenan en la GAM.
               </Text>
-              <Link href="/solo">
-                <Text style={s.linkText}>Igual puedes ir — modo solo</Text>
+              <Link href="/crear">
+                <Text style={s.linkText}>Organiza la primera</Text>
               </Link>
             </View>
           }
           renderItem={({ item }) => {
             const density = densityOf(item.joined_count, item.max_participants);
+            const when = dateColumn(item.starts_at);
+            const sport = categories.find((c) => c.id === item.category_id)?.name_es;
+            const level = item.skill === 'any' ? 'Todos los niveles' : SKILL_LABEL[item.skill];
+            const price = priceLabel(item.price_minor, item.currency);
             return (
               <Pressable
                 /* One element, one label. Read field by field a card is nine
@@ -429,7 +427,7 @@ export function DiscoverScreen() {
                   item.location_name,
                   formatDistance(item.distance_m),
                   occupancyA11yLabel(item.joined_count, item.max_participants, density),
-                  priceLabel(item.price_minor, item.currency),
+                  price,
                 ].join('. ')}
                 accessibilityHint="Abre el detalle de la sesión"
                 onPress={() => {
@@ -437,30 +435,46 @@ export function DiscoverScreen() {
                 }}
                 style={s.card}
               >
-                <View style={s.cardTop}>
-                  <Text style={s.cardTitle}>{item.title}</Text>
-                  {/* The dot and the occupancy line encode the same variable, so
-                      to a screen reader the dot is decoration. */}
-                  <View aria-hidden style={[s.heatDot, { backgroundColor: heatColor(density) }]} />
+                <View aria-hidden style={s.dateCol}>
+                  <Text style={s.dateWeekday}>{when.weekday}</Text>
+                  <Text style={s.dateTime}>{when.time}</Text>
+                  <Text style={s.dateDay}>{when.day}</Text>
                 </View>
-                <Text style={s.cardWhen}>{formatSessionTime(item.starts_at)}</Text>
-                {item.series_id ? (
-                  <Text style={s.cardSeries}>
-                    {seriesLine(item.starts_at, item.series_upcoming ?? 1)}
+                <View aria-hidden style={s.cardBody}>
+                  <Text numberOfLines={2} style={s.cardTitle}>
+                    {item.title}
                   </Text>
-                ) : null}
-                <Text style={s.cardWhere}>
-                  {item.location_name}
-                  {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
-                </Text>
-                <View style={s.cardFacts}>
-                  <Text style={s.fact}>
-                    {occupancyLabel(item.joined_count, item.max_participants)}
-                  </Text>
-                  <Text style={s.fact}>{priceLabel(item.price_minor, item.currency)}</Text>
-                  {item.skill !== 'any' ? (
-                    <Text style={s.fact}>{SKILL_LABEL[item.skill]}</Text>
+                  <Text style={s.cardSport}>{[sport, level].filter(Boolean).join(' · ')}</Text>
+                  {item.series_id ? (
+                    <Text style={s.cardSeries}>
+                      {seriesShort(item.starts_at, item.series_upcoming ?? 1)}
+                    </Text>
                   ) : null}
+                  <Text numberOfLines={1} style={s.cardWhere}>
+                    {item.location_name}
+                    {item.district ? ` · ${item.district}` : ''} · {formatDistance(item.distance_m)}
+                  </Text>
+                  <View style={s.cardBottom}>
+                    <Text style={[s.cardPrice, item.price_minor > 0 && s.cardPricePaid]}>
+                      {price}
+                    </Text>
+                    <View style={s.occupancy}>
+                      <View style={s.occupancyTrack}>
+                        <View
+                          style={[
+                            s.occupancyFill,
+                            {
+                              backgroundColor: heatColor(density),
+                              width: `${Math.max(6, density * 100)}%`,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={s.occupancyText}>
+                        {occupancyLabel(item.joined_count, item.max_participants)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </Pressable>
             );

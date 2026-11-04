@@ -14,11 +14,16 @@
  *
  * The boundaries behind the zones are OpenStreetMap's, under the ODbL, and
  * the credit below is a condition of that licence — see NOTICE.md.
+ *
+ * Descubrir v3 (2 November video): taller, with the origin and radius
+ * controls laid over its top edge, the search origin drawn as Sun rings, the
+ * radius labelled on its ring, and the caption and the scale on its bottom
+ * edge — the caption left, the scale and the credit right.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Text, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 
 import {
   boundsFor,
@@ -46,9 +51,16 @@ export const BAND_HEIGHT = 132;
 interface Props {
   centre: LatLng;
   radiusM: number;
+  /** Defaults to the original band; Descubrir v3 draws it taller. */
+  height?: number;
+  /** Bottom-left, e.g. «Todo · próximos 7 días». */
+  caption?: string;
+  /** Laid over the top edge: the origin and radius controls. */
+  overlay?: ReactNode;
 }
 
-export function HeatBand({ centre, radiusM }: Props) {
+export function HeatBand({ centre, radiusM, height = BAND_HEIGHT, caption, overlay }: Props) {
+  const BAND = height;
   const [width, setWidth] = useState(0);
   const [zones, setZones] = useState<ZoneHeat[] | null>(null);
   const [outlines, setOutlines] = useState<ZoneOutline[]>([]);
@@ -86,7 +98,7 @@ export function HeatBand({ centre, radiusM }: Props) {
     if (width === 0) return;
     let cancelled = false;
 
-    fetchZoneOutlines(supabase, kind, boundsFor(viewportFor(radiusKm, width, BAND_HEIGHT, centre)))
+    fetchZoneOutlines(supabase, kind, boundsFor(viewportFor(radiusKm, width, BAND, centre)))
       .then((rows) => {
         if (!cancelled) setOutlines(rows);
       })
@@ -100,13 +112,13 @@ export function HeatBand({ centre, radiusM }: Props) {
     };
     // `centre` is a module constant in Descubrir; its parts are listed rather
     // than the object so a caller passing a fresh literal cannot loop.
-  }, [kind, radiusKm, width, centre.lat, centre.lng]);
+  }, [kind, radiusKm, width, BAND, centre.lat, centre.lng]);
 
   const onLayout = (event: LayoutChangeEvent) => {
     setWidth(Math.round(event.nativeEvent.layout.width));
   };
 
-  const viewport = viewportFor(radiusKm, width, BAND_HEIGHT, centre);
+  const viewport = viewportFor(radiusKm, width, BAND, centre);
   const blobs = zones && width > 0 ? layoutBlobs(zones, viewport) : [];
   const ringPx = radiusKm * pixelsPerKm(viewport);
   const empty = zones !== null && blobs.length === 0;
@@ -124,10 +136,10 @@ export function HeatBand({ centre, radiusM }: Props) {
         accessibilityRole="image"
         accessibilityLabel={label}
         onLayout={onLayout}
-        style={[s.band, { height: BAND_HEIGHT }]}
+        style={[s.band, { height: BAND }]}
       >
         {width > 0 && (
-          <Svg height={BAND_HEIGHT} style={s.bandCanvas} width={width}>
+          <Svg height={BAND} style={s.bandCanvas} width={width}>
             <Defs>
               {blobs.map((b) => {
                 const hot = heatColor(b.level);
@@ -167,7 +179,7 @@ export function HeatBand({ centre, radiusM }: Props) {
               the filter reads as a session missing from the list. */}
             <Circle
               cx={width / 2}
-              cy={BAND_HEIGHT / 2}
+              cy={BAND / 2}
               fill="none"
               r={ringPx}
               stroke={color.text.primary}
@@ -179,36 +191,49 @@ export function HeatBand({ centre, radiusM }: Props) {
             {/* Where the search is centred. Not the viewer's position: Descubrir
               searches from a fixed point in San José until device location
               lands (roadmap P1 · 12). */}
-            <Rect
+            <Circle
+              cx={width / 2}
+              cy={BAND / 2}
               fill="none"
-              height={26}
-              stroke={color.text.primary}
-              strokeWidth={2}
-              width={26}
-              x={width / 2 - 13}
-              y={BAND_HEIGHT / 2 - 13}
+              r={24}
+              stroke={color.accent.primary}
+              strokeOpacity={0.35}
+              strokeWidth={3}
             />
-            <Rect
+            <Circle
+              cx={width / 2}
+              cy={BAND / 2}
               fill="none"
-              height={22}
-              stroke={color.bg.base}
-              strokeWidth={2}
-              width={22}
-              x={width / 2 - 11}
-              y={BAND_HEIGHT / 2 - 11}
+              r={16}
+              stroke={color.accent.primary}
+              strokeWidth={2.5}
             />
+            <Circle cx={width / 2} cy={BAND / 2} fill={color.accent.primary} r={8} />
           </Svg>
         )}
 
-        <Text aria-hidden style={s.bandCaption}>
-          Próximos {HEAT_WINDOW_DAYS} días · alrededor
-        </Text>
+        {width > 0 && ringPx < width / 2 - 8 && (
+          <View
+            aria-hidden
+            style={[s.ringLabel, { left: width / 2 + ringPx - 24, top: BAND / 2 - 11 }]}
+          >
+            <Text style={s.ringLabelText}>{radiusKm} km</Text>
+          </View>
+        )}
+
+        {overlay ? <View style={s.bandOverlay}>{overlay}</View> : null}
+
+        <View aria-hidden style={s.bandCaptionPill}>
+          <Text style={s.bandCaptionText}>
+            {caption ?? `Todo · próximos ${HEAT_WINDOW_DAYS} días`}
+          </Text>
+        </View>
         {(empty || failed) && (
           <View aria-hidden style={s.bandMessage}>
             <Text style={s.bandMessageText}>
               {failed
                 ? 'No se pudo cargar el mapa de calor.'
-                : 'Nada programado por acá esta semana.'}
+                : 'Nada programado por aquí esta semana.'}
             </Text>
           </View>
         )}
@@ -217,22 +242,21 @@ export function HeatBand({ centre, radiusM }: Props) {
           and this one measures people per zone — a different quantity from
           the occupancy scale further down, so it says its unit. */}
         <View aria-hidden style={s.bandLegend}>
-          <Text style={s.bandScale}>0</Text>
-          <View style={s.bandRamp}>
-            {heatStops()
-              .slice(1)
-              .map((stop) => (
-                <View key={stop} style={[s.bandStop, { backgroundColor: stop }]} />
-              ))}
+          <View style={s.bandLegendRow}>
+            <Text style={s.bandScale}>0</Text>
+            <View style={s.bandRamp}>
+              {heatStops()
+                .slice(1)
+                .map((stop) => (
+                  <View key={stop} style={[s.bandStop, { backgroundColor: stop }]} />
+                ))}
+            </View>
+            <Text style={s.bandScale}>{PEOPLE_AT_PEAK}+ personas</Text>
           </View>
-          <Text style={s.bandScale}>{PEOPLE_AT_PEAK}+ personas</Text>
+          {/* On the map itself, as the ODbL asks. */}
+          <Text style={s.bandCredit}>© colaboradores de OpenStreetMap</Text>
         </View>
       </View>
-
-      {/* Below the band rather than on it: at phone width it would collide
-        with the caption. Directly beneath is still where the map is shown,
-        which is what the ODbL asks. */}
-      <Text style={s.bandCredit}>© colaboradores de OpenStreetMap</Text>
     </View>
   );
 }

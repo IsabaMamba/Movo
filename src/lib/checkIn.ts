@@ -61,6 +61,39 @@ export async function selfCheckIn(
   return data as SelfCheckInOutcome;
 }
 
+/**
+ * «Llegué» sent after reconnecting (0042). `tappedAt` is when the person
+ * tapped, without signal; the database checks the tap, not the sync, against
+ * the window, and marks the check-in «sin señal» until the organizer confirms.
+ */
+export async function selfCheckInOffline(
+  db: SupabaseClient,
+  activityId: string,
+  code: string,
+  tappedAt: string,
+): Promise<SelfCheckInOutcome> {
+  const { data, error } = await db.rpc('self_check_in_offline', {
+    p_activity_id: activityId,
+    p_code: cleanCode(code),
+    p_tapped_at: tappedAt,
+  });
+  if (error) throw toApiError(error);
+  return data as SelfCheckInOutcome;
+}
+
+/** The organizer confirms a check-in that arrived without signal. */
+export async function confirmOfflineCheckIn(
+  db: SupabaseClient,
+  activityId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await db.rpc('confirm_offline_check_in', {
+    p_activity_id: activityId,
+    p_user_id: userId,
+  });
+  if (error) throw toApiError(error);
+}
+
 /** The organizer's code, created the first time it is asked for. */
 export async function fetchCheckInCode(db: SupabaseClient, activityId: string): Promise<string> {
   const { data, error } = await db.rpc('check_in_code', { p_activity_id: activityId });

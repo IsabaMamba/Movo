@@ -20,6 +20,7 @@ import type {
   CategoryId,
   CurrencyCode,
   JsonSchemaObject,
+  JsonSchemaProperty,
   Location,
   NearbyActivity,
   ParticipationStatus,
@@ -250,6 +251,35 @@ export interface ValidationIssue {
 }
 
 /**
+ * The fixed rules of a sport (0036): properties marked `readOnly` with a
+ * `const` — the life jacket in the water, the helmet on a bike. Nobody fills
+ * them in; the form shows them and the database writes them.
+ */
+export function fixedRules(schema: JsonSchemaObject): [string, JsonSchemaProperty][] {
+  return Object.entries(schema.properties).filter(
+    ([, prop]) => prop.readOnly === true && prop.const !== undefined,
+  );
+}
+
+/** The attributes with every fixed rule written in, as the database will store them. */
+export function withFixedAttributes(
+  schema: JsonSchemaObject,
+  attributes: Record<string, unknown>,
+): Record<string, unknown> {
+  const out = { ...attributes };
+  for (const [field, prop] of fixedRules(schema)) out[field] = prop.const;
+  return out;
+}
+
+/** «Sintética» for «sintetica»: the schema's `enumNames`, or the value itself. */
+export function enumLabel(prop: JsonSchemaProperty | undefined, value: string): string {
+  const options = prop?.enum ?? prop?.items?.enum;
+  const names = prop?.enumNames ?? prop?.items?.enumNames;
+  const index = options?.indexOf(value) ?? -1;
+  return (index >= 0 ? names?.[index] : undefined) ?? value;
+}
+
+/**
  * Validates `attributes` against the JSON Schema stored on the category.
  * Deliberately small — it covers the subset the seed schemas actually use.
  * Run it on the client for instant feedback and again server-side before
@@ -260,6 +290,12 @@ export function validateAttributes(
   attributes: Record<string, unknown>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+
+  for (const [field, prop] of fixedRules(schema)) {
+    if (field in attributes && attributes[field] !== prop.const) {
+      issues.push({ field, message: 'Es una regla fija de este deporte' });
+    }
+  }
 
   for (const field of schema.required ?? []) {
     if (attributes[field] === undefined || attributes[field] === null) {
@@ -429,7 +465,8 @@ export async function createActivity(
   input: NewActivityInput,
   schema: JsonSchemaObject,
 ): Promise<string> {
-  assertAttributes(schema, input.attributes);
+  const attributes = withFixedAttributes(schema, input.attributes);
+  assertAttributes(schema, attributes);
 
   const endsAt = new Date(input.startsAt.getTime() + input.durationMinutes * 60_000);
 
@@ -448,7 +485,7 @@ export async function createActivity(
       difficulty: input.difficulty,
       price_minor: input.priceMinor,
       currency: input.currency,
-      attributes: input.attributes,
+      attributes,
       visibility: input.visibility,
       status: input.publish ? 'published' : 'draft',
     })
@@ -482,7 +519,8 @@ export async function createSeries(
   schema: JsonSchemaObject,
   until?: Date,
 ): Promise<{ seriesId: string; generated: number }> {
-  assertAttributes(schema, input.attributes);
+  const attributes = withFixedAttributes(schema, input.attributes);
+  assertAttributes(schema, attributes);
 
   const { data, error } = await db
     .from('activity_series')
@@ -501,7 +539,7 @@ export async function createSeries(
       max_participants: input.maxParticipants,
       price_minor: input.priceMinor,
       currency: input.currency,
-      attributes: input.attributes,
+      attributes,
     })
     .select('id')
     .single();
@@ -605,7 +643,8 @@ export async function fetchMyParticipation(
 /** A session the caller is on the roster of, with what it takes to find it again. */
 export type MyParticipation = ActivityParticipant & {
   activity: Activity & {
-    location: Pick<Location, 'id' | 'name' | 'district'>;
+    /** geog is hex EWKB from PostgREST; read it with pointOf() (lib/venues). */
+    location: Pick<Location, 'id' | 'name' | 'district'> & { geog?: unknown };
     organizer: { id: string; display_name: string };
   };
 };
@@ -632,7 +671,7 @@ export async function fetchMyParticipations(
     .from('activity_participants')
     .select(
       '*, activity:activities!activity_participants_activity_id_fkey(' +
-        '*, location:locations!activities_location_id_fkey(id, name, district), ' +
+        '*, location:locations!activities_location_id_fkey(id, name, district, geog), ' +
         'organizer:profiles!activities_organizer_id_fkey(id, display_name))',
     )
     .eq('user_id', userId)
@@ -792,7 +831,8 @@ export interface NewCommunityInput {
   slug: string;
   description?: string | null;
   rules?: string | null;
-  categoryId?: CategoryId | null;
+  /** Up to three; the database checks them and sets category_id to the first (0037). */
+  categoryIds?: CategoryId[];
   isPublic: boolean;
 }
 
@@ -813,7 +853,7 @@ export async function createCommunity(
       name: input.name.trim(),
       description: input.description?.trim() || null,
       rules: input.rules?.trim() || null,
-      category_id: input.categoryId ?? null,
+      category_ids: input.categoryIds ?? [],
       is_public: input.isPublic,
       created_by: creatorId,
     })
@@ -864,10 +904,35 @@ export const REPORT_REASONS = [
   // 0032. A session's links go somewhere Movo has no say; a bad one is
   // reported on the session, with this reason, into the same queue.
   { value: 'enlace', label: 'Un enlace es engañoso o peligroso' },
+  // 0039. Somebody using another person's name or photo, or a club's.
+  { value: 'suplantacion', label: 'Se hace pasar por otra persona' },
+  // 0039. Offered only inside women-only spaces (Mujeres v1): elsewhere the
+  // sentence is meaningless, and a reason that does not apply is a reason
+  // somebody picks by mistake.
+  { value: 'not_eligible', label: 'No debería estar en un espacio solo para mujeres' },
   { value: 'otro', label: 'Otra cosa' },
 ] as const;
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
+
+/** Reasons that only make sense in some places. */
+const WOMEN_ONLY_REASONS: ReadonlySet<ReportReason> = new Set(['not_eligible']);
+
+/**
+ * The reasons to offer for one report, in the list's order.
+ *
+ * `womenOnly` is whether the session or group where it happened is
+ * women-only. The audience columns arrive with the women-only backend; until
+ * then every caller passes false and the list is what it was, plus
+ * suplantación.
+ */
+export function reportReasonsFor(context: {
+  womenOnly: boolean;
+}): (typeof REPORT_REASONS)[number][] {
+  return REPORT_REASONS.filter(
+    (option) => context.womenOnly || !WOMEN_ONLY_REASONS.has(option.value),
+  );
+}
 
 /**
  * File a report.
@@ -887,6 +952,12 @@ export async function createReport(
   subjectId: string,
   reason: ReportReason,
   details?: string,
+  /**
+   * The session where it happened, for a report about a person or a message
+   * (0039). A reviewer reading «comportamiento» about a name needs to know
+   * which Saturday.
+   */
+  contextActivityId?: string,
 ): Promise<string> {
   const { data, error } = await db
     .from('reports')
@@ -896,6 +967,7 @@ export async function createReport(
       subject_id: subjectId,
       reason,
       details: details?.trim() || null,
+      context_activity_id: contextActivityId ?? null,
     })
     .select('id')
     .single();

@@ -246,7 +246,7 @@ export function PermissionsScreen() {
             <Text style={s.hint}>
               {state.historyOn
                 ? `Activado.${since(state.current.attendance_history)} Guarda el deporte, el distrito y la franja del día de las sesiones a las que llegas, y se borra solo a los 90 días.`
-                : 'Apagado. Movo no guarda a dónde vas.'}
+                : 'Apagado. Tus sesiones quedan en «Pasadas», solo para ti: no se publican ni se usan para recomendarte.'}
             </Text>
             <Link href="/historial" style={s.chip}>
               <Text style={s.chipText}>

@@ -7,15 +7,32 @@
  * grid, and reporting lives here rather than in settings, because this is the
  * screen where somebody decides to meet strangers in a park.
  *
+ * Layout from the 2 November walkthrough (step 5): back and share on top,
+ * sport and level in Sun, the title, who organizes, the series in a cool
+ * box, then one row per fact with its icon — when, where with «Cómo llegar»,
+ * the price, what it is like — then who is going, and the two actions fixed
+ * at the bottom. «Unirme a la serie» waits for join_series().
+ *
  * Nothing from profile_private is rendered. Phone, birthdate and emergency
  * contact never appear on anyone else's screen — only display name and avatar.
  */
 
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import {
+  ActivityIndicator,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import {
+  enumLabel,
   fetchActivityDetail,
   fetchMyParticipation,
   fetchRoster,
@@ -24,12 +41,15 @@ import {
   joinActivity,
   leaveActivity,
   createReport,
-  REPORT_REASONS,
+  reportReasonsFor,
   type ActivityDetail,
   type SeriesOccurrence,
   type ReportReason,
 } from '../../lib/activities';
+import { directionsUrl, inviteText } from '../../lib/agenda';
 import { fetchActivityLinks, type ActivityLink } from '../../lib/links';
+import { pointOf } from '../../lib/venues';
+import { blockedPersonGoing } from '../../lib/blocks';
 import { supabase } from '../../lib/supabase';
 import {
   color,
@@ -46,7 +66,58 @@ import {
 import type { ActivityParticipant, JsonSchemaProperty } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { SessionLinks } from '../links/SessionLinks';
+import { Icon, type IconName } from '../nav/Icon';
 import { detailStyles as s } from './styles';
+
+const TZ = 'America/Costa_Rica';
+const DAY = new Intl.DateTimeFormat('es-CR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: TZ,
+});
+const CLOCK = new Intl.DateTimeFormat('es-CR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: TZ,
+});
+const SKILL: Record<string, string> = {
+  beginner: 'Principiante',
+  intermediate: 'Intermedio',
+  advanced: 'Avanzado',
+};
+const AVATAR_TINTS = ['#FFC56B', '#FF9F45', '#F3E6D2', '#F0644F'];
+
+/** «Dom 11 oct». */
+function dayLabel(iso: string): string {
+  const text = DAY.format(new Date(iso)).replace(/[.,]/g, '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** One fact with its icon, as the walkthrough draws them. */
+function InfoRow({
+  icon,
+  title,
+  sub,
+  children,
+}: {
+  icon: IconName;
+  title: string;
+  sub?: string | null;
+  children?: ReactNode;
+}) {
+  return (
+    <View style={s.infoRow}>
+      <Icon color={color.text.secondary} name={icon} size={20} />
+      <View style={s.infoBody}>
+        <Text style={s.infoTitle}>{title}</Text>
+        {sub ? <Text style={s.infoSub}>{sub}</Text> : null}
+        {children}
+      </View>
+    </View>
+  );
+}
 
 /** Initials stand in until avatars are uploaded; there is no storage bucket yet. */
 function initials(name: string): string {
@@ -72,8 +143,13 @@ function attributeTags(
     if (value === true) tags.push(label);
     else if (value === false || value === null || value === undefined) continue;
     else if (Array.isArray(value)) {
-      if (value.length > 0) tags.push(`${label}: ${value.join(', ')}`);
-    } else tags.push(`${label}: ${String(value)}`);
+      if (value.length > 0) {
+        tags.push(`${label}: ${value.map((v) => enumLabel(property, String(v))).join(', ')}`);
+      }
+    } else
+      tags.push(
+        `${label}: ${typeof value === 'string' ? enumLabel(property, value) : String(value)}`,
+      );
   }
   return tags;
 }
@@ -97,6 +173,7 @@ export function SessionDetailScreen() {
   const [reportBusy, setReportBusy] = useState(false);
   const [otherDates, setOtherDates] = useState<SeriesOccurrence[]>([]);
   const [links, setLinks] = useState<ActivityLink[]>([]);
+  const [blockedGoing, setBlockedGoing] = useState(false);
 
   const userId = session?.user.id;
 
@@ -121,12 +198,15 @@ export function SessionDetailScreen() {
     if (userId) {
       // Both are permitted to fail quietly: the roster is organizer- and
       // participant-only by policy, so a stranger legitimately gets nothing.
-      const [r, m] = await Promise.all([
+      const [r, m, blocked] = await Promise.all([
         fetchRoster(supabase, id).catch((): Roster => []),
         fetchMyParticipation(supabase, id, userId).catch(() => null),
+        // 0039: a yes or no, never who. Fails as «no».
+        blockedPersonGoing(supabase, id),
       ]);
       setRoster(r);
       setMine(m);
+      setBlockedGoing(blocked);
     }
   }, [id, userId]);
 
@@ -242,368 +322,452 @@ export function SessionDetailScreen() {
         ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
         : undefined;
 
+  const point = pointOf(activity.location.geog);
+  const minutes = Math.round(
+    (new Date(activity.ends_at).getTime() - new Date(activity.starts_at).getTime()) / 60000,
+  );
+  const level = band
+    ? difficultyLabel[band]
+    : activity.skill !== 'any'
+      ? SKILL[activity.skill]
+      : 'Todos los niveles';
+  const left =
+    activity.max_participants === null
+      ? null
+      : Math.max(0, activity.max_participants - activity.joined_count);
+  const goingPeople = roster.filter((p) => p.status === 'joined' || p.status === 'attended');
+
+  const share = () => {
+    const text = inviteText(activity.title, activity.starts_at, new Date());
+    if (Platform.OS === 'web') {
+      const nav = globalThis.navigator as Navigator | undefined;
+      if (nav?.share) void nav.share({ text }).catch(() => undefined);
+      else void nav?.clipboard?.writeText(text).catch(() => undefined);
+      return;
+    }
+    void Share.share({ message: text });
+  };
+
   return (
-    <ScrollView contentContainerStyle={s.content} style={s.screen}>
-      <Link href="/" style={s.back}>
-        <Text style={s.backText}>← Descubrir</Text>
-      </Link>
-
-      <View>
-        <View style={s.eyebrow}>
-          <Text style={s.eyebrowText}>{activity.category.name_es}</Text>
-          {activity.series_id && <Text style={s.seriesTag}>Se repite</Text>}
-        </View>
-        <Text style={s.title}>{activity.title}</Text>
-      </View>
-
-      {cancelled && (
-        <View style={s.cancelled}>
-          {/* First thing under the title: everything below still describes a
-              session that is not happening. */}
-          <Text accessibilityRole="alert" style={s.cancelledTitle}>
-            Cancelada — no vayas
-          </Text>
-          <Text style={s.cancelledBody}>
-            {activity.cancelled_by_staff
-              ? 'La canceló el equipo de Movo.'
-              : activity.cancel_reason
-                ? `Quien organiza escribió: «${activity.cancel_reason}»`
-                : 'Quien organiza la canceló sin escribir un motivo.'}
-          </Text>
-        </View>
-      )}
-
-      {/* Occupancy: the bar and the number are the same variable. */}
-      <View style={s.occupancy}>
-        <View style={s.occupancyTop}>
-          {/* Which is why the bar below is hidden and this line carries the
-              meaning aloud: a fill colour and a width say nothing spoken. */}
-          <Text
-            accessibilityLabel={occupancyA11yLabel(
-              activity.joined_count,
-              activity.max_participants,
-              density,
-            )}
-            style={s.occupancyCount}
-          >
-            {occupancyLabel(activity.joined_count, activity.max_participants)}
-          </Text>
-          {band && <Text style={s.occupancyWord}>· {difficultyLabel[band]}</Text>}
-        </View>
-        <View aria-hidden style={s.bar}>
-          <View
-            style={[
-              s.barFill,
-              { backgroundColor: heatColor(density), width: `${Math.max(density * 100, 4)}%` },
-            ]}
-          />
-        </View>
-        <View style={s.barScale}>
-          <Text style={s.scaleLabel}>vacío</Text>
-          <Text style={s.scaleLabel}>
-            {activity.max_participants === null
-              ? `referencia ${UNCAPPED_REFERENCE}`
-              : `${activity.max_participants} máx.`}
-          </Text>
-        </View>
-      </View>
-
-      <View style={s.organizer}>
-        {/* Initials are a compressed form of the name spelled out beside them,
-            so aloud they are two stray letters. */}
-        <View aria-hidden style={s.avatar}>
-          <Text style={s.avatarText}>{initials(activity.organizer.display_name)}</Text>
-        </View>
-        <View>
-          <Text style={s.organizerName}>{activity.organizer.display_name}</Text>
-          <Text style={s.organizerMeta}>Organiza esta sesión</Text>
-        </View>
-      </View>
-
-      <View style={s.facts}>
-        <View style={s.fact}>
-          <Text style={s.factLabel}>Cuándo</Text>
-          <Text style={s.factValue}>{formatSessionTime(activity.starts_at)}</Text>
-        </View>
-        <View style={s.fact}>
-          <Text style={s.factLabel}>Dura</Text>
-          <Text style={s.factValue}>
-            {Math.round(
-              (new Date(activity.ends_at).getTime() - new Date(activity.starts_at).getTime()) /
-                60000,
-            )}{' '}
-            min
-          </Text>
-        </View>
-        <View style={s.fact}>
-          <Text style={s.factLabel}>Precio</Text>
-          <Text style={s.factValue}>{priceLabel(activity.price_minor, activity.currency)}</Text>
-        </View>
-      </View>
-
-      {/* The one field whose absence stops somebody turning up. */}
-      <View style={s.meeting}>
-        <Text style={s.meetingLabel}>Dónde nos vemos</Text>
-        <Text style={s.meetingValue}>
-          {activity.location.name}
-          {activity.meeting_point ? ` · ${activity.meeting_point}` : ''}
-        </Text>
-        {activity.location.district && (
-          <Text style={s.meetingNote}>{activity.location.district}</Text>
-        )}
-      </View>
-
-      <SessionLinks
-        links={links}
-        onReport={(link) => {
-          if (!session) {
-            router.push('/sign-in');
-            return;
-          }
-          // The session's own report form, with the reason chosen and the
-          // domain written in, so the reviewer knows which link.
-          setReportId(null);
-          setReason('enlace');
-          setReportDetails(`Enlace: ${link.domain} (${link.url})`);
-          setReporting(true);
-        }}
-      />
-
-      {otherDates.length > 0 && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Otras fechas</Text>
-          {/* Said before the chips, because the obvious assumption — that
-              "Voy" signs you up for every Tuesday — is wrong. */}
-          <Text style={s.privacyNote}>
-            Se repite cada semana. Cada fecha tiene su propia lista: unirte a esta no te une a las
-            demás.
-          </Text>
-          <View style={s.tagRow}>
-            {otherDates.map((date) => {
-              const dateFull =
-                date.max_participants !== null && date.joined_count >= date.max_participants;
-              return (
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel={`${formatSessionTime(date.starts_at)}${dateFull ? ', llena' : ''}`}
-                  accessibilityHint="Abre esa fecha de la sesión"
-                  hitSlop={hitSlopFor(32)}
-                  key={date.id}
-                  onPress={() => {
-                    router.push({ pathname: '/sesion/[id]', params: { id: date.id } });
-                  }}
-                  style={s.tag}
-                >
-                  <Text style={s.tagText}>
-                    {formatSessionTime(date.starts_at)}
-                    {dateFull ? ' · llena' : ''}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {tags.length > 0 && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Cómo es</Text>
-          <View style={s.tagRow}>
-            {tags.map((tag) => (
-              <View key={tag} style={s.tag}>
-                <Text style={s.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {activity.equipment.length > 0 && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Lleva</Text>
-          <View style={s.tagRow}>
-            {activity.equipment.map((item) => (
-              <View key={item} style={s.tag}>
-                <Text style={s.tagText}>{item}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      <View style={s.section}>
-        <Text style={s.sectionTitle}>Quién va</Text>
-        {roster.length > 0 ? (
-          /* The size of the list is worth knowing before walking it name by
-             name — sighted readers get it from the shape of the block. */
-          <View
-            accessibilityRole="list"
-            accessibilityLabel={`Quién va: ${roster.length} ${roster.length === 1 ? 'persona' : 'personas'}`}
-            style={s.roster}
-          >
-            {roster.map((person) => (
-              <View key={person.user_id} style={s.tag}>
-                <Text style={s.rosterName}>{person.profile.display_name}</Text>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Text style={s.privacyNote}>
-            {session
-              ? 'La lista es visible para quienes ya van y para quien organiza.'
-              : 'Inicia sesión para ver quién va.'}
-          </Text>
-        )}
-      </View>
-
-      {!cancelled && mine && (going || waiting) && (
-        <View style={[s.status, waiting && s.statusWait]}>
-          {/* Appears only after the join or leave resolves, so it has to
-              announce itself rather than wait to be found. */}
-          <Text accessibilityRole="alert" style={s.statusText}>
-            {waiting
-              ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entras automáticamente.`
-              : 'Vas a esta sesión.'}
-          </Text>
-          {/* Descubrir stops showing a session once it starts, so without this
-              the page you just joined has no route back to it. */}
-          <Link href="/mis-sesiones">
-            <Text style={s.statusLink}>Verla después en Mis sesiones</Text>
-          </Link>
-        </View>
-      )}
-
-      {error && (
-        <Text accessibilityRole="alert" style={s.error}>
-          {error}
-        </Text>
-      )}
-
-      {/* Joining is refused by the database and leaving means nothing, so a
-          cancelled session offers neither. */}
-      {!cancelled && (
-        <>
+    <View style={s.screen}>
+      <ScrollView contentContainerStyle={[s.content, s.contentWithBar]} style={s.scroll}>
+        <View style={s.topBar}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={actionLabel}
-            accessibilityHint={actionHint}
-            aria-disabled={busy}
-            disabled={busy}
-            onPress={act}
-            style={[s.action, (going || waiting) && s.actionSecondary, busy && s.actionDisabled]}
+            accessibilityLabel="Volver"
+            hitSlop={hitSlopFor(32)}
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace('/');
+            }}
+            style={s.backButton}
           >
-            <Text style={[s.actionText, (going || waiting) && s.actionTextSecondary]}>
-              {actionLabel}
-            </Text>
+            <Icon color={color.text.primary} name="back" size={20} />
+            <Text style={s.backButtonText}>Volver</Text>
           </Pressable>
-          <Text style={s.actionNote}>Puedes cancelar hasta la hora de salida.</Text>
-        </>
-      )}
-
-      {/* Reporting works since #29: a closed reason list, one insert, and a
-          confirmation quoting the report id so "enviado" is checkable. The
-          comment that used to sit here said the control had no onPress, which
-          stopped being true and kept being read. */}
-      {reportId ? (
-        <View style={s.status}>
-          <Text style={s.statusText}>
-            Reporte enviado · {reportId.slice(0, 8)}. Lo revisa una persona del equipo; si hace
-            falta te escribimos. Quien organiza no recibe aviso.
-          </Text>
-        </View>
-      ) : reporting ? (
-        <View style={s.sheet}>
-          <Text style={s.sheetTitle}>Reportar esta sesión</Text>
-          <Text style={s.sheetBody}>
-            Cuéntanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
-          </Text>
-          <Link href="/normas" style={s.back}>
-            <Text style={s.sheetBody}>Ver las normas de la comunidad</Text>
-          </Link>
-
-          {/* One reason from a closed list: a radiogroup. The group carries the
-              label because the options are bare words that mean nothing
-              announced on their own. */}
-          <View
-            accessibilityRole="radiogroup"
-            accessibilityLabel="Motivo del reporte"
-            style={s.reasonRow}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Compartir esta sesión"
+            hitSlop={hitSlopFor(32)}
+            onPress={share}
+            style={s.shareButton}
           >
-            {REPORT_REASONS.map((option) => {
-              const on = reason === option.value;
-              return (
-                <Pressable
-                  accessibilityRole="radio"
-                  accessibilityLabel={option.label}
-                  aria-checked={on}
-                  key={option.value}
-                  onPress={() => {
-                    setReason(option.value);
-                  }}
-                  style={[s.reason, on && s.reasonOn]}
-                >
-                  <Text style={[s.reasonText, on && s.reasonTextOn]}>{option.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+            <Icon color={color.text.primary} name="share" size={18} />
+          </Pressable>
+        </View>
 
-          <TextInput
-            accessibilityLabel="Detalles del reporte, opcional"
-            maxLength={2000}
-            multiline
-            onChangeText={setReportDetails}
-            placeholder="Si quieres, agrega lo que viste."
-            placeholderTextColor={color.text.tertiary}
-            style={s.detailsInput}
-            value={reportDetails}
-          />
-
-          <View style={s.sheetActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Enviar reporte"
-              aria-disabled={!reason || reportBusy}
-              disabled={!reason || reportBusy}
-              onPress={sendReport}
-              style={[s.send, (!reason || reportBusy) && s.sendDisabled]}
-            >
-              <Text style={s.sendText}>{reportBusy ? 'Enviando…' : 'Enviar reporte'}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Cancelar el reporte"
-              onPress={() => {
-                setReporting(false);
-                setReason(null);
-              }}
-              style={s.cancel}
-            >
-              <Text style={s.cancelText}>Cancelar</Text>
-            </Pressable>
+        <View style={s.heading}>
+          <Text style={s.eyebrowSun}>
+            {`${activity.category.name_es} · ${level}`.toUpperCase()}
+          </Text>
+          <Text accessibilityRole="header" style={s.title}>
+            {activity.title}
+          </Text>
+          <View style={s.organizerRow}>
+            <View aria-hidden style={s.organizerAvatar}>
+              <Text style={s.organizerAvatarText}>{initials(activity.organizer.display_name)}</Text>
+            </View>
+            <Text style={s.organizerLine}>
+              Organiza <Text style={s.organizerStrong}>{activity.organizer.display_name}</Text>
+            </Text>
           </View>
         </View>
-      ) : (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Reportar esta sesión"
-          accessibilityHint={
-            session
-              ? 'Abre el formulario para contar qué pasa.'
-              : 'Necesitas iniciar sesión para reportar.'
-          }
-          onPress={() => {
+
+        {cancelled && (
+          <View style={s.cancelled}>
+            {/* First thing under the title: everything below still describes a
+                session that is not happening. */}
+            <Text accessibilityRole="alert" style={s.cancelledTitle}>
+              Cancelada — no vayas
+            </Text>
+            <Text style={s.cancelledBody}>
+              {activity.cancelled_by_staff
+                ? 'La canceló el equipo de Movo.'
+                : activity.cancel_reason
+                  ? `Quien organiza escribió: «${activity.cancel_reason}»`
+                  : 'Quien organiza la canceló sin escribir un motivo.'}
+            </Text>
+          </View>
+        )}
+
+        {activity.series_id && (
+          <View style={s.seriesBox}>
+            <Icon color={color.accent.cool} name="repeat" size={18} />
+            <Text style={s.seriesText}>
+              Se repite cada semana
+              {otherDates.length > 0 ? ` · ${otherDates.length + 1} fechas` : ''}. Cada fecha tiene
+              su propia lista: unirte a esta no te une a las demás.
+            </Text>
+          </View>
+        )}
+
+        <View style={s.info}>
+          <InfoRow
+            icon="calendar"
+            sub={`Dura ${minutes} min.`}
+            title={`${dayLabel(activity.starts_at)} · ${CLOCK.format(new Date(activity.starts_at))} a ${CLOCK.format(new Date(activity.ends_at))}`}
+          />
+          <InfoRow
+            icon="pin"
+            sub={[
+              activity.meeting_point ? `Punto de encuentro: ${activity.meeting_point}` : null,
+              activity.location.district,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            title={activity.location.name}
+          >
+            {point && (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityHint="Abre tu app de mapas con el lugar"
+                onPress={() => {
+                  void Linking.openURL(directionsUrl(point.lat, point.lng));
+                }}
+              >
+                <Text style={s.infoLink}>Cómo llegar</Text>
+              </Pressable>
+            )}
+          </InfoRow>
+          <InfoRow icon="money" title={priceLabel(activity.price_minor, activity.currency)} />
+          {tags.length > 0 && <InfoRow icon="route" title={tags.join(' · ')} />}
+          {activity.equipment.length > 0 && (
+            <InfoRow icon="check" sub={activity.equipment.join(' · ')} title="Lleva" />
+          )}
+        </View>
+
+        {blockedGoing && (
+          <View accessibilityRole="alert" style={s.blockedNotice}>
+            <Icon color={color.text.secondary} name="hand" size={18} />
+            <Text style={s.blockedNoticeText}>
+              Alguien que bloqueaste va a esta sesión. No se ven en la lista ni en el chat, pero sí
+              en persona.
+            </Text>
+          </View>
+        )}
+
+        {/* Chat v1 · 1 and Sesión v2 · 9–10: only whoever goes or organizes
+            reads the session chat, so only they see the way in. */}
+        {(going || activity.organizer.id === userId) && (
+          <Pressable
+            accessibilityHint="Abre el chat de la sesión"
+            accessibilityRole="link"
+            onPress={() => {
+              router.push({ pathname: '/chat/sesion/[id]', params: { id: activity.id } });
+            }}
+            style={s.chatRow}
+          >
+            <Icon color={color.accent.cool} name="chat" size={20} />
+            <View style={s.infoBody}>
+              <Text style={s.infoTitle}>Chat de la sesión</Text>
+              <Text style={s.infoSub}>Solo quienes van lo leen. Nadie ve tu número.</Text>
+            </View>
+            <Icon color={color.text.tertiary} name="chevronRight" size={16} />
+          </Pressable>
+        )}
+
+        <View style={s.goingBlock}>
+          <View style={s.goingTop}>
+            {goingPeople.length > 0 ? (
+              <View
+                accessible
+                accessibilityLabel={`Van ${goingPeople.map((p) => p.profile.display_name).join(', ')}`}
+                style={s.avatars}
+              >
+                {goingPeople.slice(0, 4).map((p, i) => (
+                  <View
+                    key={p.user_id}
+                    style={[
+                      s.smallAvatar,
+                      {
+                        backgroundColor: AVATAR_TINTS[i % AVATAR_TINTS.length],
+                        marginLeft: i === 0 ? 0 : -8,
+                      },
+                    ]}
+                  >
+                    <Text style={s.smallAvatarText}>{initials(p.profile.display_name)}</Text>
+                  </View>
+                ))}
+                {goingPeople.length > 4 && (
+                  <Text style={s.moreText}>+{goingPeople.length - 4}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={s.privacyNote}>
+                {session
+                  ? 'Quién va lo ven quienes ya van y quien organiza.'
+                  : 'Inicia sesión para ver quién va.'}
+              </Text>
+            )}
+            <Text
+              accessibilityLabel={occupancyA11yLabel(
+                activity.joined_count,
+                activity.max_participants,
+                density,
+              )}
+              style={s.goingCount}
+            >
+              {occupancyLabel(activity.joined_count, activity.max_participants)}
+            </Text>
+          </View>
+          <View aria-hidden style={s.bar}>
+            <View
+              style={[
+                s.barFill,
+                { backgroundColor: heatColor(density), width: `${Math.max(density * 100, 4)}%` },
+              ]}
+            />
+          </View>
+          <Text style={s.scaleLabel}>
+            {activity.max_participants === null
+              ? `Sin cupo · la barra se llena a las ${UNCAPPED_REFERENCE} personas`
+              : `Cupo de ${activity.max_participants}`}
+          </Text>
+        </View>
+
+        <SessionLinks
+          links={links}
+          onReport={(link) => {
             if (!session) {
               router.push('/sign-in');
               return;
             }
+            // The session's own report form, with the reason chosen and the
+            // domain written in, so the reviewer knows which link.
+            setReportId(null);
+            setReason('enlace');
+            setReportDetails(`Enlace: ${link.domain} (${link.url})`);
             setReporting(true);
           }}
-          style={s.report}
-        >
-          <Text style={s.reportText}>Reportar esta sesión</Text>
-        </Pressable>
+        />
+
+        {otherDates.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Otras fechas</Text>
+            <View style={s.tagRow}>
+              {otherDates.map((date) => {
+                const dateFull =
+                  date.max_participants !== null && date.joined_count >= date.max_participants;
+                return (
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`${formatSessionTime(date.starts_at)}${dateFull ? ', llena' : ''}`}
+                    accessibilityHint="Abre esa fecha de la sesión"
+                    hitSlop={hitSlopFor(32)}
+                    key={date.id}
+                    onPress={() => {
+                      router.push({ pathname: '/sesion/[id]', params: { id: date.id } });
+                    }}
+                    style={s.tag}
+                  >
+                    <Text style={s.tagText}>
+                      {formatSessionTime(date.starts_at)}
+                      {dateFull ? ' · llena' : ''}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {!cancelled && mine && (going || waiting) && (
+          <View style={[s.status, waiting && s.statusWait]}>
+            {/* Appears only after the join or leave resolves, so it has to
+              announce itself rather than wait to be found. */}
+            <Text accessibilityRole="alert" style={s.statusText}>
+              {waiting
+                ? `Estás en lista de espera${mine.waitlist_pos ? `, puesto ${mine.waitlist_pos}` : ''}. Si alguien cancela, entras automáticamente.`
+                : 'Vas a esta sesión.'}
+            </Text>
+            {/* Descubrir stops showing a session once it starts, so without this
+              the page you just joined has no route back to it. */}
+            <Link href="/mis-sesiones">
+              <Text style={s.statusLink}>Verla después en Mis sesiones</Text>
+            </Link>
+          </View>
+        )}
+
+        {error && (
+          <Text accessibilityRole="alert" style={s.error}>
+            {error}
+          </Text>
+        )}
+
+        {/* Reporting works since #29: a closed reason list, one insert, and a
+          confirmation quoting the report id so "enviado" is checkable. The
+          comment that used to sit here said the control had no onPress, which
+          stopped being true and kept being read. */}
+        {reportId ? (
+          <View style={s.status}>
+            <Text style={s.statusText}>
+              Reporte enviado · {reportId.slice(0, 8)}. Lo revisa una persona del equipo; si hace
+              falta te escribimos. Quien organiza no recibe aviso.
+            </Text>
+          </View>
+        ) : reporting ? (
+          <View style={s.sheet}>
+            <Text style={s.sheetTitle}>Reportar esta sesión</Text>
+            <Text style={s.sheetBody}>
+              Cuéntanos qué pasa. Lo lee una persona, no se avisa a quien organiza.
+            </Text>
+            <Link href="/normas" style={s.back}>
+              <Text style={s.sheetBody}>Ver las normas de la comunidad</Text>
+            </Link>
+
+            {/* One reason from a closed list: a radiogroup. The group carries the
+              label because the options are bare words that mean nothing
+              announced on their own. */}
+            <View
+              accessibilityRole="radiogroup"
+              accessibilityLabel="Motivo del reporte"
+              style={s.reasonRow}
+            >
+              {reportReasonsFor({ womenOnly: false }).map((option) => {
+                const on = reason === option.value;
+                return (
+                  <Pressable
+                    accessibilityRole="radio"
+                    accessibilityLabel={option.label}
+                    aria-checked={on}
+                    key={option.value}
+                    onPress={() => {
+                      setReason(option.value);
+                    }}
+                    style={[s.reason, on && s.reasonOn]}
+                  >
+                    <Text style={[s.reasonText, on && s.reasonTextOn]}>{option.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <TextInput
+              accessibilityLabel="Detalles del reporte, opcional"
+              maxLength={2000}
+              multiline
+              onChangeText={setReportDetails}
+              placeholder="Si quieres, agrega lo que viste."
+              placeholderTextColor={color.text.tertiary}
+              style={s.detailsInput}
+              value={reportDetails}
+            />
+
+            <View style={s.sheetActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Enviar reporte"
+                aria-disabled={!reason || reportBusy}
+                disabled={!reason || reportBusy}
+                onPress={sendReport}
+                style={[s.send, (!reason || reportBusy) && s.sendDisabled]}
+              >
+                <Text style={s.sendText}>{reportBusy ? 'Enviando…' : 'Enviar reporte'}</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Cancelar el reporte"
+                onPress={() => {
+                  setReporting(false);
+                  setReason(null);
+                }}
+                style={s.cancel}
+              >
+                <Text style={s.cancelText}>Cancelar</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Reportar esta sesión"
+            accessibilityHint={
+              session
+                ? 'Abre el formulario para contar qué pasa.'
+                : 'Necesitas iniciar sesión para reportar.'
+            }
+            onPress={() => {
+              if (!session) {
+                router.push('/sign-in');
+                return;
+              }
+              setReporting(true);
+            }}
+            style={s.report}
+          >
+            <Text style={s.reportText}>Reportar esta sesión</Text>
+          </Pressable>
+        )}
+      </ScrollView>
+
+      {/* Joining is refused by the database and leaving means nothing, so a
+          cancelled session offers neither. */}
+      {!cancelled && (
+        <View style={s.bottomBar}>
+          <View style={s.bottomRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={actionLabel}
+              accessibilityHint={actionHint}
+              aria-disabled={busy}
+              disabled={busy}
+              onPress={act}
+              style={[
+                s.action,
+                s.bottomAction,
+                (going || waiting) && s.actionSecondary,
+                busy && s.actionDisabled,
+              ]}
+            >
+              <Text style={[s.actionText, (going || waiting) && s.actionTextSecondary]}>
+                {actionLabel}
+              </Text>
+            </Pressable>
+            {point && (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Cómo llegar"
+                accessibilityHint="Abre tu app de mapas con el lugar"
+                onPress={() => {
+                  void Linking.openURL(directionsUrl(point.lat, point.lng));
+                }}
+                style={[s.action, s.actionSecondary, s.bottomSecondary]}
+              >
+                <Text style={[s.actionText, s.actionTextSecondary]}>Cómo llegar</Text>
+              </Pressable>
+            )}
+          </View>
+          <Text style={s.actionNote}>
+            {going || waiting
+              ? 'Puedes cancelar hasta la hora de salida.'
+              : full
+                ? 'Está llena: entras a la lista de espera.'
+                : left !== null
+                  ? `Quedan ${left} ${left === 1 ? 'lugar' : 'lugares'}.`
+                  : 'Sin cupo: puede ir quien quiera.'}
+          </Text>
+        </View>
       )}
-    </ScrollView>
+    </View>
   );
 }

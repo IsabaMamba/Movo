@@ -5,7 +5,12 @@ import {
   capacityFloor,
   explainSeriesError,
   groupUpcoming,
+  pastAttendance,
   peopleOnUpcoming,
+  seriesDateFill,
+  seriesDay,
+  seriesShortDate,
+  seriesStats,
   type SeriesDate,
 } from './series';
 
@@ -123,5 +128,66 @@ describe('groupUpcoming', () => {
       a('s2', null, '2026-09-30T00:00:00+00:00'),
     ]);
     expect(entries.every((e) => e.kind === 'single')).toBe(true);
+  });
+});
+
+describe('Serie v2 stats', () => {
+  const held = [
+    { id: 'c', starts_at: '2026-10-13T12:00:00Z' },
+    { id: 'a', starts_at: '2026-09-29T12:00:00Z' },
+    { id: 'b', starts_at: '2026-10-06T12:00:00Z' },
+  ];
+  const people = [
+    { activity_id: 'a', status: 'attended' },
+    { activity_id: 'a', status: 'no_show' },
+    { activity_id: 'b', status: 'attended' },
+    { activity_id: 'b', status: 'attended' },
+    { activity_id: 'c', status: 'attended' },
+    { activity_id: 'c', status: 'joined' },
+    { activity_id: 'c', status: 'cancelled' },
+  ];
+
+  it('counts who arrived out of who was expected, oldest first', () => {
+    expect(pastAttendance(held, people)).toEqual([
+      { id: 'a', starts_at: '2026-09-29T12:00:00Z', arrived: 1, expected: 2 },
+      { id: 'b', starts_at: '2026-10-06T12:00:00Z', arrived: 2, expected: 2 },
+      { id: 'c', starts_at: '2026-10-13T12:00:00Z', arrived: 1, expected: 2 },
+    ]);
+  });
+
+  it('gives the rate, the dates left and the weekly streak', () => {
+    const upcoming = [
+      date({ id: 'u1', starts_at: '2026-10-20T12:00:00Z' }),
+      date({ id: 'u2', starts_at: '2026-12-08T12:00:00Z' }),
+    ];
+    expect(seriesStats(pastAttendance(held, people), upcoming)).toEqual({
+      rate: 67,
+      upcoming: 2,
+      lastDate: '2026-12-08T12:00:00Z',
+      streak: 3,
+    });
+    expect(seriesStats([], []).rate).toBeNull();
+  });
+
+  it('breaks the streak on a skipped week', () => {
+    const past = pastAttendance(
+      [
+        { id: 'a', starts_at: '2026-09-15T12:00:00Z' },
+        { id: 'b', starts_at: '2026-10-06T12:00:00Z' },
+        { id: 'c', starts_at: '2026-10-13T12:00:00Z' },
+      ],
+      [],
+    );
+    expect(seriesStats(past, []).streak).toBe(2);
+  });
+
+  it('formats the date rows', () => {
+    expect(seriesDay('2026-10-20T12:00:00Z')).toMatch(/^Mar 20 oct/u);
+    expect(seriesShortDate('2026-12-08T12:00:00Z')).toBe('8 dic');
+    const d = date({ joined_count: 11, max_participants: 12 });
+    expect(seriesDateFill(d)).toBe('11 de 12 · queda 1 lugar');
+    expect(seriesDateFill({ ...d, joined_count: 9 })).toBe('9 de 12');
+    expect(seriesDateFill({ ...d, joined_count: 12 })).toBe('12 de 12 · llena');
+    expect(seriesDateFill({ ...d, max_participants: null, joined_count: 7 })).toBe('7 van');
   });
 });

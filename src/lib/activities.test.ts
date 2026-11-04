@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatSessionTime } from './activities';
+import {
+  enumLabel,
+  fixedRules,
+  formatSessionTime,
+  validateAttributes,
+  withFixedAttributes,
+  reportReasonsFor,
+} from './activities';
+import type { JsonSchemaObject } from '../types/database';
 
 /**
  * The session time is the one piece of text somebody acts on at a gate at
@@ -27,5 +35,59 @@ describe('formatSessionTime', () => {
   it('keeps the day in Costa Rica time whatever the device says', () => {
     // As an instant this is the 30th; in Costa Rica it is still the 29th.
     expect(formatSessionTime('2026-09-30T00:00:00.000Z')).toMatch(/29/);
+  });
+});
+
+/**
+ * A kayak session's life jacket is not the organizer's to leave out (0036).
+ * The database writes it anyway; these keep the client from showing a form
+ * that disagrees with what will be stored.
+ */
+describe('fixed rules and option labels', () => {
+  const kayak: JsonSchemaObject = {
+    type: 'object',
+    additionalProperties: false,
+    required: ['water', 'life_jackets'],
+    properties: {
+      water: { type: 'string', enum: ['lago', 'rio'], enumNames: ['Lago', 'Río'] },
+      life_jackets: { type: 'boolean', const: true, readOnly: true, title: 'Chaleco' },
+    },
+  };
+
+  it('finds the fixed rules and writes them in', () => {
+    expect(fixedRules(kayak).map(([key]) => key)).toEqual(['life_jackets']);
+    expect(withFixedAttributes(kayak, { water: 'rio', life_jackets: false })).toEqual({
+      water: 'rio',
+      life_jackets: true,
+    });
+  });
+
+  it('passes once the rules are in, and refuses a rule turned off', () => {
+    expect(validateAttributes(kayak, withFixedAttributes(kayak, { water: 'lago' }))).toEqual([]);
+    expect(validateAttributes(kayak, { water: 'lago', life_jackets: false })).toContainEqual({
+      field: 'life_jackets',
+      message: 'Es una regla fija de este deporte',
+    });
+  });
+
+  it('reads an option by its name, and falls back to the value', () => {
+    expect(enumLabel(kayak.properties.water, 'rio')).toBe('Río');
+    expect(enumLabel(kayak.properties.water, 'mar')).toBe('mar');
+    expect(enumLabel(undefined, 'x')).toBe('x');
+  });
+});
+
+describe('reportReasonsFor', () => {
+  it('offers «no debería estar aquí» only in women-only spaces', () => {
+    const mixed = reportReasonsFor({ womenOnly: false }).map((o) => o.value);
+    const women = reportReasonsFor({ womenOnly: true }).map((o) => o.value);
+    expect(mixed).not.toContain('not_eligible');
+    expect(women).toContain('not_eligible');
+    expect(mixed).toContain('suplantacion');
+  });
+
+  it('keeps «otra cosa» last in both', () => {
+    expect(reportReasonsFor({ womenOnly: false }).at(-1)?.value).toBe('otro');
+    expect(reportReasonsFor({ womenOnly: true }).at(-1)?.value).toBe('otro');
   });
 });

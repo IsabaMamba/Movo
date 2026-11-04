@@ -62,11 +62,15 @@ export interface ProfilePrivate {
   locale: string;
 }
 
+export type SportFamily = 'correr' | 'montana' | 'balon' | 'ruedas' | 'entrenar' | 'agua';
+
 export interface Category {
   id: CategoryId;
   name_es: string;
   name_en: string;
   icon: string | null;
+  /** One of six; one colour per family on the client (0036). */
+  family: SportFamily;
   /** JSON Schema subset describing `Activity.attributes` for this category. */
   attribute_schema: JsonSchemaObject;
   is_active: boolean;
@@ -83,6 +87,8 @@ export interface Location {
   is_verified: boolean;
   created_by: string | null;
   created_at: string;
+  /** The point, as hex EWKB from PostgREST. Read it with pointOf() (lib/venues). */
+  geog?: unknown;
 }
 
 export interface ActivitySeries {
@@ -158,6 +164,8 @@ export interface ActivityParticipant {
   cancelled_at: string | null;
   checked_in_at: string | null;
   checked_in_by: string | null;
+  /** Added in 0042. A self check-in sent after the fact, until the organizer confirms it. */
+  check_in_offline: boolean;
 }
 
 export interface Message {
@@ -168,6 +176,14 @@ export interface Message {
   body: string;
   created_at: string;
   deleted_at: string | null;
+  /** Added in 0040. The message this one answers, in the same chat. */
+  reply_to: string | null;
+  /** Added in 0040. Set by remove_message(); never shown to the author. */
+  removed_by: string | null;
+  removed_reason: string | null;
+  /** Added in 0040. At most three pinned per chat. */
+  pinned_at: string | null;
+  pinned_by: string | null;
 }
 
 /**
@@ -211,10 +227,14 @@ export interface Community {
   name: string;
   description: string | null;
   category_id: CategoryId | null;
+  /** Up to three, in the group's order; category_id is the first (0037). */
+  category_ids: CategoryId[];
   cover_url: string | null;
   rules: string | null;
   is_public: boolean;
   created_by: string | null;
+  /** Added in 0040. Who writes in the group chat. */
+  chat_mode: 'everyone' | 'organizers';
 }
 
 export interface Report {
@@ -240,6 +260,13 @@ export interface Report {
   reviewed_at: string | null;
   action_taken: string | null;
   created_at: string;
+  /** Added in 0039. The session where a report about a person or message happened. */
+  context_activity_id: string | null;
+  /**
+   * Added in 0039, generated from `reason`: 0 safety now, 1 identity and
+   * truth, 2 the rest. Never written by a client.
+   */
+  priority: number;
 }
 
 /**
@@ -383,6 +410,11 @@ export interface JsonSchemaProperty {
   maximum?: number;
   default?: unknown;
   items?: JsonSchemaProperty;
+  /** The words for each `enum` value, same order (0036). */
+  enumNames?: string[];
+  /** With `readOnly`: a fixed rule of the sport, written by the database (0036). */
+  const?: unknown;
+  readOnly?: boolean;
 }
 
 export interface JsonSchemaObject {

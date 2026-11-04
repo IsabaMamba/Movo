@@ -346,8 +346,8 @@ begin
       (organizer_id, category_id, location_id, title, weekday, local_start_time, duration_minutes)
       values ('a1900000-0000-0000-0000-000000000001', 'football', 'b1900000-0000-0000-0000-000000000001',
               'Otra serie', 3, '18:00', 60)$s$),
-  ('write a message', $s$insert into public.messages (activity_id, author_id, body)
-      values ('c1900000-0000-0000-0000-000000000003', 'a1900000-0000-0000-0000-000000000001', 'hola')$s$),
+  -- Since 0040 a message is written through send_message().
+  ('write a message', $s$select public.send_message('c1900000-0000-0000-0000-000000000011', null, 'hola')$s$),
   ('create a venue', $s$insert into public.locations (name, geog, is_public_venue, created_by)
       values ('Lugar de Sus',
               extensions.st_setsrid(extensions.st_makepoint(-84.10, 9.93), 4326)::extensions.geography,
@@ -390,8 +390,7 @@ do $$ begin
     (organizer_id, category_id, location_id, title, weekday, local_start_time, duration_minutes)
   values ('a1900000-0000-0000-0000-000000000003', 'football', 'b1900000-0000-0000-0000-000000000001',
           'Serie de Beto', 3, '18:00', 60);
-  insert into public.messages (activity_id, author_id, body)
-  values ('c1900000-0000-0000-0000-000000000011', 'a1900000-0000-0000-0000-000000000003', 'hola');
+  perform public.send_message('c1900000-0000-0000-0000-000000000011', null, 'hola');
   insert into public.locations (name, geog, is_public_venue, created_by)
   values ('Lugar de Beto',
           extensions.st_setsrid(extensions.st_makepoint(-84.10, 9.93), 4326)::extensions.geography,
