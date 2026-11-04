@@ -1,6 +1,7 @@
 /**
  * Editar perfil (Perfil v2, phone 2): name, «Sobre ti», your zone and your
- * sports, saved together.
+ * gender, saved together. Your sports moved to their own screen with a
+ * level each (Deportes v2 · 4, /perfil/deportes); this one links to it.
  *
  * The zone is chosen from the distritos Movo already has — typed to search,
  * never typed as an address — and the hint says what it is for and what it
@@ -21,7 +22,6 @@ import {
   BIO_MAX,
   bioProblem,
   fetchDistrictOptions,
-  MAX_SPORTS,
   saveMyProfile,
   searchDistricts,
   type DistrictOption,
@@ -35,13 +35,12 @@ import { useMyProfile } from './useMyProfile';
 export function EditProfileScreen() {
   const { session, loading } = useAuth();
   const userId = session?.user.id;
-  const { profile, categories, error: loadError } = useMyProfile(userId);
+  const { profile, error: loadError } = useMyProfile(userId);
 
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [district, setDistrict] = useState<DistrictOption | null>(null);
   const [query, setQuery] = useState('');
-  const [sports, setSports] = useState<string[]>([]);
   const [gender, setGender] = useState<Gender | null>(null);
   const [options, setOptions] = useState<DistrictOption[]>([]);
   const [busy, setBusy] = useState(false);
@@ -60,7 +59,6 @@ export function EditProfileScreen() {
     if (!profile) return;
     setName(profile.display_name);
     setBio(profile.bio ?? '');
-    setSports(profile.interests);
     setGender(profile.gender);
   }, [profile]);
   useEffect(() => {
@@ -77,16 +75,6 @@ export function EditProfileScreen() {
   const problem = nameProblem(name) ?? bioProblem(bio);
   const canSave = !busy && problem === null && profile !== null;
 
-  const toggleSport = (id: string) => {
-    setSports((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : prev.length >= MAX_SPORTS
-          ? prev
-          : [...prev, id],
-    );
-  };
-
   const save = () => {
     if (!canSave) return;
     setBusy(true);
@@ -96,7 +84,6 @@ export function EditProfileScreen() {
       displayName: name,
       bio,
       homeDistrict: district?.code ?? null,
-      interests: sports,
     })
       // Only when it changed: every change is logged (0035), and an
       // unchanged answer is not a change.
@@ -255,29 +242,9 @@ export function EditProfileScreen() {
 
       <View style={s.field}>
         <Text style={s.label}>Tus deportes</Text>
-        <View style={s.chipRow}>
-          {categories.map((category) => {
-            const on = sports.includes(category.id);
-            return (
-              <Pressable
-                accessibilityRole="checkbox"
-                aria-checked={on}
-                accessibilityLabel={category.name_es}
-                hitSlop={hitSlopFor(size.controlSm)}
-                key={category.id}
-                onPress={() => {
-                  toggleSport(category.id);
-                }}
-                style={[s.chip, on && s.chipOn]}
-              >
-                <Text style={[s.chipText, on && s.chipTextOn]}>
-                  {on ? '✓ ' : ''}
-                  {category.name_es}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Link href="/perfil/deportes" style={s.link}>
+          <Text style={s.linkText}>Elegir tus deportes y tu nivel en cada uno</Text>
+        </Link>
         <Text style={s.hint}>Se ven en tu perfil público.</Text>
       </View>
 

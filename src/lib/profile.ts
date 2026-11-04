@@ -24,8 +24,42 @@ export interface MyProfile {
   district_name: string | null;
   canton_name: string | null;
   interests: string[];
+  /** 0038: each sport with the person's level in it, in the catalog's order. */
+  sports?: MySport[];
   /** 0035. Owner-only; null for accounts from before it. */
   gender: 'mujer' | 'hombre' | 'no_dice' | null;
+}
+
+// ------------------------------------------------- a level per sport (0038)
+
+export type SportLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface MySport {
+  category: string;
+  level: SportLevel;
+}
+
+/** The three words of Deportes v2 · 4, in order. */
+export const SPORT_LEVELS: { id: SportLevel; label: string }[] = [
+  { id: 'beginner', label: 'Empezando' },
+  { id: 'intermediate', label: 'Intermedio' },
+  { id: 'advanced', label: 'Avanzado' },
+];
+
+export function levelLabel(level: string): string {
+  return SPORT_LEVELS.find((l) => l.id === level)?.label ?? 'Empezando';
+}
+
+/** A profile from before 0038 reached the client has ids only: they start as «Empezando». */
+export function mySports(profile: Pick<MyProfile, 'interests' | 'sports'>): MySport[] {
+  if (profile.sports) return profile.sports;
+  return profile.interests.map((category) => ({ category, level: 'beginner' }));
+}
+
+/** Replaces the caller's sports and levels in one call. */
+export async function saveMySports(db: SupabaseClient, sports: MySport[]): Promise<void> {
+  const { error } = await db.rpc('set_my_sports', { p_sports: sports });
+  if (error) throw toApiError(error);
 }
 
 export async function fetchMyProfile(db: SupabaseClient): Promise<MyProfile | null> {
@@ -39,7 +73,6 @@ export interface ProfileEdit {
   displayName: string;
   bio: string;
   homeDistrict: string | null;
-  interests: string[];
 }
 
 export async function saveMyProfile(db: SupabaseClient, edit: ProfileEdit): Promise<void> {
@@ -52,11 +85,6 @@ export async function saveMyProfile(db: SupabaseClient, edit: ProfileEdit): Prom
     })
     .eq('id', edit.userId);
   if (error) throw toApiError(error);
-
-  const { error: sportsError } = await db.rpc('set_my_interests', {
-    p_categories: edit.interests,
-  });
-  if (sportsError) throw toApiError(sportsError);
 }
 
 // ------------------------------------------------------------ the zone
