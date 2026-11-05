@@ -508,3 +508,38 @@ describe('inFilter', () => {
     expect(inFilter({ kind: 'waitlist_promoted' }, 'todos')).toBe(true);
   });
 });
+
+/** 0045: handing a group over, and deleting it. */
+describe('group hand-over and deletion notices', () => {
+  const row = (type: string, payload: Record<string, unknown>) =>
+    toInboxItem({
+      id: 'n',
+      user_id: 'u',
+      type,
+      payload,
+      read_at: null,
+      created_at: '2026-11-05T12:00:00Z',
+    } as never);
+
+  it('names the group and says what to do', () => {
+    expect(row('group_handover_offered', { name: 'Corredores' }).text).toMatch(
+      /Te quieren pasar el grupo Corredores.*7 días/u,
+    );
+    expect(row('group_handover_accepted', { name: 'Corredores' }).text).toMatch(/Aceptaron/u);
+    expect(row('group_handover_declined', { name: 'Corredores' }).text).toMatch(/Sigues a cargo/u);
+    expect(row('group_deleted', { name: 'Corredores' }).text).toBe(
+      'El grupo Corredores ya no existe. Quien lo creó lo eliminó.',
+    );
+  });
+
+  it('says why a group-only session was cancelled, and still opens it', () => {
+    const item = row('activity_cancelled', {
+      activity_id: 'a1',
+      title: 'Trote',
+      by: 'group_deleted',
+      group: 'Corredores',
+    });
+    expect(item.text).toBe('Trote se canceló: el grupo Corredores ya no existe.');
+    expect(item.activityId).toBe('a1');
+  });
+});

@@ -34,6 +34,10 @@ import {
   type CommunityMemberEntry,
 } from '../../lib/activities';
 import {
+  type GroupHandover,
+  handoverUntil,
+  fetchHandover,
+  answerHandover,
   fetchGroupUpcoming,
   groupInitials,
   groupSports,
@@ -79,6 +83,9 @@ export function GrupoDetailScreen() {
   /** Grupos v6 · the Chat tab: the latest line, the unread count, the pins. */
   const [chat, setChat] = useState<ChatSummary | null>(null);
   const [pinned, setPinned] = useState<ChatMessage[]>([]);
+  /** 0045: an offer to take over the group, when it is for the person looking. */
+  const [handover, setHandover] = useState<GroupHandover | null>(null);
+  const [answering, setAnswering] = useState(false);
 
   const userId = session?.user.id;
 
@@ -103,6 +110,7 @@ export function GrupoDetailScreen() {
     ]);
     setChat(mine.find((c) => 'communityId' in c.scope && c.scope.communityId === found.id) ?? null);
     setPinned(page?.pinned ?? []);
+    setHandover(await fetchHandover(supabase, found.id).catch(() => null));
   }, [slug]);
 
   useEffect(() => {
@@ -278,6 +286,46 @@ export function GrupoDetailScreen() {
         </View>
 
         {community.description ? <Text style={s.cardBody}>{community.description}</Text> : null}
+
+        {handover?.forMe && (
+          <View accessibilityRole="alert" style={s.offerCard}>
+            <Text style={s.chatCardTitle}>{handover.fromName} te quiere pasar el grupo</Text>
+            <Text style={s.chatCardSub}>
+              Si aceptas, lo administras tú: sus ajustes, quiénes organizan y su chat. Quien te lo
+              pasa sigue en el grupo. La oferta dura {handoverUntil(handover.expiresAt)}.
+            </Text>
+            <View style={s.offerActions}>
+              {(
+                [
+                  [true, 'Aceptar'],
+                  [false, 'No, gracias'],
+                ] as const
+              ).map(([accept, label]) => (
+                <Pressable
+                  accessibilityRole="button"
+                  aria-disabled={answering}
+                  disabled={answering}
+                  key={label}
+                  onPress={() => {
+                    setAnswering(true);
+                    setError(null);
+                    answerHandover(supabase, community.id, accept)
+                      .then(() => load())
+                      .catch((cause: unknown) => {
+                        setError(cause instanceof Error ? cause.message : 'No se pudo responder.');
+                      })
+                      .finally(() => {
+                        setAnswering(false);
+                      });
+                  }}
+                  style={accept ? s.primary : s.secondary}
+                >
+                  <Text style={accept ? s.primaryText : s.secondaryText}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         <View accessibilityRole="tablist" style={s.tabs}>
           {(

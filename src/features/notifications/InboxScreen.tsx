@@ -65,6 +65,10 @@ function kindIcon(kind: string): { name: IconName; tint: string } {
     case 'solo_session_organizer':
     case 'solo_session_participant':
     case 'group_handed_over':
+    case 'group_handover_offered':
+    case 'group_handover_accepted':
+    case 'group_handover_declined':
+    case 'group_deleted':
       return { name: 'people', tint: color.accent.cool };
     case 'report_resolved':
       return { name: 'flag', tint: color.accent.cool };

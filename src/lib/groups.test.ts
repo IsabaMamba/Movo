@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  confirmsGroupName,
   groupAgenda,
   groupEditProblem,
   groupInitials,
   groupSports,
   roleWord,
   toggleSport,
+  toHandover,
 } from './groups';
 
 const NOW = new Date('2026-11-02T16:00:00Z');
@@ -68,5 +70,27 @@ describe('groupEditProblem', () => {
     expect(groupEditProblem({ name: ' A ', categoryIds: [] })).toMatch(/2 letras/u);
     expect(groupEditProblem({ name: 'Club', categoryIds: ['a', 'b', 'c', 'd'] })).toMatch(/3/u);
     expect(groupEditProblem({ name: 'Club', categoryIds: ['running'] })).toBeNull();
+  });
+});
+
+describe('hand over and delete', () => {
+  it('confirms the name in any case, never an empty one', () => {
+    expect(confirmsGroupName(' corredores de tibás ', 'Corredores de Tibás')).toBe(true);
+    expect(confirmsGroupName('Corredores', 'Corredores de Tibás')).toBe(false);
+    expect(confirmsGroupName('', '')).toBe(false);
+  });
+
+  it('reads the pending offer, or nothing', () => {
+    expect(
+      toHandover({
+        to_user: 'u2',
+        to_name: 'Luis',
+        from_name: 'Ana',
+        expires_at: 'x',
+        for_me: true,
+      }),
+    ).toEqual({ toUser: 'u2', toName: 'Luis', fromName: 'Ana', expiresAt: 'x', forMe: true });
+    expect(toHandover(null)).toBeNull();
+    expect(toHandover({ to_name: 'Luis' })).toBeNull();
   });
 });
