@@ -41,6 +41,7 @@ import {
   type ChatPage,
   type ChatScope,
 } from '../../lib/chat';
+import { createReport, reportReasonsFor, type ReportReason } from '../../lib/activities';
 import { blockPerson } from '../../lib/blocks';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
@@ -82,6 +83,10 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
   const [menuFor, setMenuFor] = useState<Shown | null>(null);
   /** The message being answered, shown above the composer (Chat v1). */
   const [replyTo, setReplyTo] = useState<Shown | null>(null);
+  /** Chat v1 · 3: reporting the message in the sheet, with an optional block. */
+  const [reporting, setReporting] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason | null>(null);
+  const [alsoBlock, setAlsoBlock] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [settings, setSettings] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -162,6 +167,7 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
   const act = (run: () => Promise<unknown>) => {
     setMenuFor(null);
     setRemoving(false);
+    setReporting(false);
     setError(null);
     run()
       .then(() => load())
@@ -424,7 +430,79 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
               {menuFor.isMe ? 'Tú' : menuFor.author?.displayName}: {menuFor.body}
             </Text>
           </View>
-          {removing ? (
+          {reporting && menuFor.author ? (
+            <>
+              <Text style={s.sheetTitle}>
+                ¿Qué pasa con este mensaje? Lo lee el equipo de Movo; {menuFor.author.displayName}{' '}
+                no sabe quién lo reportó.
+              </Text>
+              {reportReasonsFor({ womenOnly: false }).map((option) => {
+                const on = reportReason === option.value;
+                return (
+                  <Pressable
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    key={option.value}
+                    onPress={() => {
+                      setReportReason(option.value);
+                    }}
+                    style={[s.option, on && s.optionOn]}
+                  >
+                    <View style={[s.radio, on && s.radioOn]} />
+                    <View style={s.optionText}>
+                      <Text style={s.sheetRowText}>{option.label}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+              <Pressable
+                accessibilityRole="checkbox"
+                aria-checked={alsoBlock}
+                onPress={() => {
+                  setAlsoBlock(!alsoBlock);
+                }}
+                style={[s.option, alsoBlock && s.optionOn]}
+              >
+                <View style={[s.radio, alsoBlock && s.radioOn]} />
+                <View style={s.optionText}>
+                  <Text style={s.sheetRowText}>
+                    Bloquear también a {menuFor.author.displayName}
+                  </Text>
+                  <Text style={s.sheetRowHint}>Dejas de ver sus mensajes. No le avisamos.</Text>
+                </View>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                aria-disabled={reportReason === null}
+                disabled={reportReason === null}
+                onPress={() => {
+                  const who = menuFor.author;
+                  const reason = reportReason;
+                  if (!who || !reason || !session) return;
+                  act(async () => {
+                    await createReport(
+                      supabase,
+                      session.user.id,
+                      'message',
+                      menuFor.id,
+                      reason,
+                      undefined,
+                      'activityId' in scope ? scope.activityId : undefined,
+                    );
+                    if (alsoBlock) await blockPerson(supabase, who.id);
+                    setNotice(
+                      alsoBlock
+                        ? `Reportaste el mensaje y bloqueaste a ${who.displayName}. Te avisamos cuando el equipo lo revise.`
+                        : 'Reportaste el mensaje. Te avisamos cuando el equipo lo revise.',
+                    );
+                  });
+                }}
+                style={[s.reportSend, reportReason === null && s.reportSendOff]}
+              >
+                <Text style={s.reportSendText}>Enviar el reporte</Text>
+              </Pressable>
+            </>
+          ) : removing ? (
             <>
               <Text style={s.sheetTitle}>
                 ¿Qué regla no cumple? Es lo que le decimos a quien lo escribió.
@@ -496,6 +574,22 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => {
+                    setReporting(true);
+                    setReportReason(null);
+                    setAlsoBlock(false);
+                  }}
+                  style={s.sheetRow}
+                >
+                  <Text style={s.sheetRowDanger}>Reportar este mensaje</Text>
+                  <Text style={s.sheetRowHint}>
+                    Lo lee el equipo: {menuFor.author.displayName} no sabe quién fue
+                  </Text>
+                </Pressable>
+              )}
+              {!menuFor.isMe && menuFor.author && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
                     const who = menuFor.author;
                     if (!who) return;
                     act(() =>
@@ -517,6 +611,7 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
             onPress={() => {
               setMenuFor(null);
               setRemoving(false);
+              setReporting(false);
             }}
             style={s.sheetCancel}
           >

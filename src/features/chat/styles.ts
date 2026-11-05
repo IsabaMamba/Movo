@@ -212,6 +212,16 @@ export const chatStyles = StyleSheet.create({
   sheetRowText: { ...type.body, color: color.text.primary },
   sheetRowDanger: { ...type.body, color: color.semantic.dangerOnRaised },
   sheetRowHint: { ...type.caption, color: color.text.tertiary },
+  reportSend: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    marginTop: space.sm,
+    minHeight: size.control,
+  },
+  reportSendOff: { opacity: 0.4 },
+  reportSendText: { ...type.action, color: color.text.inverse },
   sheetCancel: {
     alignItems: 'center',
     borderColor: color.border.strong,
