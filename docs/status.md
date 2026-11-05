@@ -82,7 +82,7 @@ column is maintained by hand.
 | `0042_offline_check_in`        | «Llegué» without signal: `self_check_in_offline()` judges the time of the tap; `check_in_offline` until `confirm_offline_check_in()` by the organizer                                                                                                     | yes     |
 | `0043_return_venue`            | `return_location()` (staff, with a note) hands a venue back and sends `venue_returned`; no new session there until it is corrected or verified                                                                                                            | yes     |
 | `0044_legal_versions`          | `terms` and `privacy` consents; `legal_versions` (public read); `publish_legal_version()` (staff, sends `terms_updated`); `my_legal_status()`                                                                                                             | yes     |
-| `0045_group_handover`          | `hand_over_community()` offers a group to a member for 7 days; `answer_community_handover()` accepts or declines; `community_handover()`; `delete_community()` (owner, confirmed by name) cancels group-only sessions with a notice and deletes the group | no      |
+| `0045_group_handover`          | `hand_over_community()` offers a group to a member for 7 days; `answer_community_handover()` accepts or declines; `community_handover()`; `delete_community()` (owner, confirmed by name) cancels group-only sessions with a notice and deletes the group | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -164,7 +164,10 @@ applied the same day: `set_my_sports()` is executable by `authenticated` and not
 `my_profile()` returns `sports`. `0039`–`0044` were applied on 5 November: clients can no longer
 insert into `messages` or delete from `blocks`; `send_message()` is executable by `authenticated`
 and not by `anon`; `messages` is in the `supabase_realtime` publication; `chat_state` and
-`legal_versions` have RLS on; `cron.job` holds `purge-chats`, active, at 09:37 UTC. `0022` was applied on 28
+`legal_versions` have RLS on; `cron.job` holds `purge-chats`, active, at 09:37 UTC. `0045` was
+applied the same day: `community_handovers` has RLS on and no client grant; `delete_community()`
+is executable by `authenticated` and not by `anon`; `community_owner()` by neither; every group
+has an owner. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
