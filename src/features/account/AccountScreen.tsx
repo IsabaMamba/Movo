@@ -46,6 +46,7 @@ import {
   exportFileName,
   exportMyData,
 } from '../../lib/account';
+import { hasPassword } from '../../lib/credentials';
 import { levelLabel, mySports } from '../../lib/profile';
 import { disablePush, getPushState, type PushState } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
@@ -66,7 +67,9 @@ type RowHref =
   | '/permisos'
   | '/normas'
   | '/mis-sesiones'
-  | '/perfil/bloqueos';
+  | '/perfil/bloqueos'
+  | '/perfil/correo'
+  | '/perfil/contrasena';
 
 /** The inside of a settings row: icon, label, optional value, chevron. */
 function RowBody({
@@ -331,6 +334,15 @@ export function AccountScreen() {
       <View style={s.section}>
         <Text style={p.groupLabel}>TU CUENTA</Text>
         <View style={p.group}>
+          <Row
+            href="/perfil/correo"
+            icon="pencil"
+            label="Correo"
+            value={session.user.email ?? null}
+          />
+          {hasPassword(session.user) && (
+            <Row href="/perfil/contrasena" icon="lock" label="Contraseña" />
+          )}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Tus datos: descargar o borrar"
