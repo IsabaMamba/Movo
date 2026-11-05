@@ -80,6 +80,8 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
   const [sending, setSending] = useState(false);
   const [phoneCheck, setPhoneCheck] = useState(false);
   const [menuFor, setMenuFor] = useState<Shown | null>(null);
+  /** The message being answered, shown above the composer (Chat v1). */
+  const [replyTo, setReplyTo] = useState<Shown | null>(null);
   const [removing, setRemoving] = useState(false);
   const [settings, setSettings] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -143,9 +145,10 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
     setPhoneCheck(false);
     setSending(true);
     setError(null);
-    sendMessage(supabase, scope, body)
+    sendMessage(supabase, scope, body, replyTo?.id)
       .then(() => {
         setDraft('');
+        setReplyTo(null);
         return load();
       })
       .catch((cause: unknown) => {
@@ -357,36 +360,60 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
           </Text>
         </View>
       ) : (
-        <View style={s.composer}>
-          <TextInput
-            accessibilityLabel="Escribe un mensaje"
-            maxLength={BODY_MAX}
-            multiline
-            onChangeText={(text) => {
-              setDraft(text);
-              if (phoneCheck) setPhoneCheck(false);
-            }}
-            placeholder="Escribe un mensaje"
-            placeholderTextColor={color.text.tertiary}
-            style={s.input}
-            value={draft}
-          />
-          <Pressable
-            accessibilityLabel={sending ? 'Enviando' : 'Enviar'}
-            accessibilityRole="button"
-            aria-disabled={draft.trim() === '' || sending}
-            disabled={draft.trim() === '' || sending}
-            onPress={() => {
-              send();
-            }}
-            style={[s.send, draft.trim() !== '' && s.sendOn]}
-          >
-            <Icon
-              color={draft.trim() !== '' ? color.text.inverse : color.text.tertiary}
-              name="send"
-              size={18}
+        <View>
+          {replyTo && (
+            <View style={s.replyBar}>
+              <View style={s.replyBarText}>
+                <Text style={s.replyBarLabel}>
+                  Respondiendo a {replyTo.isMe ? 'ti' : (replyTo.author?.displayName ?? 'alguien')}
+                </Text>
+                <Text numberOfLines={1} style={s.replyText}>
+                  {replyTo.body}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="No responder a este mensaje"
+                accessibilityRole="button"
+                hitSlop={HIT_SLOP}
+                onPress={() => {
+                  setReplyTo(null);
+                }}
+              >
+                <Icon color={color.text.tertiary} name="close" size={16} />
+              </Pressable>
+            </View>
+          )}
+          <View style={s.composer}>
+            <TextInput
+              accessibilityLabel="Escribe un mensaje"
+              maxLength={BODY_MAX}
+              multiline
+              onChangeText={(text) => {
+                setDraft(text);
+                if (phoneCheck) setPhoneCheck(false);
+              }}
+              placeholder="Escribe un mensaje"
+              placeholderTextColor={color.text.tertiary}
+              style={s.input}
+              value={draft}
             />
-          </Pressable>
+            <Pressable
+              accessibilityLabel={sending ? 'Enviando' : 'Enviar'}
+              accessibilityRole="button"
+              aria-disabled={draft.trim() === '' || sending}
+              disabled={draft.trim() === '' || sending}
+              onPress={() => {
+                send();
+              }}
+              style={[s.send, draft.trim() !== '' && s.sendOn]}
+            >
+              <Icon
+                color={draft.trim() !== '' ? color.text.inverse : color.text.tertiary}
+                name="send"
+                size={18}
+              />
+            </Pressable>
+          </View>
         </View>
       )}
 
@@ -417,6 +444,18 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
             </>
           ) : (
             <>
+              {page?.canWrite && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setReplyTo(menuFor);
+                    setMenuFor(null);
+                  }}
+                  style={s.sheetRow}
+                >
+                  <Text style={s.sheetRowText}>Responder</Text>
+                </Pressable>
+              )}
               {menuFor.isMe && (
                 <Pressable
                   accessibilityRole="button"
