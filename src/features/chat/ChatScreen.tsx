@@ -219,9 +219,21 @@ export function ChatScreen({ kind }: { kind: 'session' | 'group' }) {
         style={[s.messageRow, item.isMe && s.messageRowMine]}
       >
         {!item.isMe && (
-          <View aria-hidden style={s.avatar}>
+          <Pressable
+            accessibilityLabel={
+              item.author ? `Ver el perfil de ${item.author.displayName}` : 'Cuenta borrada'
+            }
+            accessibilityRole="link"
+            disabled={!item.author}
+            onPress={() => {
+              if (item.author) {
+                router.push({ pathname: '/persona/[id]', params: { id: item.author.id } });
+              }
+            }}
+            style={s.avatar}
+          >
             <Text style={s.avatarText}>{authorInitials(item.author?.displayName)}</Text>
-          </View>
+          </Pressable>
         )}
         <View style={[s.messageCol, item.isMe && s.messageColMine]}>
           {!item.isMe && (
