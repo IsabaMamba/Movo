@@ -84,6 +84,7 @@ column is maintained by hand.
 | `0044_legal_versions`          | `terms` and `privacy` consents; `legal_versions` (public read); `publish_legal_version()` (staff, sends `terms_updated`); `my_legal_status()`                                                                                                             | yes     |
 | `0045_group_handover`          | `hand_over_community()` offers a group to a member for 7 days; `answer_community_handover()` accepts or declines; `community_handover()`; `delete_community()` (owner, confirmed by name) cancels group-only sessions with a notice and deletes the group | yes     |
 | `0046_group_invites`           | `community_invites` (one link per group, 7 days, limited uses, RPC only); `create_group_invite()`, `revoke_group_invite()`, `group_invite()` for organizers; `invite_preview()` (also signed out); `join_group_with_code()`                               | yes     |
+| `0047_help_feedback`           | `help_feedback` (question, yes/no, reason when no; no account or free text; no client reads); `record_help_feedback()` for anon and authenticated                                                                                                         | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,

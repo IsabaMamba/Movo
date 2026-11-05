@@ -18,7 +18,19 @@
  */
 
 /** Pathnames a search engine may list. Exact match; everything else is noindex. */
-export const INDEXABLE_PATHS: readonly string[] = ['/', '/normas', '/sign-in', '/sign-up'];
+export const INDEXABLE_PATHS: readonly string[] = [
+  '/',
+  '/normas',
+  '/sign-in',
+  '/sign-up',
+  '/ayuda',
+];
+
+/**
+ * Prefixes whose every page may be listed: each help answer has its own
+ * address, to share and to find (Ayuda v1, Páginas web v1).
+ */
+export const INDEXABLE_PREFIXES: readonly string[] = ['/ayuda/'];
 
 export const NOINDEX = 'noindex, nofollow';
 
@@ -26,5 +38,8 @@ export const NOINDEX = 'noindex, nofollow';
 export function isIndexable(pathname: string): boolean {
   const path = pathname.split(/[?#]/u)[0] ?? '';
   const trimmed = path.length > 1 ? path.replace(/\/+$/u, '') : path;
-  return INDEXABLE_PATHS.includes(trimmed || '/');
+  return (
+    INDEXABLE_PATHS.includes(trimmed || '/') ||
+    INDEXABLE_PREFIXES.some((prefix) => trimmed.startsWith(prefix))
+  );
 }
