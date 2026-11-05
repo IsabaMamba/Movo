@@ -27,6 +27,7 @@ import {
 } from 'react-native';
 
 import { fetchCategories, fetchNearbyActivities, formatSessionTime } from '../../lib/activities';
+import { fetchMyProfile } from '../../lib/profile';
 import { recordConsent } from '../../lib/consents';
 import {
   GAM_CENTRE,
@@ -99,11 +100,20 @@ const sportDot = (id: string) => sportColor(id, color.accent.cool);
 /** Taller than the original band: on the boards the map is the first thing. */
 const MAP_HEIGHT = 300;
 
+/** The «Tus deportes» filter: not a category id, so it cannot collide with one. */
+const MINE = '__mine__';
+
 export function DiscoverScreen() {
   const { session } = useAuth();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selected, setSelected] = useState<CategoryId | null>(null);
+  /**
+   * One sport, «Todo» (null), or «Tus deportes» (MINE): every sport in the
+   * person's profile at once (Deportes v2 · 1). Signed in with sports, that
+   * is where Descubrir starts.
+   */
+  const [selected, setSelected] = useState<CategoryId | typeof MINE | null>(null);
+  const [mine, setMine] = useState<string[]>([]);
   const [radiusM, setRadiusM] = useState<number>(15_000);
   const [activities, setActivities] = useState<NearbyActivity[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -129,13 +139,41 @@ export function DiscoverScreen() {
     };
   }, []);
 
+  // The person's sports, once per sign-in. Starting on «Tus deportes» is a
+  // default, not a lock: it is set only if nothing was chosen yet.
+  useEffect(() => {
+    if (!session) {
+      setMine([]);
+      setSelected((current) => (current === MINE ? null : current));
+      return;
+    }
+    let cancelled = false;
+    fetchMyProfile(supabase)
+      .then((profile) => {
+        if (cancelled || !profile) return;
+        setMine(profile.interests);
+        if (profile.interests.length > 0) setSelected((current) => current ?? MINE);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
   const load = useCallback(async (): Promise<NearbyActivity[]> => {
     return fetchNearbyActivities(supabase, {
       ...origin,
       radiusM,
-      categories: selected ? [selected] : undefined,
+      categories:
+        selected === MINE
+          ? mine.length > 0
+            ? mine
+            : undefined
+          : selected
+            ? [selected]
+            : undefined,
     });
-  }, [origin, radiusM, selected]);
+  }, [origin, radiusM, selected, mine]);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,7 +236,15 @@ export function DiscoverScreen() {
   };
 
   const radiusKm = radiusM / 1000;
-  const selectedName = categories.find((c) => c.id === selected)?.name_es ?? 'Todo';
+  const selectedName =
+    selected === MINE
+      ? 'Tus deportes'
+      : (categories.find((c) => c.id === selected)?.name_es ?? 'Todo');
+  // Yours first, in the catalog's order, then the rest.
+  const ordered = [
+    ...categories.filter((c) => mine.includes(c.id)),
+    ...categories.filter((c) => !mine.includes(c.id)),
+  ];
 
   const originControl = (
     <Pressable
@@ -311,6 +357,25 @@ export function DiscoverScreen() {
         style={s.filters}
       >
         <View style={s.filterRow}>
+          {mine.length > 0 && (
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityLabel={`Tus deportes: ${categories
+                .filter((c) => mine.includes(c.id))
+                .map((c) => c.name_es)
+                .join(', ')}`}
+              aria-checked={selected === MINE}
+              hitSlop={CHIP_HIT_SLOP}
+              onPress={() => {
+                setSelected(MINE);
+              }}
+              style={[s.chip, selected === MINE && s.chipOn]}
+            >
+              <Text style={[s.chipText, selected === MINE && s.chipTextOn]}>
+                {selected === MINE ? '✓ ' : ''}Tus deportes
+              </Text>
+            </Pressable>
+          )}
           <Pressable
             accessibilityRole="radio"
             accessibilityLabel="Todos los deportes"
@@ -325,7 +390,7 @@ export function DiscoverScreen() {
               {selected === null ? '✓ ' : ''}Todo
             </Text>
           </Pressable>
-          {categories.map((category) => {
+          {ordered.map((category) => {
             const on = selected === category.id;
             return (
               <Pressable
