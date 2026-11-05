@@ -269,7 +269,7 @@ export const gruposStyles = StyleSheet.create({
     minWidth: 18,
     paddingHorizontal: 4,
   },
-  tabBadgeText: { ...type.caption, color: color.text.inverse, fontSize: 11, fontWeight: '700' },
+  tabBadgeText: { ...type.caption, color: color.text.inverse, fontSize: 12, fontWeight: '700' },
   labelRow: { alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between' },
   filterChipOn: { backgroundColor: color.text.primary, borderColor: color.text.primary },
   filterChipText: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },

@@ -153,7 +153,7 @@ export const discoverStyles = StyleSheet.create({
     paddingVertical: 2,
     position: 'absolute',
   },
-  ringLabelText: { ...type.caption, color: color.text.primary, fontSize: 11 },
+  ringLabelText: { ...type.caption, color: color.text.primary, fontSize: 12 },
   bandMessage: {
     alignItems: 'center',
     bottom: space.xxl,
@@ -179,12 +179,12 @@ export const discoverStyles = StyleSheet.create({
   bandScale: {
     ...type.caption,
     color: color.text.primary,
-    fontSize: 11,
+    fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
   bandRamp: { borderRadius: 2, flexDirection: 'row', height: 5, overflow: 'hidden', width: 64 },
   bandStop: { flex: 1 },
-  bandCredit: { ...type.caption, color: color.text.tertiary, fontSize: 10 },
+  bandCredit: { ...type.caption, color: color.text.tertiary, fontSize: 12 },
 
   listHead: {
     alignItems: 'baseline',

@@ -51,7 +51,7 @@ export const checkInStyles = StyleSheet.create({
     justifyContent: 'center',
     width: 30,
   },
-  avatarText: { ...type.caption, color: color.text.inverse, fontSize: 10, fontWeight: '700' },
+  avatarText: { ...type.caption, color: color.text.inverse, fontSize: 12, fontWeight: '700' },
   more: { ...type.caption, color: color.text.tertiary, marginLeft: space.xs },
   going: { ...type.bodySmall, color: color.text.secondary },
   goingStrong: { color: color.text.primary, fontWeight: '700' },
