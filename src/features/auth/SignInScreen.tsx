@@ -1,7 +1,8 @@
-import { Link, Redirect } from 'expo-router';
+import { Link, Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
+import { safeNext } from '../../lib/next';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
@@ -9,13 +10,18 @@ import { authStyles as s } from './styles';
 
 export function SignInScreen() {
   const { session, loading, signIn } = useAuth();
+  // «?next=/g/CODE»: back to where the person was going (an invitation, an
+  // answer). Only a path inside Movo; anything else is ignored.
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const target = safeNext(next);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (loading) return <ActivityIndicator style={s.screen} />;
-  if (session) return <Redirect href="/" />;
+  // Typed routes cannot know a runtime path; safeNext has checked it.
+  if (session) return <Redirect href={(target ?? '/') as '/'} />;
 
   const submit = () => {
     setError(null);

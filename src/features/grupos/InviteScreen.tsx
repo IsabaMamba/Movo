@@ -168,7 +168,7 @@ export function InviteScreen() {
             <Pressable
               accessibilityRole="link"
               onPress={() => {
-                router.push('/sign-in');
+                router.push({ pathname: '/sign-in', params: { next: `/g/${code ?? ''}` } });
               }}
               style={s.primary}
             >
@@ -179,11 +179,7 @@ export function InviteScreen() {
             Al unirte aceptas las reglas del grupo y las normas de Movo. Puedes salir cuando
             quieras.
           </Text>
-          {!session && (
-            <Text style={s.hint}>
-              Después de iniciar sesión, vuelve a abrir este enlace para unirte.
-            </Text>
-          )}
+          {!session && <Text style={s.hint}>Al iniciar sesión vuelves aquí para unirte.</Text>}
         </View>
       )}
     </ScrollView>
