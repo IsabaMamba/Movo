@@ -594,6 +594,9 @@ export function ReportQueueScreen() {
       <Link href="/staff/lugares" style={s.back}>
         <Text style={s.linkText}>Lugares por verificar</Text>
       </Link>
+      <Link href="/staff/clima" style={s.back}>
+        <Text style={s.linkText}>Cancelar por alerta de la CNE</Text>
+      </Link>
 
       {/*
         Two views rather than one list.
