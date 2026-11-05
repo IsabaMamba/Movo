@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupAgenda, groupInitials, groupSports, roleWord, toggleSport } from './groups';
+import {
+  groupAgenda,
+  groupEditProblem,
+  groupInitials,
+  groupSports,
+  roleWord,
+  toggleSport,
+} from './groups';
 
 const NOW = new Date('2026-11-02T16:00:00Z');
 
@@ -53,5 +60,13 @@ describe('group sports', () => {
     expect(toggleSport([], 'yoga')).toEqual(['yoga']);
     expect(toggleSport(['yoga', 'surf'], 'yoga')).toEqual(['surf']);
     expect(toggleSport(['a', 'b', 'c'], 'd')).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('groupEditProblem', () => {
+  it('asks for a name and at most three sports', () => {
+    expect(groupEditProblem({ name: ' A ', categoryIds: [] })).toMatch(/2 letras/u);
+    expect(groupEditProblem({ name: 'Club', categoryIds: ['a', 'b', 'c', 'd'] })).toMatch(/3/u);
+    expect(groupEditProblem({ name: 'Club', categoryIds: ['running'] })).toBeNull();
   });
 });

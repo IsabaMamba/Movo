@@ -145,3 +145,64 @@ export function toggleSport(selected: readonly string[], id: string): string[] {
   if (selected.includes(id)) return selected.filter((s) => s !== id);
   return selected.length >= MAX_GROUP_SPORTS ? [...selected] : [...selected, id];
 }
+
+// ------------------------------------------------- Ajustes del grupo (Grupos v6 · 5)
+
+export interface GroupEdit {
+  name: string;
+  description: string;
+  rules: string;
+  categoryIds: string[];
+  isPublic: boolean;
+}
+
+/**
+ * Whoever organizes edits the group directly: communities_update_organizer
+ * (0003) allows it, and 0037's trigger checks the sports and keeps
+ * category_id as the first.
+ */
+export async function updateGroup(
+  db: SupabaseClient,
+  communityId: string,
+  edit: GroupEdit,
+): Promise<void> {
+  const { error } = await db
+    .from('communities')
+    .update({
+      name: edit.name.trim(),
+      description: edit.description.trim() || null,
+      rules: edit.rules.trim() || null,
+      category_ids: edit.categoryIds,
+      is_public: edit.isPublic,
+    })
+    .eq('id', communityId);
+  if (error) throw toApiError(error);
+}
+
+/**
+ * Make somebody organize, or stop. Never the owner's row: whoever created
+ * the group stays its owner until it is handed over.
+ */
+export async function setMemberRole(
+  db: SupabaseClient,
+  communityId: string,
+  userId: string,
+  role: 'member' | 'organizer',
+): Promise<void> {
+  const { error } = await db
+    .from('community_members')
+    .update({ role })
+    .eq('community_id', communityId)
+    .eq('user_id', userId)
+    .neq('role', 'owner');
+  if (error) throw toApiError(error);
+}
+
+/** Why the group form cannot be saved yet, or null. */
+export function groupEditProblem(edit: Pick<GroupEdit, 'name' | 'categoryIds'>): string | null {
+  const name = edit.name.trim();
+  if (name.length < 2) return 'El nombre necesita al menos 2 letras.';
+  if (name.length > 80) return 'El nombre cabe en 80 caracteres.';
+  if (edit.categoryIds.length > MAX_GROUP_SPORTS) return 'Hasta 3 deportes.';
+  return null;
+}
