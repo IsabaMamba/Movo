@@ -136,6 +136,19 @@ export const chatStyles = StyleSheet.create({
   },
   phoneSecondaryText: { ...type.action, color: color.text.primary },
 
+  replyBar: {
+    alignItems: 'center',
+    borderLeftColor: color.accent.cool,
+    borderLeftWidth: stroke.thick,
+    borderTopColor: color.border.default,
+    borderTopWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  replyBarText: { flex: 1, gap: 2 },
+  replyBarLabel: { ...type.caption, color: color.accent.cool, fontWeight: '600' },
   composer: {
     alignItems: 'flex-end',
     borderTopColor: color.border.default,
