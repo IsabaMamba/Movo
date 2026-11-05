@@ -83,7 +83,7 @@ column is maintained by hand.
 | `0043_return_venue`            | `return_location()` (staff, with a note) hands a venue back and sends `venue_returned`; no new session there until it is corrected or verified                                                                                                            | yes     |
 | `0044_legal_versions`          | `terms` and `privacy` consents; `legal_versions` (public read); `publish_legal_version()` (staff, sends `terms_updated`); `my_legal_status()`                                                                                                             | yes     |
 | `0045_group_handover`          | `hand_over_community()` offers a group to a member for 7 days; `answer_community_handover()` accepts or declines; `community_handover()`; `delete_community()` (owner, confirmed by name) cancels group-only sessions with a notice and deletes the group | yes     |
-| `0046_group_invites`           | `community_invites` (one link per group, 7 days, limited uses, RPC only); `create_group_invite()`, `revoke_group_invite()`, `group_invite()` for organizers; `invite_preview()` (also signed out); `join_group_with_code()`                               | no      |
+| `0046_group_invites`           | `community_invites` (one link per group, 7 days, limited uses, RPC only); `create_group_invite()`, `revoke_group_invite()`, `group_invite()` for organizers; `invite_preview()` (also signed out); `join_group_with_code()`                               | yes     |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -168,7 +168,9 @@ and not by `anon`; `messages` is in the `supabase_realtime` publication; `chat_s
 `legal_versions` have RLS on; `cron.job` holds `purge-chats`, active, at 09:37 UTC. `0045` was
 applied the same day: `community_handovers` has RLS on and no client grant; `delete_community()`
 is executable by `authenticated` and not by `anon`; `community_owner()` by neither; every group
-has an owner. `0022` was applied on 28
+has an owner. `0046` was applied the same day: `community_invites` has RLS on and no client
+grant; `invite_preview()` is executable by `anon`, `join_group_with_code()` is not, and
+`new_invite_code()` by no client. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
