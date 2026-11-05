@@ -177,6 +177,19 @@ export function toInboxItem(row: Notification): InboxItem {
       }
       // Written by delete_my_account() (0029). The session is deleted with
       // the account, so there is nothing to open and no id to open it by.
+      // Written by delete_community() (0045): the group went, and its
+      // group-only sessions with it. The session row stays, cancelled.
+      if (text(payload, 'by') === 'group_deleted') {
+        const group = text(payload, 'group');
+        return {
+          ...base,
+          text:
+            group === null
+              ? `${title} se canceló: el grupo ya no existe.`
+              : `${title} se canceló: el grupo ${group} ya no existe.`,
+          activityId,
+        };
+      }
       if (text(payload, 'by') === 'gone') {
         return {
           ...base,
@@ -277,6 +290,43 @@ export function toInboxItem(row: Notification): InboxItem {
       };
 
     // Written by delete_my_account() (0029) to whoever inherits a group.
+    // 0045: a group's owner offers it to you; you answer on the group's page.
+    case 'group_handover_offered': {
+      const name = text(payload, 'name') ?? 'un grupo';
+      return {
+        ...base,
+        text: `Te quieren pasar el grupo ${name}. Entra al grupo desde Grupos para aceptarlo o rechazarlo; la oferta dura 7 días.`,
+        activityId: null,
+      };
+    }
+    case 'group_handover_accepted': {
+      const name = text(payload, 'name') ?? 'el grupo';
+      return {
+        ...base,
+        text: `Aceptaron administrar ${name}. Sigues en el grupo.`,
+        activityId: null,
+      };
+    }
+    case 'group_handover_declined': {
+      const name = text(payload, 'name') ?? 'el grupo';
+      return {
+        ...base,
+        text: `No aceptaron administrar ${name}. Sigues a cargo; puedes ofrecérselo a otra persona.`,
+        activityId: null,
+      };
+    }
+    case 'group_deleted': {
+      const name = text(payload, 'name');
+      return {
+        ...base,
+        text:
+          name === null
+            ? 'Un grupo en el que estabas ya no existe. Quien lo creó lo eliminó.'
+            : `El grupo ${name} ya no existe. Quien lo creó lo eliminó.`,
+        activityId: null,
+      };
+    }
+
     case 'group_handed_over': {
       const name = text(payload, 'name');
       return {
@@ -407,6 +457,9 @@ const ORGANIZER_KINDS = new Set([
   'solo_session_organizer',
   'activity_cancelled_by_movo',
   'group_handed_over',
+  'group_handover_offered',
+  'group_handover_accepted',
+  'group_handover_declined',
   'venue_returned',
 ]);
 

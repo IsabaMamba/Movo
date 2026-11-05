@@ -4,8 +4,9 @@
  * El grupo: name, what it is about, up to three sports and the rules.
  * Chat del grupo: who writes. Quién entra: open or by invitation, and who
  * organizes. Everything here is a write the policies already allow an
- * organizer (0003, 0037, 0040); handing the group over and deleting it need
- * functions of their own and are not here yet.
+ * organizer (0003, 0037, 0040). «Si ya no puedes seguir» is the owner's:
+ * offer the group to another member, who accepts within 7 days, or delete
+ * it, typing its name to confirm (0045).
  */
 
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,12 +21,19 @@ import {
 } from '../../lib/activities';
 import { setChatMode, type ChatMode } from '../../lib/chat';
 import {
+  confirmsGroupName,
+  deleteGroup,
+  fetchHandover,
   groupEditProblem,
   groupSports,
+  handOverGroup,
+  handoverUntil,
   MAX_GROUP_SPORTS,
   setMemberRole,
   toggleSport,
   updateGroup,
+  withdrawHandover,
+  type GroupHandover,
 } from '../../lib/groups';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
@@ -55,6 +63,11 @@ export function GroupSettingsScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [handover, setHandover] = useState<GroupHandover | null>(null);
+  const [handingTo, setHandingTo] = useState<string | null>(null);
+  const [choosingHeir, setChoosingHeir] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [typedName, setTypedName] = useState('');
 
   const load = useCallback(async () => {
     if (!slug) return;
@@ -67,6 +80,7 @@ export function GroupSettingsScreen() {
     setSports(groupSports(found));
     setIsPublic(found.is_public);
     setMembers(await fetchCommunityMembers(supabase, found.id).catch(() => []));
+    setHandover(await fetchHandover(supabase, found.id).catch(() => null));
   }, [slug]);
 
   useEffect(() => {
@@ -145,6 +159,34 @@ export function GroupSettingsScreen() {
         ? `${person.profile.display_name} ahora organiza.`
         : `${person.profile.display_name} ya no organiza.`,
     );
+  };
+
+  const isOwner = me?.role === 'owner';
+  const others = members
+    .filter((m) => m.user_id !== session.user.id)
+    .sort((a, b) => Number(b.role === 'organizer') - Number(a.role === 'organizer'));
+
+  const offer = (person: CommunityMemberEntry) => {
+    setChoosingHeir(false);
+    setHandingTo(null);
+    run(
+      () => handOverGroup(supabase, group.id, person.user_id),
+      `Le ofreciste el grupo a ${person.profile.display_name}. Tiene 7 días para aceptarlo; mientras tanto sigues a cargo.`,
+    );
+  };
+
+  const remove = () => {
+    if (!confirmsGroupName(typedName, group.name) || busy) return;
+    setBusy(true);
+    setError(null);
+    deleteGroup(supabase, group.id, typedName)
+      .then(() => {
+        router.replace('/grupos');
+      })
+      .catch((cause: unknown) => {
+        setBusy(false);
+        setError(cause instanceof Error ? cause.message : 'No se pudo eliminar el grupo.');
+      });
   };
 
   const choice = <T extends string | boolean>(
@@ -378,6 +420,175 @@ export function GroupSettingsScreen() {
             : 'Todo el grupo lee y escribe. Para fijar un mensaje o quitarlo, mantenlo presionado en el chat.'}
         </Text>
       </View>
+
+      {/* ---------------------------------------- Si ya no puedes seguir */}
+      {isOwner && (
+        <>
+          <Text style={s.overline}>SI YA NO PUEDES SEGUIR</Text>
+
+          <View style={s.field}>
+            <Text style={s.label}>Pasar el grupo a otra persona</Text>
+            {handover ? (
+              <>
+                <Text style={s.hint}>
+                  Se lo ofreciste a {handover.toName}, {handoverUntil(handover.expiresAt)}. Mientras
+                  no acepte, sigues a cargo.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={busy}
+                  onPress={() => {
+                    run(() => withdrawHandover(supabase, group.id), 'Retiraste la oferta.');
+                  }}
+                  style={s.secondary}
+                >
+                  <Text style={s.secondaryText}>Retirar la oferta</Text>
+                </Pressable>
+              </>
+            ) : choosingHeir ? (
+              <>
+                <Text style={s.hint}>
+                  Elige quién lo va a administrar. Esa persona puede aceptarlo o rechazarlo en 7
+                  días. Si acepta, sigues en el grupo como miembro.
+                </Text>
+                {others.length === 0 ? (
+                  <Text style={s.hint}>No hay nadie más en el grupo todavía.</Text>
+                ) : (
+                  others.map((person) => {
+                    const on = handingTo === person.user_id;
+                    return (
+                      <Pressable
+                        accessibilityRole="radio"
+                        aria-checked={on}
+                        key={person.user_id}
+                        onPress={() => {
+                          setHandingTo(person.user_id);
+                        }}
+                        style={[s.memberRow, on && s.memberRowOn]}
+                      >
+                        <View style={s.cardText}>
+                          <Text style={s.rowTitle}>{person.profile.display_name}</Text>
+                          <Text style={s.rowMeta}>
+                            {person.role === 'organizer' ? 'Organiza' : 'Miembro'}
+                          </Text>
+                        </View>
+                        {on && <Icon color={color.accent.primary} name="check" size={18} />}
+                      </Pressable>
+                    );
+                  })
+                )}
+                <Pressable
+                  accessibilityRole="button"
+                  aria-disabled={busy || handingTo === null}
+                  disabled={busy || handingTo === null}
+                  onPress={() => {
+                    const person = others.find((m) => m.user_id === handingTo);
+                    if (person) offer(person);
+                  }}
+                  style={[s.primary, (busy || handingTo === null) && s.primaryDisabled]}
+                >
+                  <Text style={s.primaryText}>
+                    {handingTo
+                      ? `Pasar el grupo a ${others.find((m) => m.user_id === handingTo)?.profile.display_name ?? ''}`
+                      : 'Elige a alguien'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setChoosingHeir(false);
+                    setHandingTo(null);
+                  }}
+                  style={s.secondary}
+                >
+                  <Text style={s.secondaryText}>No, volver</Text>
+                </Pressable>
+              </>
+            ) : (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setChoosingHeir(true);
+                  setDeleting(false);
+                }}
+                style={s.secondary}
+              >
+                <Text style={s.secondaryText}>Pasar el grupo a otra persona</Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View style={s.field}>
+            <Text style={s.label}>Eliminar el grupo</Text>
+            {deleting ? (
+              <View style={s.dangerBox}>
+                <Text style={s.dangerTitle}>Esto no se puede deshacer</Text>
+                <Text style={s.cardBody}>
+                  · Se cancelan las sesiones que vienen solo para el grupo, y a quienes iban les
+                  llega el aviso.
+                </Text>
+                <Text style={s.cardBody}>
+                  · Las {members.length} personas dejan de estar en el grupo. Sus cuentas no
+                  cambian.
+                </Text>
+                <Text style={s.cardBody}>
+                  · Las sesiones públicas siguen, a nombre de quien las organiza.
+                </Text>
+                <Text style={s.label}>Para confirmar, escribe el nombre del grupo</Text>
+                <TextInput
+                  accessibilityLabel={`Escribe ${group.name} para confirmar`}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={setTypedName}
+                  placeholder={group.name}
+                  placeholderTextColor={color.text.tertiary}
+                  style={s.input}
+                  value={typedName}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  aria-disabled={busy || !confirmsGroupName(typedName, group.name)}
+                  disabled={busy || !confirmsGroupName(typedName, group.name)}
+                  onPress={remove}
+                  style={[
+                    s.dangerButton,
+                    (busy || !confirmsGroupName(typedName, group.name)) && s.primaryDisabled,
+                  ]}
+                >
+                  <Text style={s.dangerButtonText}>
+                    {busy ? 'Eliminando…' : 'Eliminar el grupo'}
+                  </Text>
+                </Pressable>
+                <Text style={s.hint}>
+                  ¿Solo quieres dejar de administrarlo? Mejor pásalo a otra persona.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setDeleting(false);
+                    setTypedName('');
+                  }}
+                  style={s.secondary}
+                >
+                  <Text style={s.secondaryText}>No, volver</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                accessibilityHint="Pide confirmación escribiendo el nombre del grupo."
+                accessibilityRole="button"
+                onPress={() => {
+                  setDeleting(true);
+                  setChoosingHeir(false);
+                }}
+                style={s.secondary}
+              >
+                <Text style={s.dangerText}>Eliminar el grupo…</Text>
+              </Pressable>
+            )}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }

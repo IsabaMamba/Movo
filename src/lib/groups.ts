@@ -206,3 +206,99 @@ export function groupEditProblem(edit: Pick<GroupEdit, 'name' | 'categoryIds'>):
   if (edit.categoryIds.length > MAX_GROUP_SPORTS) return 'Hasta 3 deportes.';
   return null;
 }
+
+// ------------------------------------------------- hand over, delete (0045)
+
+export interface GroupHandover {
+  toUser: string;
+  toName: string;
+  fromName: string;
+  /** ISO instant the offer lapses. */
+  expiresAt: string;
+  /** True for the person offered the group; false for the owner who offered it. */
+  forMe: boolean;
+}
+
+/** The pending offer, as its owner or its recipient sees it; null otherwise. */
+export async function fetchHandover(
+  db: SupabaseClient,
+  communityId: string,
+): Promise<GroupHandover | null> {
+  const { data, error } = await db.rpc('community_handover', { p_community_id: communityId });
+  if (error) throw toApiError(error);
+  return toHandover(data);
+}
+
+export function toHandover(raw: unknown): GroupHandover | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.to_user !== 'string' || typeof r.expires_at !== 'string') return null;
+  return {
+    toUser: r.to_user,
+    toName: typeof r.to_name === 'string' ? r.to_name : 'Alguien',
+    fromName: typeof r.from_name === 'string' ? r.from_name : 'Alguien',
+    expiresAt: r.expires_at,
+    forMe: r.for_me === true,
+  };
+}
+
+export async function handOverGroup(
+  db: SupabaseClient,
+  communityId: string,
+  toUser: string,
+): Promise<void> {
+  const { error } = await db.rpc('hand_over_community', {
+    p_community_id: communityId,
+    p_to_user: toUser,
+  });
+  if (error) throw toApiError(error);
+}
+
+export async function withdrawHandover(db: SupabaseClient, communityId: string): Promise<void> {
+  const { error } = await db.rpc('cancel_community_handover', { p_community_id: communityId });
+  if (error) throw toApiError(error);
+}
+
+export async function answerHandover(
+  db: SupabaseClient,
+  communityId: string,
+  accept: boolean,
+): Promise<void> {
+  const { error } = await db.rpc('answer_community_handover', {
+    p_community_id: communityId,
+    p_accept: accept,
+  });
+  if (error) throw toApiError(error);
+}
+
+/** Owner only, confirmed by typing the group's name. Returns how many sessions were cancelled. */
+export async function deleteGroup(
+  db: SupabaseClient,
+  communityId: string,
+  confirmName: string,
+): Promise<number> {
+  const { data, error } = await db.rpc('delete_community', {
+    p_community_id: communityId,
+    p_confirm_name: confirmName,
+  });
+  if (error) throw toApiError(error);
+  const r = (data ?? {}) as { sessions_cancelled?: number };
+  return r.sessions_cancelled ?? 0;
+}
+
+/** Whether the typed name confirms deleting the group: same letters, any case, trimmed. */
+export function confirmsGroupName(typed: string, name: string): boolean {
+  return typed.trim().toLowerCase() === name.trim().toLowerCase() && name.trim() !== '';
+}
+
+/** «hasta el lun 9 nov», Costa Rica's calendar. */
+export function handoverUntil(iso: string): string {
+  return `hasta el ${new Intl.DateTimeFormat('es-CR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'America/Costa_Rica',
+  })
+    .format(new Date(iso))
+    .replace(/[.,]/g, '')}`;
+}
