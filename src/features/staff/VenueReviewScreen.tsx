@@ -30,6 +30,7 @@ import {
   districtMismatch,
   explainVerifyError,
   fetchVenuesForReview,
+  returnVenue,
   unverifyVenue,
   verifyVenue,
   type StaffVenue,
@@ -40,7 +41,7 @@ import { staffStyles as s } from './styles';
 
 const NOTE_LIMIT = 280;
 
-type Acting = { id: string; kind: 'verify' | 'unverify' } | null;
+type Acting = { id: string; kind: 'verify' | 'unverify' | 'return' } | null;
 
 export function VenueReviewScreen() {
   const { session, loading } = useAuth();
@@ -98,7 +99,13 @@ export function VenueReviewScreen() {
     if (acting === null || note.trim().length === 0) return;
     setPending(true);
     setBanner(null);
-    const call = acting.kind === 'verify' ? verifyVenue : unverifyVenue;
+    // «Devolver para corregir» (0043): the creator reads the note.
+    const call =
+      acting.kind === 'verify'
+        ? verifyVenue
+        : acting.kind === 'return'
+          ? returnVenue
+          : unverifyVenue;
     call(supabase, acting.id, note)
       .then(async () => {
         const name = venues?.find((v) => v.id === acting.id)?.name ?? 'El lugar';
@@ -109,7 +116,9 @@ export function VenueReviewScreen() {
           text:
             acting.kind === 'verify'
               ? `«${name}» quedó verificado. Quien lo creó ya no puede moverlo.`
-              : `«${name}» ya no está verificado. Quien lo creó puede volver a corregirlo.`,
+              : acting.kind === 'return'
+                ? `Devolviste «${name}». Quien lo creó recibió tu nota; nadie crea sesiones nuevas ahí hasta que lo corrija.`
+                : `«${name}» ya no está verificado. Quien lo creó puede volver a corregirlo.`,
           bad: false,
         });
       })
@@ -216,7 +225,9 @@ export function VenueReviewScreen() {
                       <Text style={s.confirmText}>
                         {acting.kind === 'verify'
                           ? '¿Qué revisaste? Queda guardado con tu nombre.'
-                          : '¿Por qué quitas la verificación? Queda guardado con tu nombre.'}
+                          : acting.kind === 'return'
+                            ? '¿Qué hay que corregir? Quien lo creó lee esta nota; tu nombre no.'
+                            : '¿Por qué quitas la verificación? Queda guardado con tu nombre.'}
                       </Text>
                       <TextInput
                         accessibilityLabel="Nota de la revisión"
@@ -226,7 +237,9 @@ export function VenueReviewScreen() {
                         placeholder={
                           acting.kind === 'verify'
                             ? 'Cancha pública, el punto está en la entrada'
-                            : 'Lo verifiqué por error'
+                            : acting.kind === 'return'
+                              ? 'El punto cae en una casa: muévelo a la entrada del parque'
+                              : 'Lo verifiqué por error'
                         }
                         placeholderTextColor={color.text.tertiary}
                         style={s.input}
@@ -238,7 +251,9 @@ export function VenueReviewScreen() {
                           accessibilityLabel={
                             acting.kind === 'verify'
                               ? 'Sí, verificar'
-                              : 'Sí, quitar la verificación'
+                              : acting.kind === 'return'
+                                ? 'Sí, devolver para corregir'
+                                : 'Sí, quitar la verificación'
                           }
                           aria-disabled={pending || note.trim().length === 0}
                           disabled={pending || note.trim().length === 0}
@@ -250,7 +265,9 @@ export function VenueReviewScreen() {
                               ? '…'
                               : acting.kind === 'verify'
                                 ? 'Sí, verificar'
-                                : 'Sí, quitar'}
+                                : acting.kind === 'return'
+                                  ? 'Sí, devolver'
+                                  : 'Sí, quitar'}
                           </Text>
                         </Pressable>
                         <Pressable
@@ -288,6 +305,19 @@ export function VenueReviewScreen() {
                         <Text style={[s.actionText, s.actionGraveText]}>
                           {venue.is_verified ? 'Quitar verificación' : 'Verificar'}
                         </Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Devolver ${venue.name} para corregir`}
+                        accessibilityHint="Quien lo creó recibe tu nota. No se crean sesiones nuevas ahí hasta que lo corrija."
+                        onPress={() => {
+                          setBanner(null);
+                          setNote('');
+                          setActing({ id: venue.id, kind: 'return' });
+                        }}
+                        style={s.action}
+                      >
+                        <Text style={s.actionText}>Devolver para corregir</Text>
                       </Pressable>
                     </View>
                   )}
