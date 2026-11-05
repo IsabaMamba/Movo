@@ -3,7 +3,7 @@ import { join, relative, sep } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { INDEXABLE_PATHS, isIndexable } from './robots';
+import { INDEXABLE_PATHS, INDEXABLE_PREFIXES, isIndexable } from './robots';
 
 /**
  * Every route, by walking `src/app` the way Expo Router does: `index` is the
@@ -28,8 +28,15 @@ describe('isIndexable', () => {
   it('lists only the allowlist, out of every route in src/app', () => {
     const all = routes();
     expect(all.length).toBeGreaterThan(15);
-    const listed = all.filter(isIndexable).sort();
+    const listed = all
+      .filter(isIndexable)
+      .filter((path) => !INDEXABLE_PREFIXES.some((prefix) => path.startsWith(prefix)))
+      .sort();
     expect(listed).toEqual([...INDEXABLE_PATHS].sort());
+    // A prefix opens only its own folder: one help answer, nothing else.
+    expect(all.filter((path) => INDEXABLE_PREFIXES.some((p) => path.startsWith(p)))).toEqual([
+      '/ayuda/x1',
+    ]);
   });
 
   it('names no page that does not exist', () => {
