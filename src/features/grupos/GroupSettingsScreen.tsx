@@ -11,7 +11,16 @@
 
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import {
   fetchCategories,
@@ -35,6 +44,14 @@ import {
   withdrawHandover,
   type GroupHandover,
 } from '../../lib/groups';
+import {
+  createGroupInvite,
+  fetchGroupInvite,
+  inviteStatus,
+  inviteUrl,
+  revokeGroupInvite,
+  type GroupInvite,
+} from '../../lib/invites';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
 import { sportColor } from '../../theme/sport';
@@ -64,6 +81,7 @@ export function GroupSettingsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [handover, setHandover] = useState<GroupHandover | null>(null);
+  const [invite, setInvite] = useState<GroupInvite | null>(null);
   const [handingTo, setHandingTo] = useState<string | null>(null);
   const [choosingHeir, setChoosingHeir] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -81,6 +99,7 @@ export function GroupSettingsScreen() {
     setIsPublic(found.is_public);
     setMembers(await fetchCommunityMembers(supabase, found.id).catch(() => []));
     setHandover(await fetchHandover(supabase, found.id).catch(() => null));
+    setInvite(await fetchGroupInvite(supabase, found.id).catch(() => null));
   }, [slug]);
 
   useEffect(() => {
@@ -162,6 +181,33 @@ export function GroupSettingsScreen() {
   };
 
   const isOwner = me?.role === 'owner';
+
+  /** The web knows its own origin; a native build needs EXPO_PUBLIC_SITE_URL until there is a domain. */
+  const origin =
+    Platform.OS === 'web' && typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.EXPO_PUBLIC_SITE_URL ?? null);
+  const link = invite ? inviteUrl(invite.code, origin) : null;
+
+  const shareLink = () => {
+    if (!link) return;
+    const text = `Te invito a ${group.name} en Movo: ${link}`;
+    if (Platform.OS === 'web') {
+      const nav = globalThis.navigator as Navigator | undefined;
+      if (nav?.share) {
+        void nav.share({ text }).catch(() => undefined);
+        return;
+      }
+      void nav?.clipboard
+        ?.writeText(link)
+        .then(() => {
+          setNotice('Copiamos el enlace. Pégalo donde quieras.');
+        })
+        .catch(() => undefined);
+      return;
+    }
+    void Share.share({ message: text });
+  };
   const others = members
     .filter((m) => m.user_id !== session.user.id)
     .sort((a, b) => Number(b.role === 'organizer') - Number(a.role === 'organizer'));
@@ -340,8 +386,67 @@ export function GroupSettingsScreen() {
         <Text style={s.hint}>
           {isPublic
             ? 'Aparece en Grupos y cualquiera se puede unir.'
-            : 'No aparece en búsquedas ni en «Cerca de ti». Hasta que llegue el enlace de invitación, nadie nuevo puede entrar.'}
+            : 'No aparece en búsquedas ni en «Cerca de ti». Para entrar hace falta el enlace de invitación.'}
         </Text>
+      </View>
+
+      <View style={s.field}>
+        <Text style={s.label}>Enlace de invitación</Text>
+        {invite && link ? (
+          <View style={s.inviteBox}>
+            <Text selectable style={s.inviteLink}>
+              {link}
+            </Text>
+            <Text style={s.hint}>{inviteStatus(invite)}</Text>
+            <View style={s.chipRow}>
+              <Pressable accessibilityRole="button" onPress={shareLink} style={s.filterChip}>
+                <Icon color={color.text.primary} name="share" size={14} />
+                <Text style={s.filterChipText}>Compartir</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={() => {
+                  run(async () => {
+                    setInvite(await createGroupInvite(supabase, group.id));
+                  }, 'Hiciste un enlace nuevo. El anterior ya no sirve.');
+                }}
+                style={s.filterChip}
+              >
+                <Text style={s.filterChipText}>Desactivar y crear otro</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={() => {
+                  run(() => revokeGroupInvite(supabase, group.id), 'Desactivaste el enlace.');
+                }}
+                style={s.filterChip}
+              >
+                <Text style={s.dangerChipText}>Desactivar</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <>
+            <Text style={s.hint}>
+              Un enlace para entrar al grupo, aunque sea con invitación. Sirve 7 días y para 10
+              personas; lo puedes desactivar cuando quieras.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={() => {
+                run(async () => {
+                  setInvite(await createGroupInvite(supabase, group.id));
+                }, 'Listo: comparte el enlace con quien quieras invitar.');
+              }}
+              style={s.secondary}
+            >
+              <Text style={s.secondaryText}>Crear enlace de invitación</Text>
+            </Pressable>
+          </>
+        )}
       </View>
 
       <Pressable
