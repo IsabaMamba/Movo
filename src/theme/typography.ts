@@ -62,8 +62,10 @@ export const type = {
   /** Field labels and section eyebrows. Always uppercase, always tracked out. */
   label: {
     fontFamily: fontFamily.semibold,
-    fontSize: 11,
-    lineHeight: 14,
+    // 12 since Accesibilidad v1: nothing in Movo is smaller, except the
+    // tab bar labels, which do not scale and have the large content viewer.
+    fontSize: 12,
+    lineHeight: 15,
     letterSpacing: 1.3,
   },
   /** Buttons and chips. */

@@ -347,7 +347,7 @@ export const detailStyles = StyleSheet.create({
     justifyContent: 'center',
     width: 30,
   },
-  smallAvatarText: { ...type.caption, color: color.text.inverse, fontSize: 10, fontWeight: '700' },
+  smallAvatarText: { ...type.caption, color: color.text.inverse, fontSize: 12, fontWeight: '700' },
   moreText: { ...type.caption, color: color.text.tertiary, marginLeft: space.xs },
   goingCount: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
   bottomBar: {

@@ -16,6 +16,8 @@ export const palette = {
   abyss: '#070A14',
   slate: '#2A344A',
   steel: '#3B445B',
+  /** Accesibilidad v1: control outlines at 3.2–3.9:1 on the grounds they sit on. */
+  pewter: '#66718C',
   blueGray: '#4B5A73',
   mist: '#6E7A91',
   cloud: '#A9B2C3',
@@ -45,8 +47,12 @@ export const color = {
   border: {
     /** Dividers and hairlines. */
     default: palette.slate,
-    /** Input and chip outlines. */
-    strong: palette.steel,
+    /**
+     * Outlines of controls: inputs, unselected chips, off toggles, radios,
+     * ghost buttons. Pewter since Accesibilidad v1 (4 November) — steel
+     * measured under 3:1, the minimum for a control's boundary.
+     */
+    strong: palette.pewter,
     /** Focus ring. */
     focus: palette.aqua,
     /** Invalid input outline. */

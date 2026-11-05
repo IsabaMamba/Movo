@@ -37,6 +37,10 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: color.bg.base },
         tabBarActiveTintColor: color.accent.primary,
         tabBarInactiveTintColor: color.text.tertiary,
+        // Accesibilidad v1: the one text kept at 11 and out of system text
+        // scaling — at 200 % the five labels would not fit. iOS shows them
+        // large on a long press (large content viewer).
+        tabBarAllowFontScaling: false,
         tabBarLabelStyle: { ...type.caption, fontSize: 11 },
         tabBarStyle: styles.bar,
       }}
