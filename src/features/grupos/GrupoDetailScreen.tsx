@@ -50,9 +50,7 @@ import {
   fetchChat,
   fetchMyChats,
   lastLine,
-  setChatMode,
   type ChatMessage,
-  type ChatMode,
   type ChatSummary,
 } from '../../lib/chat';
 import { Icon } from '../nav/Icon';
@@ -81,7 +79,6 @@ export function GrupoDetailScreen() {
   /** Grupos v6 · the Chat tab: the latest line, the unread count, the pins. */
   const [chat, setChat] = useState<ChatSummary | null>(null);
   const [pinned, setPinned] = useState<ChatMessage[]>([]);
-  const [modeBusy, setModeBusy] = useState(false);
 
   const userId = session?.user.id;
 
@@ -141,20 +138,8 @@ export function GrupoDetailScreen() {
   }
 
   const mine = members.find((m) => m.user_id === userId) ?? null;
+  const organizes = mine?.role === 'owner' || mine?.role === 'organizer';
 
-  /** «Todo el grupo» or «Solo quienes organizan» (0040, set_chat_mode). */
-  const changeMode = (mode: ChatMode) => {
-    setModeBusy(true);
-    setError(null);
-    setChatMode(supabase, community.id, mode)
-      .then(() => load())
-      .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : 'No se pudo cambiar quién escribe.');
-      })
-      .finally(() => {
-        setModeBusy(false);
-      });
-  };
   const isMember = mine !== null;
   const tint = sportColor(community.category_id ?? '', color.accent.primary);
   // Every sport of the group (0037), in its order: «Running, Trail running».
@@ -246,14 +231,31 @@ export function GrupoDetailScreen() {
           >
             <Icon color={color.text.primary} name="back" size={22} />
           </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Compartir el grupo"
-            hitSlop={hitSlopFor(32)}
-            onPress={share}
-          >
-            <Icon color={color.text.primary} name="share" size={20} />
-          </Pressable>
+          <View style={s.heroActions}>
+            {organizes && (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Ajustes del grupo"
+                hitSlop={hitSlopFor(32)}
+                onPress={() => {
+                  router.push({
+                    pathname: '/grupos/[slug]/ajustes',
+                    params: { slug: community.slug },
+                  });
+                }}
+              >
+                <Icon color={color.text.primary} name="settings" size={20} />
+              </Pressable>
+            )}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Compartir el grupo"
+              hitSlop={hitSlopFor(32)}
+              onPress={share}
+            >
+              <Icon color={color.text.primary} name="share" size={20} />
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -438,48 +440,22 @@ export function GrupoDetailScreen() {
               </View>
             )}
 
-            {mine?.role !== 'member' ? (
-              <View style={s.chatSection}>
-                <Text style={s.rulesLabel}>Quién escribe</Text>
-                <View
-                  accessibilityLabel="Quién escribe en el chat"
-                  accessibilityRole="radiogroup"
-                  style={s.chipRow}
-                >
-                  {(
-                    [
-                      ['everyone', 'Todo el grupo'],
-                      ['organizers', 'Solo quienes organizan'],
-                    ] as const
-                  ).map(([mode, label]) => {
-                    const on = community.chat_mode === mode;
-                    return (
-                      <Pressable
-                        accessibilityRole="radio"
-                        aria-checked={on}
-                        aria-disabled={modeBusy}
-                        disabled={modeBusy}
-                        key={mode}
-                        onPress={() => {
-                          if (on) return;
-                          changeMode(mode);
-                        }}
-                        style={[s.filterChip, on && s.filterChipOn]}
-                      >
-                        <Text style={[s.filterChipText, on && s.filterChipTextOn]}>
-                          {on ? '✓ ' : ''}
-                          {label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <Text style={s.hint}>
+            {organizes ? (
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => {
+                  router.push({
+                    pathname: '/grupos/[slug]/ajustes',
+                    params: { slug: community.slug },
+                  });
+                }}
+              >
+                <Text style={s.linkText}>
                   {community.chat_mode === 'organizers'
-                    ? 'Todo el grupo lee; solo quienes organizan escriben. Sirve para avisos.'
-                    : 'Todo el grupo lee y escribe. Quien organiza puede fijar hasta 3 mensajes y quitar los que no cumplen las reglas.'}
+                    ? 'Solo quienes organizan escriben. Cambiarlo en Ajustes del grupo'
+                    : 'Todo el grupo escribe. Cambiarlo en Ajustes del grupo'}
                 </Text>
-              </View>
+              </Pressable>
             ) : (
               <Text style={s.hint}>
                 Dentro de Movo: nadie ve el número de nadie. Solo quienes son del grupo lo leen.
