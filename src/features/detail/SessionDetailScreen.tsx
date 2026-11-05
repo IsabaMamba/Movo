@@ -65,6 +65,7 @@ import {
 } from '../../theme';
 import type { ActivityParticipant, JsonSchemaProperty } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
+import { StatusPage } from '../web/StatusPage';
 import { SessionLinks } from '../links/SessionLinks';
 import { Icon, type IconName } from '../nav/Icon';
 import { detailStyles as s } from './styles';
@@ -224,15 +225,24 @@ export function SessionDetailScreen() {
 
   if (activity === undefined) return <ActivityIndicator style={s.screen} />;
 
+  // Páginas web v1: a session link that no longer works falls into the
+  // 404, which never says why — passed, cancelled or only for a group.
+  // A load that failed for another reason is «Algo falló», with a retry.
   if (activity === null) {
-    return (
-      <View style={[s.screen, { padding: 24, paddingTop: 64 }]}>
-        <Text style={s.sectionTitle}>No encontramos esta sesión</Text>
-        <Text style={s.privacyNote}>{error ?? 'Puede que ya no exista o que no sea pública.'}</Text>
-        <Link href="/" style={s.back}>
-          <Text style={s.backText}>Volver a Descubrir</Text>
-        </Link>
-      </View>
+    return error === null ? (
+      <StatusPage kind="not_found" />
+    ) : (
+      <StatusPage
+        kind="error"
+        onRetry={() => {
+          setError(null);
+          setActivity(undefined);
+          load().catch((cause: unknown) => {
+            setActivity(null);
+            setError(cause instanceof Error ? cause.message : 'No se pudo cargar la sesión.');
+          });
+        }}
+      />
     );
   }
 
