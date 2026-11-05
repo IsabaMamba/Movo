@@ -393,14 +393,22 @@ export function SessionDetailScreen() {
           <Text accessibilityRole="header" style={s.title}>
             {activity.title}
           </Text>
-          <View style={s.organizerRow}>
+          {/* Perfiles v1: who organizes is one tap from their profile. */}
+          <Pressable
+            accessibilityHint="Abre su perfil"
+            accessibilityRole="link"
+            onPress={() => {
+              router.push({ pathname: '/persona/[id]', params: { id: activity.organizer.id } });
+            }}
+            style={s.organizerRow}
+          >
             <View aria-hidden style={s.organizerAvatar}>
               <Text style={s.organizerAvatarText}>{initials(activity.organizer.display_name)}</Text>
             </View>
             <Text style={s.organizerLine}>
               Organiza <Text style={s.organizerStrong}>{activity.organizer.display_name}</Text>
             </Text>
-          </View>
+          </Pressable>
         </View>
 
         {cancelled && (
