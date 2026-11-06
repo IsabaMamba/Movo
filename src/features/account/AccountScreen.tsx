@@ -24,10 +24,17 @@
  * with its camera badge, icons on every row, the state of Avisos as the row's
  * value, and «Tus datos» and «Cerrar sesión» as rows of «Tu cuenta» — the
  * download and the delete open under «Tus datos» rather than sitting open.
+ *
+ * Perfil v3 (4 November): the menu in three blocks — Seguridad y privacidad
+ * (Bloqueos with its count, Tus permisos, Notificaciones), Ayuda y normas,
+ * Tu cuenta — and «Cerrar sesión» and «Eliminar la cuenta» as two plain
+ * buttons at the end, not rows. Signing out asks once, and says nothing is
+ * lost. «Verificar identidad» and «Legal y privacidad» join the menu when
+ * their screens exist; a row that leads nowhere is worse than no row.
  */
 
 import { Link, Redirect, router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -47,8 +54,10 @@ import {
   exportMyData,
 } from '../../lib/account';
 import { hasPassword } from '../../lib/credentials';
+import { fetchBlockedPeople } from '../../lib/blocks';
+import { fetchNotificationPrefs, prefsSummary } from '../../lib/notificationPrefs';
 import { levelLabel, mySports } from '../../lib/profile';
-import { disablePush, getPushState, type PushState } from '../../lib/push';
+import { disablePush } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
 import { color } from '../../theme';
 import { sportColor } from '../../theme/sport';
@@ -70,18 +79,22 @@ type RowHref =
   | '/perfil/bloqueos'
   | '/perfil/correo'
   | '/perfil/contrasena'
+  | '/perfil/notificaciones'
+  | '/lugares'
   | '/ayuda';
 
 /** The inside of a settings row: icon, label, optional value, chevron. */
 function RowBody({
   icon,
   label,
+  sub,
   value,
   quiet,
   chevron = true,
 }: {
   icon: IconName;
   label: string;
+  sub?: string;
   value?: string | null;
   quiet?: boolean;
   chevron?: boolean;
@@ -91,7 +104,14 @@ function RowBody({
       <View aria-hidden style={p.rowIcon}>
         <Icon color={quiet ? color.text.tertiary : color.text.secondary} name={icon} size={20} />
       </View>
-      <Text style={[p.rowText, quiet && p.rowTextQuiet]}>{label}</Text>
+      {sub ? (
+        <View style={p.rowStack}>
+          <Text style={[p.rowText, quiet && p.rowTextQuiet]}>{label}</Text>
+          <Text style={p.rowSub}>{sub}</Text>
+        </View>
+      ) : (
+        <Text style={[p.rowText, quiet && p.rowTextQuiet]}>{label}</Text>
+      )}
       {value ? <Text style={p.rowValue}>{value}</Text> : null}
       {chevron && <Icon color={color.text.tertiary} name="chevronRight" size={16} />}
     </>
@@ -103,12 +123,14 @@ function Row({
   href,
   icon,
   label,
+  sub,
   value,
   last,
 }: {
   href: RowHref;
   icon: IconName;
   label: string;
+  sub?: string;
   value?: string | null;
   last?: boolean;
 }) {
@@ -119,17 +141,10 @@ function Row({
         accessibilityLabel={value ? `${label}, ${value}` : label}
         style={[p.row, last && p.rowLast]}
       >
-        <RowBody icon={icon} label={label} value={value} />
+        <RowBody icon={icon} label={label} sub={sub} value={value} />
       </Pressable>
     </Link>
   );
-}
-
-/** «Encendidas» when this browser is subscribed, «Apagadas» when it could be. */
-function pushValue(state: PushState | null): string | null {
-  if (state === 'on') return 'Encendidas';
-  if (state === 'off' || state === 'denied') return 'Apagadas';
-  return null;
 }
 
 /** Web saves a file; native hands the text to the share sheet. */
@@ -156,15 +171,28 @@ export function AccountScreen() {
   const [typed, setTyped] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
-  const [push, setPush] = useState<PushState | null>(null);
-
-  useEffect(() => {
-    void getPushState()
-      .then(setPush)
-      .catch(() => undefined);
-  }, []);
+  const [signingOut, setSigningOut] = useState(false);
+  const [blockCount, setBlockCount] = useState<number | null>(null);
+  const [prefsValue, setPrefsValue] = useState<string | null>(null);
 
   const userId = session?.user.id;
+
+  // Both values are decoration on a row; a failure leaves the row bare.
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) return;
+      void fetchBlockedPeople(supabase)
+        .then((list) => {
+          setBlockCount(list.length);
+        })
+        .catch(() => undefined);
+      void fetchNotificationPrefs(supabase, userId)
+        .then((prefs) => {
+          setPrefsValue(prefsSummary(prefs));
+        })
+        .catch(() => undefined);
+    }, [userId]),
+  );
   const { profile, categories, zone, error: loadError, reload } = useMyProfile(userId);
   const categoryName = (id: string) => categories.find((k) => k.id === id)?.name_es ?? id;
 
@@ -318,16 +346,39 @@ export function AccountScreen() {
           <Row href="/historial" icon="history" label="Historial de asistencia" />
           {/* Organizar lives here since the tab bar (16 October): most people
               organise nothing, so it is a row, not a tab. */}
-          <Row href="/organizar" icon="clipboard" label="Organizar" last />
+          <Row href="/organizar" icon="clipboard" label="Organizar" />
+          <Row href="/lugares" icon="pin" label="Mis lugares" last />
         </View>
       </View>
 
       <View style={s.section}>
-        <Text style={p.groupLabel}>AJUSTES</Text>
+        <Text style={p.groupLabel}>SEGURIDAD Y PRIVACIDAD</Text>
         <View style={p.group}>
-          <Row href="/avisos" icon="bell" label="Avisos" value={pushValue(push)} />
-          <Row href="/permisos" icon="shield" label="Tus permisos" />
-          <Row href="/perfil/bloqueos" icon="hand" label="Bloqueos" />
+          <Row
+            href="/perfil/bloqueos"
+            icon="hand"
+            label="Bloqueos"
+            value={blockCount === null ? null : String(blockCount)}
+          />
+          <Row
+            href="/permisos"
+            icon="shield"
+            label="Tus permisos"
+            sub="Ubicación, avisos y normas aceptadas"
+          />
+          <Row
+            href="/perfil/notificaciones"
+            icon="bell"
+            label="Notificaciones"
+            sub={prefsValue ?? 'Qué te avisamos y en qué chats'}
+            last
+          />
+        </View>
+      </View>
+
+      <View style={s.section}>
+        <Text style={p.groupLabel}>AYUDA Y NORMAS</Text>
+        <View style={p.group}>
           <Row href="/ayuda" icon="search" label="Ayuda" />
           <Row href="/normas" icon="book" label="Normas de la comunidad" last />
         </View>
@@ -347,26 +398,73 @@ export function AccountScreen() {
           )}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Tus datos: descargar o borrar"
+            accessibilityLabel="Descargar tus datos"
             aria-expanded={dataOpen}
             onPress={() => {
               setDataOpen(!dataOpen);
             }}
             style={p.row}
           >
-            <RowBody icon="download" label="Tus datos" value="Descargar o borrar" />
+            <RowBody icon="download" label="Descargar tus datos" />
+          </Pressable>
+        </View>
+
+        <View style={p.endActions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setSigningOut(true);
+            }}
+            style={p.endAction}
+          >
+            <Icon color={color.text.secondary} name="logout" size={16} />
+            <Text style={p.endActionText}>Cerrar sesión</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Cerrar sesión"
             onPress={() => {
-              void signOut();
+              setNotice(null);
+              setError(null);
+              setDataOpen(true);
+              setConfirming(true);
             }}
-            style={[p.row, p.rowLast]}
+            style={p.endAction}
           >
-            <RowBody chevron={false} icon="logout" label="Cerrar sesión" quiet />
+            <Icon color={color.semantic.dangerOnRaised} name="close" size={16} />
+            <Text style={[p.endActionText, p.endActionDanger]}>Eliminar la cuenta</Text>
           </Pressable>
         </View>
+
+        {signingOut && (
+          <View accessibilityViewIsModal style={p.confirmBox}>
+            <Text accessibilityRole="header" style={s.label}>
+              ¿Cerrar sesión en este teléfono?
+            </Text>
+            <Text style={s.hint}>
+              Dejan de llegarte avisos aquí. Tus sesiones, grupos y chats siguen igual cuando
+              vuelvas a entrar.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setSigningOut(false);
+                void signOut();
+              }}
+              style={p.confirmYes}
+            >
+              <Text style={p.confirmYesText}>Cerrar sesión</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setSigningOut(false);
+              }}
+              style={p.confirmNo}
+            >
+              <Text style={p.confirmNoText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        )}
 
         {dataOpen && (
           <View style={s.section}>
