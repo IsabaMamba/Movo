@@ -348,6 +348,12 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId,
       };
 
+    // Written by notify_participants_daily() (0050), once a day, only to an
+    // organizer who switched «Quién se une o sale» on (0049).
+    case 'participants_daily': {
+      return { ...base, text: dailyDigestText(payload, title), activityId };
+    }
+
     // Written by leave_series() (0048) to the organizer: who left, the whole
     // series or one date, and a reason only if the person picked one of three.
     case 'series_left':
@@ -489,6 +495,7 @@ const ORGANIZER_KINDS = new Set([
   'venue_returned',
   'series_left',
   'series_date_left',
+  'participants_daily',
 ]);
 
 export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
@@ -496,6 +503,45 @@ export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
 export function inFilter(item: Pick<InboxItem, 'kind'>, filter: InboxFilter): boolean {
   if (filter === 'todos') return true;
   return filter === 'organizar' ? ORGANIZER_KINDS.has(item.kind) : !ORGANIZER_KINDS.has(item.kind);
+}
+
+/**
+ * «3 personas se unieron a Trote suave: Ana, Beto y 1 más. Caro no puede ir.»
+ * Exported for the test. Names come from the payload, at most two who joined
+ * and one who left; the rest are a count.
+ */
+export function dailyDigestText(payload: Record<string, unknown>, title: string): string {
+  const count = (key: string) => {
+    const v = payload[key];
+    return typeof v === 'number' ? v : 0;
+  };
+  const names = (key: string) => {
+    const v = payload[key];
+    return Array.isArray(v) ? v.filter((n): n is string => typeof n === 'string') : [];
+  };
+  const joined = count('joined');
+  const left = count('left');
+  const who = names('names');
+  const gone = names('left_names');
+  const parts: string[] = [];
+  if (joined > 0) {
+    const rest = joined - who.length;
+    const list =
+      who.length === 0
+        ? ''
+        : rest > 0
+          ? `: ${who.join(', ')} y ${String(rest)} más`
+          : `: ${who.length === 2 ? `${who[0] ?? ''} y ${who[1] ?? ''}` : (who[0] ?? '')}`;
+    parts.push(
+      `${joined === 1 ? '1 persona se unió' : `${String(joined)} personas se unieron`} a ${title}${list}.`,
+    );
+  }
+  if (left > 0) {
+    const first = gone[0];
+    if (left === 1 && first) parts.push(`${first} no puede ir.`);
+    else parts.push(`${left === 1 ? '1 persona salió' : `${String(left)} personas salieron`}.`);
+  }
+  return parts.length > 0 ? parts.join(' ') : `Hubo cambios en la lista de ${title}.`;
 }
 
 /** «sábado 7 de noviembre», in Costa Rica time. */
