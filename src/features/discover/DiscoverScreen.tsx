@@ -11,7 +11,11 @@
  * then the list as a sheet — «9 sesiones a menos de 15 km» — of cards with
  * the date in a column on the left and the occupancy as a bar on the right.
  * The full-screen map, search, 100 km and País are not built yet: they wait
- * for the street map (docs/design/mapa.md) and zone_summary().
+ * for the street map (docs/design/mapa.md).
+ *
+ * Deportes v2 · 2 (0051): tapping a zone on the heat opens its sheet — the
+ * sessions of the sports in the filter, people going (or «menos de 5»), a
+ * bar per sport — and «Ver las sesiones» narrows the list to that zone.
  */
 
 import { Link, useRouter } from 'expo-router';
@@ -54,6 +58,7 @@ import { BellLink } from '../nav/BellLink';
 import { Icon } from '../nav/Icon';
 import { dateColumn, formatDistance, nearbyCount, seriesShort } from './format';
 import { HeatBand } from './HeatBand';
+import { ZoneSheet } from './ZoneSheet';
 import { discoverStyles as s } from './styles';
 
 /**
@@ -124,6 +129,14 @@ export function DiscoverScreen() {
   const [originMode, setOriginMode] = useState<'gam' | 'mine' | 'locating'>('gam');
   const [originNote, setOriginNote] = useState<string | null>(null);
   const [originMenu, setOriginMenu] = useState(false);
+  const [zone, setZone] = useState<{ code: string; name: string } | null>(null);
+  const [zoneFilter, setZoneFilter] = useState<{ name: string; ids: Set<string> } | null>(null);
+
+  // A zone's sessions were counted for one filter; another filter is another
+  // question, so the narrowing goes.
+  useEffect(() => {
+    setZoneFilter(null);
+  }, [selected, radiusM, origin]);
 
   useEffect(() => {
     let cancelled = false;
@@ -236,6 +249,18 @@ export function DiscoverScreen() {
   };
 
   const radiusKm = radiusM / 1000;
+  const zoneSports: string[] | null =
+    selected === MINE ? (mine.length > 0 ? mine : null) : selected ? [selected] : null;
+  const zoneOf =
+    selected === MINE
+      ? ' de tus deportes'
+      : selected
+        ? ` de ${(categories.find((c) => c.id === selected)?.name_es ?? '').toLowerCase()}`
+        : '';
+  const shown =
+    activities === null || zoneFilter === null
+      ? activities
+      : activities.filter((a) => zoneFilter.ids.has(a.id));
   const selectedName =
     selected === MINE
       ? 'Tus deportes'
@@ -308,6 +333,9 @@ export function DiscoverScreen() {
           caption={`${selectedName} · próximos 7 días`}
           centre={origin}
           height={MAP_HEIGHT}
+          onZonePress={(picked) => {
+            setZone(picked);
+          }}
           overlay={controls}
           radiusM={radiusM}
         />
@@ -342,6 +370,34 @@ export function DiscoverScreen() {
             </Pressable>
           ))}
         </View>
+      )}
+      {zone !== null && (
+        <ZoneSheet
+          categories={categories}
+          of={zoneOf}
+          onClose={() => {
+            setZone(null);
+          }}
+          onShow={(summary) => {
+            setZoneFilter({ name: summary.name, ids: new Set(summary.activity_ids) });
+            setZone(null);
+          }}
+          sports={zoneSports}
+          zone={zone}
+        />
+      )}
+      {zoneFilter !== null && (
+        <Pressable
+          accessibilityHint="Quita el filtro de zona"
+          accessibilityRole="button"
+          onPress={() => {
+            setZoneFilter(null);
+          }}
+          style={s.zoneFilter}
+        >
+          <Text style={s.zoneFilterText}>En {zoneFilter.name}</Text>
+          <Icon color={color.text.secondary} name="close" size={14} />
+        </Pressable>
       )}
       {originNote !== null && (
         <Text aria-live="polite" style={[s.meta, s.gutter]}>
@@ -417,11 +473,11 @@ export function DiscoverScreen() {
 
       {error ? <Text style={s.error}>{error}</Text> : null}
 
-      {activities !== null && activities.length > 0 && (
+      {shown !== null && shown.length > 0 && (
         <View style={s.listHead}>
           <Text style={s.listCount}>
-            <Text style={s.listCountStrong}>{nearbyCount(activities.length, radiusKm).count}</Text>
-            {nearbyCount(activities.length, radiusKm).rest}
+            <Text style={s.listCountStrong}>{nearbyCount(shown.length, radiusKm).count}</Text>
+            {nearbyCount(shown.length, radiusKm).rest}
           </Text>
           <Text style={s.meta}>por hora</Text>
         </View>
@@ -454,7 +510,7 @@ export function DiscoverScreen() {
       ) : (
         <FlatList
           contentContainerStyle={s.list}
-          data={activities}
+          data={shown}
           keyExtractor={(activity) => activity.id}
           refreshControl={<RefreshControl onRefresh={refresh} refreshing={refreshing} />}
           ListHeaderComponent={header}
