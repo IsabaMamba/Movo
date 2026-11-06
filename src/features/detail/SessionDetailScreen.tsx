@@ -11,7 +11,7 @@
  * sport and level in Sun, the title, who organizes, the series in a cool
  * box, then one row per fact with its icon — when, where with «Cómo llegar»,
  * the price, what it is like — then who is going, and the two actions fixed
- * at the bottom. «Unirme a la serie» waits for join_series().
+ * at the bottom. The series box opens /serie/[id], where join_series() lives.
  *
  * Nothing from profile_private is rendered. Phone, birthdate and emergency
  * contact never appear on anyone else's screen — only display name and avatar.
@@ -429,14 +429,25 @@ export function SessionDetailScreen() {
         )}
 
         {activity.series_id && (
-          <View style={s.seriesBox}>
+          <Pressable
+            accessibilityHint="Abre todas las fechas de la serie"
+            accessibilityRole="link"
+            onPress={() => {
+              if (activity.series_id) {
+                router.push({ pathname: '/serie/[id]', params: { id: activity.series_id } });
+              }
+            }}
+            style={s.seriesBox}
+          >
             <Icon color={color.accent.cool} name="repeat" size={18} />
             <Text style={s.seriesText}>
               Se repite cada semana
               {otherDates.length > 0 ? ` · ${otherDates.length + 1} fechas` : ''}. Cada fecha tiene
-              su propia lista: unirte a esta no te une a las demás.
+              su propia lista: unirte a esta no te une a las demás.{' '}
+              <Text style={s.seriesLink}>Ver la serie</Text>
             </Text>
-          </View>
+            <Icon color={color.text.tertiary} name="chevronRight" size={16} />
+          </Pressable>
         )}
 
         <View style={s.info}>

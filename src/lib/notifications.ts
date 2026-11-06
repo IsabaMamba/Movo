@@ -348,6 +348,32 @@ export function toInboxItem(row: Notification): InboxItem {
         activityId,
       };
 
+    // Written by leave_series() (0048) to the organizer: who left, the whole
+    // series or one date, and a reason only if the person picked one of three.
+    case 'series_left':
+    case 'series_date_left': {
+      const name = text(payload, 'name') ?? 'Alguien';
+      const reason = text(payload, 'reason');
+      const why =
+        reason === 'trabajo'
+          ? ' Por trabajo.'
+          : reason === 'salud'
+            ? ' Por salud.'
+            : reason === 'viaje'
+              ? ' Por un viaje.'
+              : '';
+      const startsAt = text(payload, 'starts_at');
+      const when = startsAt === null ? 'una fecha' : `el ${noticeDay(startsAt)}`;
+      return {
+        ...base,
+        text:
+          row.type === 'series_left'
+            ? `${name} salió de la serie ${title} y liberó sus lugares en las próximas fechas.${why}`
+            : `${name} no puede ir ${when} a ${title}. Sigue en las demás fechas.${why}`,
+        activityId: row.type === 'series_left' ? null : activityId,
+      };
+    }
+
     // Written by send_message() and remove_message() (0040). Never the text of
     // a message: who wrote, and where. Each opens the chat it is about.
     case 'chat_reply':
@@ -461,6 +487,8 @@ const ORGANIZER_KINDS = new Set([
   'group_handover_accepted',
   'group_handover_declined',
   'venue_returned',
+  'series_left',
+  'series_date_left',
 ]);
 
 export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
@@ -468,6 +496,18 @@ export type InboxFilter = 'todos' | 'sesiones' | 'organizar';
 export function inFilter(item: Pick<InboxItem, 'kind'>, filter: InboxFilter): boolean {
   if (filter === 'todos') return true;
   return filter === 'organizar' ? ORGANIZER_KINDS.has(item.kind) : !ORGANIZER_KINDS.has(item.kind);
+}
+
+/** «sábado 7 de noviembre», in Costa Rica time. */
+function noticeDay(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'America/Costa_Rica',
+  })
+    .format(new Date(iso))
+    .replace(',', '');
 }
 
 /** «hace 20 min», «hace 2 h», «ayer», «sáb 31 oct». */
