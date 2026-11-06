@@ -86,8 +86,9 @@ column is maintained by hand.
 | `0046_group_invites`            | `community_invites` (one link per group, 7 days, limited uses, RPC only); `create_group_invite()`, `revoke_group_invite()`, `group_invite()` for organizers; `invite_preview()` (also signed out); `join_group_with_code()`                               | yes     |
 | `0047_help_feedback`            | `help_feedback` (question, yes/no, reason when no; no account or free text; no client reads); `record_help_feedback()` for anon and authenticated                                                                                                         | yes     |
 | `0048_join_series`              | `join_series()` takes every upcoming date through `join_activity()` (full dates waitlist; all or none); `leave_series()` leaves all or one date and tells the organizer once, reason one of three words                                                   | yes     |
-| `0049_notification_preferences` | `notification_preferences` (own row; reminders, invitations, chat on, joins off); a `BEFORE INSERT` trigger on `notifications` drops what the person switched off                                                                                         | no      |
-| `0050_participants_daily`       | `notify_participants_daily()`: one notice per upcoming session with joins or departures in 24 h, to its organizer; cron `participants-daily` at 01:00 UTC; dropped by 0049 unless switched on                                                             | no      |
+| `0049_notification_preferences` | `notification_preferences` (own row; reminders, invitations, chat on, joins off); a `BEFORE INSERT` trigger on `notifications` drops what the person switched off                                                                                         | yes     |
+| `0050_participants_daily`       | `notify_participants_daily()`: one notice per upcoming session with joins or departures in 24 h, to its organizer; cron `participants-daily` at 01:00 UTC; dropped by 0049 unless switched on                                                             | yes     |
+| `0051_zone_summary`             | `zone_summary(code, categories, days)` for the Descubrir zone sheet: sessions per sport, people only from 5, ids for the list; same exclusions as `zone_heat()`; authenticated only                                                                       | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -177,7 +178,9 @@ grant; `invite_preview()` is executable by `anon`, `join_group_with_code()` is n
 `new_invite_code()` by no client. `0047` was applied on 6 November: `help_feedback` has RLS on and
 no client can read it; `record_help_feedback()` is executable by `anon`. `0048` was applied the same day:
 `join_series()` and `leave_series()` are `SECURITY DEFINER`, executable by `authenticated` and not by
-`anon`. `0022` was applied on 28
+`anon`. `0049` and `0050` were applied the same day: `notification_preferences` has RLS on and
+no `anon` grant; the `notifications_respect_preferences` trigger exists; `cron.job` holds
+`participants-daily`, active, at `0 1 * * *`; no client can run `notify_participants_daily()`. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real

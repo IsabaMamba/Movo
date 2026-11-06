@@ -22,7 +22,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 
 import {
@@ -57,9 +57,25 @@ interface Props {
   caption?: string;
   /** Laid over the top edge: the origin and radius controls. */
   overlay?: ReactNode;
+  /**
+   * Deportes v2 · 2: tapping a zone opens its sheet. When given, every blob
+   * on the band becomes a button of at least 44 px around its anchor.
+   */
+  onZonePress?: (zone: { code: string; name: string }) => void;
 }
 
-export function HeatBand({ centre, radiusM, height = BAND_HEIGHT, caption, overlay }: Props) {
+/** A tap target never smaller than the minimum, never wider than a thumb's sweep. */
+const MIN_TARGET = 44;
+const MAX_TARGET = 96;
+
+export function HeatBand({
+  centre,
+  radiusM,
+  height = BAND_HEIGHT,
+  caption,
+  overlay,
+  onZonePress,
+}: Props) {
   const BAND = height;
   const [width, setWidth] = useState(0);
   const [zones, setZones] = useState<ZoneHeat[] | null>(null);
@@ -132,9 +148,9 @@ export function HeatBand({ centre, radiusM, height = BAND_HEIGHT, caption, overl
   return (
     <View style={s.bandWrap}>
       <View
-        accessible
-        accessibilityRole="image"
-        accessibilityLabel={label}
+        accessible={!onZonePress}
+        accessibilityRole={onZonePress ? undefined : 'image'}
+        accessibilityLabel={onZonePress ? undefined : label}
         onLayout={onLayout}
         style={[s.band, { height: BAND }]}
       >
@@ -211,6 +227,28 @@ export function HeatBand({ centre, radiusM, height = BAND_HEIGHT, caption, overl
             <Circle cx={width / 2} cy={BAND / 2} fill={color.accent.primary} r={8} />
           </Svg>
         )}
+
+        {onZonePress &&
+          blobs
+            .filter((b) => b.x >= 0 && b.x <= width && b.y >= 0 && b.y <= BAND)
+            .map((b) => {
+              const side = Math.min(MAX_TARGET, Math.max(MIN_TARGET, b.r));
+              return (
+                <Pressable
+                  accessibilityHint="Abre el resumen de la zona"
+                  accessibilityLabel={`${b.name}: ${b.sessions === 1 ? '1 sesión' : `${String(b.sessions)} sesiones`}`}
+                  accessibilityRole="button"
+                  key={`tap-${b.code}`}
+                  onPress={() => {
+                    onZonePress({ code: b.code, name: b.name });
+                  }}
+                  style={[
+                    s.zoneTap,
+                    { height: side, left: b.x - side / 2, top: b.y - side / 2, width: side },
+                  ]}
+                />
+              );
+            })}
 
         {width > 0 && ringPx < width / 2 - 8 && (
           <View
