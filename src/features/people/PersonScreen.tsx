@@ -246,7 +246,11 @@ export function PersonScreen() {
                 accessibilityRole="link"
                 key={a.id}
                 onPress={() => {
-                  router.push({ pathname: '/sesion/[id]', params: { id: a.id } });
+                  if (a.seriesId) {
+                    router.push({ pathname: '/serie/[id]', params: { id: a.seriesId } });
+                  } else {
+                    router.push({ pathname: '/sesion/[id]', params: { id: a.id } });
+                  }
                 }}
                 style={s.row}
               >

@@ -297,6 +297,7 @@ export const detailStyles = StyleSheet.create({
     padding: space.md,
   },
   seriesText: { ...type.bodySmall, color: color.text.primary, flex: 1 },
+  seriesLink: { color: color.accent.cool, fontWeight: '700' },
   info: { borderTopColor: color.border.default, borderTopWidth: stroke.hair },
   infoRow: {
     borderBottomColor: color.border.default,
