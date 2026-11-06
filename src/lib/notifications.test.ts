@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { inFilter, timeAgo, toInboxItem, unreadA11yLabel } from './notifications';
+import { dailyDigestText, inFilter, timeAgo, toInboxItem, unreadA11yLabel } from './notifications';
 import type { Notification } from '../types/database';
 
 /**
@@ -541,5 +541,28 @@ describe('group hand-over and deletion notices', () => {
     });
     expect(item.text).toBe('Trote se canceló: el grupo Corredores ya no existe.');
     expect(item.activityId).toBe('a1');
+  });
+});
+
+describe('dailyDigestText (0050)', () => {
+  it('names two, counts the rest, and says who left', () => {
+    expect(
+      dailyDigestText(
+        { joined: 3, names: ['Ana', 'Beto'], left: 1, left_names: ['Caro'] },
+        'Trote suave',
+      ),
+    ).toBe('3 personas se unieron a Trote suave: Ana, Beto y 1 más. Caro no puede ir.');
+  });
+
+  it('reads well with one, and with only departures', () => {
+    expect(dailyDigestText({ joined: 1, names: ['Ana'], left: 0 }, 'Trote')).toBe(
+      '1 persona se unió a Trote: Ana.',
+    );
+    expect(dailyDigestText({ joined: 2, names: ['Ana', 'Beto'] }, 'Trote')).toBe(
+      '2 personas se unieron a Trote: Ana y Beto.',
+    );
+    expect(dailyDigestText({ joined: 0, left: 2, left_names: ['Caro'] }, 'Trote')).toBe(
+      '2 personas salieron.',
+    );
   });
 });
