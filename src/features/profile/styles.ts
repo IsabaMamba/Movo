@@ -93,6 +93,47 @@ export const profileStyles = StyleSheet.create({
   rowText: { ...type.body, color: color.text.primary, flex: 1 },
   rowValue: { ...type.bodySmall, color: color.text.tertiary },
   rowTextQuiet: { color: color.text.secondary },
+  rowStack: { flex: 1, gap: 2 },
+  rowSub: { ...type.caption, color: color.text.tertiary },
+  endActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: space.sm,
+  },
+  endAction: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.xs,
+    minHeight: size.minTarget,
+  },
+  endActionText: { ...type.bodySmall, color: color.text.secondary, fontWeight: '600' },
+  endActionDanger: { color: color.semantic.dangerOnRaised },
+  confirmBox: {
+    backgroundColor: color.bg.surface,
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    gap: space.sm,
+    padding: space.lg,
+  },
+  confirmYes: {
+    alignItems: 'center',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  confirmYesText: { ...type.action, color: color.text.inverse },
+  confirmNo: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    justifyContent: 'center',
+    minHeight: size.control,
+  },
+  confirmNoText: { ...type.action, color: color.text.primary },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   rowChevron: { ...type.body, color: color.text.tertiary },
 
@@ -251,4 +292,29 @@ export const blocksStyles = StyleSheet.create({
     paddingHorizontal: space.lg,
   },
   confirmYesText: { ...type.bodySmall, color: color.text.inverse, fontWeight: '700' },
+});
+
+/** Perfil › Notificaciones (Avisos v3 · 6). */
+export const prefsStyles = StyleSheet.create({
+  overline: { ...type.label, color: color.text.tertiary, letterSpacing: 1 },
+  group: {
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  row: {
+    alignItems: 'center',
+    borderBottomColor: color.border.default,
+    borderBottomWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.md,
+    minHeight: size.minTarget + 12,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  rowLast: { borderBottomWidth: 0 },
+  rowText: { flex: 1, gap: 2 },
+  title: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  sub: { ...type.caption, color: color.text.tertiary },
+  always: { ...type.caption, color: color.text.secondary, fontWeight: '700' },
 });
