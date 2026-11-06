@@ -87,6 +87,7 @@ column is maintained by hand.
 | `0047_help_feedback`            | `help_feedback` (question, yes/no, reason when no; no account or free text; no client reads); `record_help_feedback()` for anon and authenticated                                                                                                         | yes     |
 | `0048_join_series`              | `join_series()` takes every upcoming date through `join_activity()` (full dates waitlist; all or none); `leave_series()` leaves all or one date and tells the organizer once, reason one of three words                                                   | yes     |
 | `0049_notification_preferences` | `notification_preferences` (own row; reminders, invitations, chat on, joins off); a `BEFORE INSERT` trigger on `notifications` drops what the person switched off                                                                                         | no      |
+| `0050_participants_daily`       | `notify_participants_daily()`: one notice per upcoming session with joins or departures in 24 h, to its organizer; cron `participants-daily` at 01:00 UTC; dropped by 0049 unless switched on                                                             | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
