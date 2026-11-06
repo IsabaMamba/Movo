@@ -16,7 +16,8 @@ begin;
 insert into auth.users (id, email, raw_user_meta_data) values
   ('a4800000-0000-0000-0000-000000000001', 'org@serie.test',  '{"display_name":"Luis"}'),
   ('a4800000-0000-0000-0000-000000000002', 'ana@serie.test',  '{"display_name":"Ana"}'),
-  ('a4800000-0000-0000-0000-000000000003', 'beto@serie.test', '{"display_name":"Beto"}');
+  ('a4800000-0000-0000-0000-000000000003', 'beto@serie.test', '{"display_name":"Beto"}'),
+  ('a4800000-0000-0000-0000-000000000004', 'caro@serie.test', '{"display_name":"Caro"}');
 
 insert into public.locations (id, name, district, geog, is_public_venue, is_verified, created_by)
 values ('a4800000-0000-0000-0000-0000000000a1', 'La Sabana', 'Mata Redonda',
@@ -35,8 +36,8 @@ insert into public.activity_series (
    'a4800000-0000-0000-0000-0000000000a1', 'Otra serie', 'weekly', 2, '18:00', 60,
    'any', 10, 0, 'CRC', '{"distance_km": 5, "pace_min_per_km": 6.0}'::jsonb);
 
--- c1 already happened, c2 and c3 are open, c4 holds one place and Beto takes
--- it, c5 was cancelled; c9 belongs to the other series.
+-- c1 already happened, c2 and c3 are open,
+-- c4 holds two places and Beto and Caro take them, c5 was cancelled; c9 belongs to the other series.
 insert into public.activities (
   id, series_id, organizer_id, category_id, location_id, title,
   starts_at, ends_at, max_participants, status, visibility, attributes
@@ -50,7 +51,7 @@ select v.id::uuid, v.series::uuid, 'a4800000-0000-0000-0000-000000000001', 'runn
     ('a4800000-0000-0000-0000-0000000000c1', 'a4800000-0000-0000-0000-0000000000b1', interval '-2 days', 2, 'completed'),
     ('a4800000-0000-0000-0000-0000000000c2', 'a4800000-0000-0000-0000-0000000000b1', interval '5 days',  2, 'published'),
     ('a4800000-0000-0000-0000-0000000000c3', 'a4800000-0000-0000-0000-0000000000b1', interval '12 days', 2, 'published'),
-    ('a4800000-0000-0000-0000-0000000000c4', 'a4800000-0000-0000-0000-0000000000b1', interval '19 days', 1, 'published'),
+    ('a4800000-0000-0000-0000-0000000000c4', 'a4800000-0000-0000-0000-0000000000b1', interval '19 days', 2, 'published'),
     ('a4800000-0000-0000-0000-0000000000c5', 'a4800000-0000-0000-0000-0000000000b1', interval '26 days', 2, 'cancelled'),
     ('a4800000-0000-0000-0000-0000000000c9', 'a4800000-0000-0000-0000-0000000000b2', interval '3 days',  10, 'published')
   ) as v(id, series, offs, cap, status);
@@ -64,8 +65,12 @@ do $$ begin
   end if;
 end $$;
 
--- Beto takes the only place on c4.
+-- Beto and Caro take both places on c4.
 select set_config('request.jwt.claim.sub', 'a4800000-0000-0000-0000-000000000003', true);
+set local role authenticated;
+select public.join_activity('a4800000-0000-0000-0000-0000000000c4');
+reset role;
+select set_config('request.jwt.claim.sub', 'a4800000-0000-0000-0000-000000000004', true);
 set local role authenticated;
 select public.join_activity('a4800000-0000-0000-0000-0000000000c4');
 reset role;
