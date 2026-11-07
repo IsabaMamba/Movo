@@ -252,6 +252,15 @@ export const seriesStyles = StyleSheet.create({
     paddingHorizontal: space.lg,
   },
   linkText: { flex: 1 },
+  inviteRow: {
+    alignItems: 'center',
+    borderTopColor: color.border.default,
+    borderTopWidth: stroke.hair,
+    flexDirection: 'row',
+    gap: space.md,
+    minHeight: size.control,
+    paddingVertical: space.sm,
+  },
   linkTitle: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
   linkSub: { ...type.caption, color: color.text.secondary },
 

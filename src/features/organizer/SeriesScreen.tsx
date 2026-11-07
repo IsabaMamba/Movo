@@ -19,6 +19,11 @@
  * many arrive on average, how many dates are left, how many weeks in a row
  * it has met, a bar per recent date, who is going, the dates ahead. The form
  * and the cancel opened behind «Editar la serie».
+ *
+ * «Invítalas a toda la serie» (0052) lists the people who came to a date and
+ * are not on all of them, and invites each once — a notice that opens the
+ * series page, where joining it whole is one tap. Sharing the series outside
+ * Movo is the «Compartir» button, as before.
  */
 
 import { Link, Redirect, useLocalSearchParams } from 'expo-router';
@@ -54,6 +59,14 @@ import {
   type OrganizerSeries,
   type SeriesPastDate,
 } from '../../lib/series';
+import {
+  candidateLine,
+  explainInviteError,
+  fetchInviteCandidates,
+  invitedNotice,
+  inviteToSeries,
+  type InviteCandidate,
+} from '../../lib/seriesInvites';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, priceLabel, size } from '../../theme';
 import type { Location } from '../../types/database';
@@ -72,6 +85,7 @@ export function SeriesScreen() {
   const [series, setSeries] = useState<OrganizerSeries | null | undefined>(undefined);
   const [venues, setVenues] = useState<Location[]>([]);
   const [past, setPast] = useState<SeriesPastDate[]>([]);
+  const [candidates, setCandidates] = useState<InviteCandidate[]>([]);
   const [editing, setEditing] = useState(false);
 
   const [title, setTitle] = useState('');
@@ -103,16 +117,19 @@ export function SeriesScreen() {
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [row, locs, history] = await Promise.all([
+    const [row, locs, history, people] = await Promise.all([
       fetchOrganizerSeries(supabase, id),
       fetchPublicVenues(supabase),
       // The stats are a view on the series, not the series: a failed read
       // leaves them empty rather than the screen.
       fetchSeriesHistory(supabase, id).catch((): SeriesPastDate[] => []),
+      // The same for the invitation list: without it the button is just gone.
+      fetchInviteCandidates(supabase, id).catch((): InviteCandidate[] => []),
     ]);
     setSeries(row);
     setVenues(locs);
     setPast(history);
+    setCandidates(people);
     if (row) fill(row);
   }, [id, fill]);
 
@@ -282,6 +299,25 @@ export function SeriesScreen() {
   const barTop = Math.max(1, series.max_participants ?? 0, ...past.map((d) => d.expected));
   const next = series.upcoming[0] ?? null;
 
+  const pending = candidates.filter((c) => !c.invited);
+
+  const inviteSome = (ids: readonly string[]) => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    inviteToSeries(supabase, series.id, ids)
+      .then(async (n) => {
+        setCandidates(await fetchInviteCandidates(supabase, series.id));
+        setNotice(invitedNotice(n));
+      })
+      .catch((cause: unknown) => {
+        setError(explainInviteError(cause));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
+
   const invite = () => {
     const text = `${series.title}: ${cadenceLabel(series.weekday, series.local_start_time).toLowerCase()} en ${series.location.name}. ¿Te animas? Búscala en Movo.`;
     if (Platform.OS === 'web') {
@@ -437,15 +473,64 @@ export function SeriesScreen() {
         </Text>
       </View>
 
+      {candidates.length > 0 && (
+        <View style={v.card}>
+          <View style={v.cardHead}>
+            <Text style={v.overline}>INVÍTALAS A TODA LA SERIE</Text>
+            <Text style={v.cardHint}>una vez cada una</Text>
+          </View>
+          <Text style={s.hint}>
+            Estuvieron en alguna fecha pero no van a todas. Les llega un aviso para unirse a todas
+            las fechas de una vez.
+          </Text>
+          {candidates.map((c) => (
+            <View key={c.userId} style={v.inviteRow}>
+              <View style={v.linkText}>
+                <Text style={v.linkTitle}>{c.name}</Text>
+                <Text style={v.linkSub}>{candidateLine(c)}</Text>
+              </View>
+              {c.invited ? (
+                <Icon color={color.semantic.success} name="check" size={18} />
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Invitar a ${c.name} a toda la serie`}
+                  disabled={busy}
+                  hitSlop={CHIP_HIT_SLOP}
+                  onPress={() => {
+                    inviteSome([c.userId]);
+                  }}
+                  style={s.chip}
+                >
+                  <Text style={s.chipText}>Invitar</Text>
+                </Pressable>
+              )}
+            </View>
+          ))}
+          {pending.length > 1 && (
+            <Pressable
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={() => {
+                inviteSome(pending.map((c) => c.userId));
+              }}
+              style={[s.publish, busy && s.publishDisabled]}
+            >
+              <Text style={s.publishText}>Invitar a las {pending.length}</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
       <View style={v.actions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Invitar a la serie"
+          accessibilityLabel="Compartir la serie fuera de Movo"
           onPress={invite}
           style={v.action}
         >
           <Icon color={color.text.primary} name="share" size={16} />
-          <Text style={v.actionText}>Invitar a la serie</Text>
+          <Text style={v.actionText}>Compartir</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"

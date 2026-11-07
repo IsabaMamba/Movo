@@ -72,6 +72,8 @@ function kindIcon(kind: string): { name: IconName; tint: string } {
       return { name: 'people', tint: color.accent.cool };
     case 'report_resolved':
       return { name: 'flag', tint: color.accent.cool };
+    case 'series_invitation':
+      return { name: 'repeat', tint: color.accent.primary };
     case 'chat_reply':
     case 'chat_organizer':
     case 'chat_message':
@@ -163,6 +165,8 @@ export function InboxScreen() {
           ? { pathname: '/organizar/[id]', params: { id: item.activityId } }
           : { pathname: '/sesion/[id]', params: { id: item.activityId } },
       );
+    } else if (item.seriesId !== undefined) {
+      router.push({ pathname: '/serie/[id]', params: { id: item.seriesId } });
     }
     markRead(item.id);
   };
@@ -199,7 +203,7 @@ export function InboxScreen() {
       .filter((part) => part !== null)
       .join('. ');
 
-    if (item.activityId !== null) {
+    if (item.activityId !== null || item.seriesId !== undefined) {
       return (
         <Pressable
           /* One aviso is one decision — is this something I have to do
@@ -211,7 +215,9 @@ export function InboxScreen() {
           accessibilityHint={
             item.opensRoster
               ? 'Abre la lista de asistencia y marca el aviso como leído.'
-              : 'Abre la sesión y marca el aviso como leído.'
+              : item.activityId === null
+                ? 'Abre la serie y marca el aviso como leído.'
+                : 'Abre la sesión y marca el aviso como leído.'
           }
           key={item.id}
           onPress={() => {
