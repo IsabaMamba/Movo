@@ -18,6 +18,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { toApiError } from './errors';
+import { cadenceLabel } from './series';
 import { suspensionUntilLabel } from './suspensions';
 import type { Notification } from '../types/database';
 
@@ -116,6 +117,8 @@ export interface InboxItem {
    */
   opensChat?: true;
   communityId?: string;
+  /** Open the series page (0052), where the person can join it whole. */
+  seriesId?: string;
 }
 
 /**
@@ -377,6 +380,25 @@ export function toInboxItem(row: Notification): InboxItem {
             ? `${name} salió de la serie ${title} y liberó sus lugares en las próximas fechas.${why}`
             : `${name} no puede ir ${when} a ${title}. Sigue en las demás fechas.${why}`,
         activityId: row.type === 'series_left' ? null : activityId,
+      };
+    }
+
+    // Written by invite_to_series() (0052), once per person per series. Opens
+    // the series page, where «Unirme a la serie» is join_series() (0048).
+    case 'series_invitation': {
+      const name = text(payload, 'name') ?? 'Quien organiza';
+      const seriesId = text(payload, 'series_id');
+      const weekday = payload.weekday;
+      const time = text(payload, 'local_start_time');
+      const when =
+        typeof weekday === 'number' && time !== null
+          ? `, ${cadenceLabel(weekday, time).toLowerCase()}`
+          : '';
+      return {
+        ...base,
+        text: `${name} te invita a toda la serie ${title}${when}. Únete a todas las fechas de una vez.`,
+        activityId: null,
+        ...(seriesId === null ? {} : { seriesId }),
       };
     }
 

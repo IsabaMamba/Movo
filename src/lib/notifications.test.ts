@@ -30,6 +30,36 @@ function row(over: Partial<Notification> = {}): Notification {
 }
 
 describe('toInboxItem', () => {
+  describe('a series invitation (0052)', () => {
+    it('says who invites, to what, and when, and opens the series', () => {
+      const item = toInboxItem(
+        row({
+          type: 'series_invitation',
+          payload: {
+            series_id: 's1',
+            title: 'Trote del sábado',
+            weekday: 6,
+            local_start_time: '07:00',
+            name: 'Luis',
+          },
+        }),
+      );
+      expect(item.text).toBe(
+        'Luis te invita a toda la serie Trote del sábado, todos los sábados a las 07:00. Únete a todas las fechas de una vez.',
+      );
+      expect(item.activityId).toBeNull();
+      expect(item.seriesId).toBe('s1');
+    });
+
+    it('leads nowhere without a series id', () => {
+      const item = toInboxItem(row({ type: 'series_invitation', payload: { title: 'Trote' } }));
+      expect(item.seriesId).toBeUndefined();
+      expect(item.text).toBe(
+        'Quien organiza te invita a toda la serie Trote. Únete a todas las fechas de una vez.',
+      );
+    });
+  });
+
   describe('the fields every item carries', () => {
     it('passes the id and the instant through untouched', () => {
       // The screen sorts on `createdAt` and marks read by `id`; a reformatted
