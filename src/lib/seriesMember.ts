@@ -16,6 +16,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { ActivityStatus, ParticipationStatus } from '../types/database';
 import { toApiError } from './errors';
+import { withPricingDefaults, type Pricing } from './pricing';
 
 export interface MemberSeriesDate {
   id: string;
@@ -38,13 +39,15 @@ export interface MemberSeries {
   organizer: { id: string; displayName: string };
   priceMinor: number;
   currency: string;
+  /** Per person or split, and the entry fee (0054). */
+  pricing: Pricing;
   skill: string;
   locationName: string;
   /** Oldest first. Cancelled dates are left out. */
   dates: MemberSeriesDate[];
 }
 
-interface DateRow {
+interface DateRow extends Partial<Pricing> {
   id: string;
   starts_at: string;
   status: ActivityStatus;
@@ -69,8 +72,9 @@ export async function fetchMemberSeries(
   const dates = await db
     .from('activities')
     .select(
-      'id, starts_at, status, joined_count, max_participants, title, category_id, price_minor, ' +
-        'currency, skill, organizer:profiles!activities_organizer_id_fkey(id, display_name), ' +
+      // `*` rather than a column list: the pricing columns (0054) are read
+      // when they exist, and an older database still answers.
+      '*, organizer:profiles!activities_organizer_id_fkey(id, display_name), ' +
         'location:locations!activities_location_id_fkey(name)',
     )
     .eq('series_id', seriesId)
@@ -110,6 +114,7 @@ export async function fetchMemberSeries(
     },
     priceMinor: head.price_minor,
     currency: head.currency,
+    pricing: withPricingDefaults(head),
     skill: head.skill,
     locationName: head.location?.name ?? '',
     dates: rows.map((r) => {
@@ -298,6 +303,12 @@ export async function leaveSeries(
 export function explainMemberError(cause: unknown): string {
   const message = cause instanceof Error ? cause.message : '';
   if (message.includes('no upcoming dates')) return 'Esta serie ya no tiene fechas por delante.';
+  if (message.includes('series takes single dates only')) {
+    return 'Esta serie es por fechas sueltas: únete a cada fecha que te sirva.';
+  }
+  if (message.includes('series takes whole sign-ups only')) {
+    return 'Esta serie se toma completa: únete a toda la serie.';
+  }
   if (message.includes('organizer is already attending')) return 'Tú organizas esta serie.';
   if (message.includes('community members only')) {
     return 'Esta serie es solo para el grupo. Únete al grupo primero.';

@@ -91,6 +91,9 @@ export interface Location {
   geog?: unknown;
 }
 
+export type ActivityPriceUnit = 'per_person' | 'split';
+export type VenueFee = 'none' | 'amount' | 'unknown';
+
 export interface ActivitySeries {
   id: string;
   organizer_id: string;
@@ -112,6 +115,17 @@ export interface ActivitySeries {
   currency: CurrencyCode;
   attributes: ActivityAttributes;
   is_active: boolean;
+  /** join_series() is allowed (0053). */
+  allow_whole_signup: boolean;
+  /** A date can be joined on its own (0053). */
+  allow_single_dates: boolean;
+  /** per_person, or a total split between people (0054). */
+  price_unit: ActivityPriceUnit;
+  split_total_minor: number | null;
+  split_divisor: number | null;
+  /** Paid at the venue, not to the organizer (0054). */
+  venue_fee: VenueFee;
+  venue_fee_minor: number | null;
 }
 
 export interface Activity {
@@ -134,6 +148,13 @@ export interface Activity {
   difficulty: number | null;
   price_minor: number;
   currency: CurrencyCode;
+  /** per_person, or a total split between people (0054). */
+  price_unit: ActivityPriceUnit;
+  split_total_minor: number | null;
+  split_divisor: number | null;
+  /** Paid at the venue, not to the organizer (0054). */
+  venue_fee: VenueFee;
+  venue_fee_minor: number | null;
   equipment: string[];
   rules: string | null;
   attributes: ActivityAttributes;

@@ -114,8 +114,8 @@ export function directionsUrl(lat: number, lng: number): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
-/** The message «Invitar a alguien» shares. No link until Movo has a domain. */
-export function inviteText(title: string, iso: string, now: Date): string {
+/** The message «Invitar a alguien» shares, with the session's link when there is one (0055). */
+export function inviteText(title: string, iso: string, now: Date, url?: string | null): string {
   const { label, relative } = dayHeading(iso, now);
   const time = new Intl.DateTimeFormat('es-CR', {
     hour: '2-digit',
@@ -124,5 +124,9 @@ export function inviteText(title: string, iso: string, now: Date): string {
     timeZone: TZ,
   }).format(new Date(iso));
   const when = relative === 'hoy' ? 'hoy' : relative === 'mañana' ? 'mañana' : label.toLowerCase();
-  return `Me uní a ${title}, ${when} a las ${time}. ¿Te animas? Búscala en Movo.`;
+  // With a link (0055) the friend opens the session itself; without one,
+  // they are told where to look.
+  return url
+    ? `Me uní a ${title}, ${when} a las ${time}. ¿Te animas? ${url}`
+    : `Me uní a ${title}, ${when} a las ${time}. ¿Te animas? Búscala en Movo.`;
 }

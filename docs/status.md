@@ -89,7 +89,11 @@ column is maintained by hand.
 | `0049_notification_preferences` | `notification_preferences` (own row; reminders, invitations, chat on, joins off); a `BEFORE INSERT` trigger on `notifications` drops what the person switched off                                                                                         | yes     |
 | `0050_participants_daily`       | `notify_participants_daily()`: one notice per upcoming session with joins or departures in 24 h, to its organizer; cron `participants-daily` at 01:00 UTC; dropped by 0049 unless switched on                                                             | yes     |
 | `0051_zone_summary`             | `zone_summary(code, categories, days)` for the Descubrir zone sheet: sessions per sport, people only from 5, ids for the list; same exclusions as `zone_heat()`; authenticated only                                                                       | yes     |
-| `0052_series_invitations`       | `series_invitations` (series, person) and `series_invite_candidates()` / `invite_to_series()`: whoever organizes invites people who were on a date to the whole series, once each; notice `series_invitation`                                             | no      |
+| `0052_series_invitations`       | `series_invitations` (series, person) and `series_invite_candidates()` / `invite_to_series()`: whoever organizes invites people who were on a date to the whole series, once each; notice `series_invitation`                                             | yes     |
+| `0053_series_signup`            | `activity_series.allow_whole_signup` / `allow_single_dates` (at least one on); `series_signup()` for anybody, `set_series_signup()` for the organizer; a trigger refuses a single date the series does not take                                           | yes     |
+| `0054_pricing`                  | `price_unit` (per person or split), `split_total_minor`, `split_divisor`, `venue_fee` (none, amount, unknown) and `venue_fee_minor` on sessions and series; `apply_pricing()` computes a split and copies a series to its dates                           | yes     |
+| `0055_session_links`            | `session_links` (one code per person and session) and `session_link()`; `session_link_preview()` for anon: the state (open, full, cancelled, past, group, missing) and public facts, never who is going; misses counted per IP                            | yes     |
+| `0056_series_people`            | `series_people()` for the organizer: everybody who was on a date of a series, whole or date by date, arrivals of the past dates, the next date, invited or not                                                                                            | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
@@ -182,7 +186,17 @@ no client can read it; `record_help_feedback()` is executable by `anon`. `0048` 
 `anon`. `0049` and `0050` were applied the same day: `notification_preferences` has RLS on and
 no `anon` grant; the `notifications_respect_preferences` trigger exists; `cron.job` holds
 `participants-daily`, active, at `0 1 * * *`; no client can run `notify_participants_daily()`. `0051` was applied on 6 November:
-`zone_summary()` is `SECURITY DEFINER`, executable by `authenticated` and not by `anon`. `0022` was applied on 28
+`zone_summary()` is `SECURITY DEFINER`, executable by `authenticated` and not by `anon`. `0052` was applied the same day:
+`series_invitations` has RLS on and no client grant; `series_invite_candidates()` and
+`invite_to_series()` are `SECURITY DEFINER`, executable by `authenticated` and not by `anon`. `0053` was applied on 9
+November: `series_signup()` is executable by `anon`, `set_series_signup()` only by
+`authenticated`, no client can run `enforce_series_signup()`, the trigger exists, and every
+existing series kept both ways on. `0054` was applied the same day: both pricing triggers exist, no
+client can run `apply_pricing()` or `split_share()`, and every existing session reads as per
+person with no entry fee. `0055` was applied the same day: `session_links` and
+`session_link_misses` have RLS on and no client grants, `session_link()` is executable by
+`authenticated` only, and `session_link_preview()` answers `anon` with `missing` for an unknown
+code. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
