@@ -71,6 +71,69 @@ export function invitedNotice(n: number): string {
 export function explainInviteError(cause: unknown): string {
   const message = cause instanceof Error ? cause.message : '';
   if (message.includes('series is not active')) return 'Esta serie ya está cancelada.';
+  if (message.includes('series takes single dates only')) {
+    return 'Esta serie es por fechas sueltas, así que no se invita a toda la serie.';
+  }
   if (message.includes('Solo quien organiza')) return 'Solo quien organiza la serie puede invitar.';
   return message || 'No se pudo enviar la invitación.';
+}
+
+// ------------------------------------------------- «Quiénes van» (0056)
+
+/** One person who has been on a date of the series, as the organizer sees them. */
+export interface SeriesPerson {
+  userId: string;
+  name: string;
+  /** On every upcoming date: in the series. */
+  whole: boolean;
+  arrived: number;
+  pastDates: number;
+  /** Their place on the next date, if any. */
+  next: 'joined' | 'waitlisted' | null;
+  invited: boolean;
+}
+
+export async function fetchSeriesPeople(
+  db: SupabaseClient,
+  seriesId: string,
+): Promise<SeriesPerson[]> {
+  const { data, error } = await db.rpc('series_people', { p_series_id: seriesId });
+  if (error) throw toApiError(error);
+  return (
+    (data ?? []) as {
+      user_id: string;
+      display_name: string | null;
+      whole: boolean;
+      arrived: number;
+      past_dates: number;
+      next_status: string | null;
+      invited: boolean;
+    }[]
+  ).map((row) => ({
+    userId: row.user_id,
+    name: row.display_name ?? 'Alguien',
+    whole: row.whole,
+    arrived: row.arrived,
+    pastDates: row.past_dates,
+    next: row.next_status === 'joined' || row.next_status === 'waitlisted' ? row.next_status : null,
+    invited: row.invited,
+  }));
+}
+
+/** «Toda la serie · llegó 5 de 6 · va», «Fecha por fecha · llegó 1 de 6 · no va». */
+export function personLine(p: SeriesPerson): string {
+  const how = p.whole ? 'Toda la serie' : 'Fecha por fecha';
+  const came = p.pastDates === 0 ? null : `llegó ${String(p.arrived)} de ${String(p.pastDates)}`;
+  const next =
+    p.next === 'joined'
+      ? 'va a la próxima'
+      : p.next === 'waitlisted'
+        ? 'en espera'
+        : 'no va a la próxima';
+  return [how, came, next].filter((part): part is string => part !== null).join(' · ');
+}
+
+/** Who «Invitar a la serie» is for: date by date, not invited yet. */
+export function invitable(people: readonly SeriesPerson[]): SeriesPerson[] {
+  return people.filter((p) => !p.whole && !p.invited);
 }

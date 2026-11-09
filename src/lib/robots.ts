@@ -20,6 +20,8 @@
 /** Pathnames a search engine may list. Exact match; everything else is noindex. */
 export const INDEXABLE_PATHS: readonly string[] = [
   '/',
+  // Landing v3: «la única página que Google debe encontrar» once it is the root.
+  '/inicio',
   '/normas',
   '/sign-in',
   '/sign-up',

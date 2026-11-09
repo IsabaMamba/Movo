@@ -32,6 +32,7 @@ import {
   syncPendingCheckIns,
 } from '../../lib/pendingCheckIns';
 import { initials } from '../../lib/profile';
+import { fetchSessionLink, sessionLinkUrl, siteOrigin } from '../../lib/sessionLinks';
 import { supabase } from '../../lib/supabase';
 import { pointOf } from '../../lib/venues';
 import { color, priceLabel } from '../../theme';
@@ -73,6 +74,9 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
   const [leaving, setLeaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [people, setPeople] = useState<string[]>([]);
+  // 0055: fetched ahead, because a browser only lets a tap open the share
+  // sheet, not a tap followed by a network round trip.
+  const [link, setLink] = useState<string | null>(null);
   /** 0042: a «Llegué» kept on the phone because there was no signal. */
   const [queuedAt, setQueuedAt] = useState<string | null>(null);
 
@@ -207,8 +211,20 @@ export function ArrivalCard({ entry, sport, onChanged }: Props) {
       });
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchSessionLink(supabase, activity.id)
+      .then((code) => {
+        if (!cancelled) setLink(sessionLinkUrl(code, siteOrigin()));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [activity.id]);
+
   const invite = () => {
-    const text = inviteText(activity.title, activity.starts_at, now);
+    const text = inviteText(activity.title, activity.starts_at, now, link);
     if (Platform.OS === 'web') {
       const nav = globalThis.navigator as Navigator | undefined;
       if (nav?.share) {

@@ -84,4 +84,10 @@ describe('inviteText', () => {
       'Me uní a Vuelta al Parque del Este, sáb 7 nov a las 07:00. ¿Te animas? Búscala en Movo.',
     );
   });
+
+  it('ends with the link when there is one', () => {
+    expect(inviteText('Vuelta', '2026-11-07T13:00:00Z', NOW, 'https://movo.app/s/7Q2K9M')).toBe(
+      'Me uní a Vuelta, sáb 7 nov a las 07:00. ¿Te animas? https://movo.app/s/7Q2K9M',
+    );
+  });
 });
