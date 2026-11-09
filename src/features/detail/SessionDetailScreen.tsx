@@ -50,6 +50,7 @@ import { directionsUrl, inviteText } from '../../lib/agenda';
 import { fetchActivityLinks, type ActivityLink } from '../../lib/links';
 import { pointOf } from '../../lib/venues';
 import { blockedPersonGoing } from '../../lib/blocks';
+import { pricingParts, withPricingDefaults } from '../../lib/pricing';
 import { BOTH, fetchSeriesSignup, seriesBoxLine, type SeriesSignup } from '../../lib/seriesSignup';
 import { supabase } from '../../lib/supabase';
 import {
@@ -61,7 +62,6 @@ import {
   hitSlopFor,
   occupancyA11yLabel,
   occupancyLabel,
-  priceLabel,
   UNCAPPED_REFERENCE,
 } from '../../theme';
 import type { ActivityParticipant, JsonSchemaProperty } from '../../types/database';
@@ -266,6 +266,10 @@ export function SessionDetailScreen() {
   const going = mine?.status === 'joined' || mine?.status === 'attended';
   const waiting = mine?.status === 'waitlisted';
   const wholeOnly = activity.series_id !== null && !signup.allowSingle;
+  // 0054: per person or split, and the entry fee; per date in a series.
+  const pricing = pricingParts(withPricingDefaults(activity), {
+    perDate: activity.series_id !== null,
+  });
   const full =
     activity.max_participants !== null && activity.joined_count >= activity.max_participants;
   // Only people on the roster and the organizer can still read a cancelled
@@ -500,7 +504,11 @@ export function SessionDetailScreen() {
               </Pressable>
             )}
           </InfoRow>
-          <InfoRow icon="money" title={priceLabel(activity.price_minor, activity.currency)} />
+          <InfoRow
+            icon="money"
+            sub={pricing.details.length > 0 ? pricing.details.join(' · ') : null}
+            title={pricing.main}
+          />
           {tags.length > 0 && <InfoRow icon="route" title={tags.join(' · ')} />}
           {activity.equipment.length > 0 && (
             <InfoRow icon="check" sub={activity.equipment.join(' · ')} title="Lleva" />

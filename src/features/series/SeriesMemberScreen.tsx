@@ -46,8 +46,9 @@ import {
   type MemberSeriesDate,
 } from '../../lib/seriesMember';
 import { BOTH, fetchSeriesSignup, type SeriesSignup } from '../../lib/seriesSignup';
+import { pricingLine } from '../../lib/pricing';
 import { supabase } from '../../lib/supabase';
-import { color, hitSlopFor, priceLabel, size } from '../../theme';
+import { color, hitSlopFor, size } from '../../theme';
 import { StatusPage } from '../web/StatusPage';
 import { useAuth } from '../auth/AuthProvider';
 import { Icon } from '../nav/Icon';
@@ -269,8 +270,7 @@ export function SeriesMemberScreen() {
               {organizer}
             </Text>
             {SKILL[series.skill] ? ` · ${SKILL[series.skill] ?? ''}` : ''} ·{' '}
-            {priceLabel(series.priceMinor, series.currency)}
-            {series.priceMinor > 0 ? ' por fecha' : ''}
+            {pricingLine(series.pricing, { perDate: true })}
             {series.locationName ? ` · ${series.locationName}` : ''}
           </Text>
         </View>

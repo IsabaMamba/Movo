@@ -33,6 +33,7 @@ import {
   type ValidationIssue,
 } from '../../lib/activities';
 import { linksProblem, setActivityLinks } from '../../lib/links';
+import { splitShare, toMinor } from '../../lib/pricing';
 import { projectRef, supabase } from '../../lib/supabase';
 import { fetchMyProfile } from '../../lib/profile';
 import { weekdayPlural } from '../../lib/series';
@@ -41,10 +42,11 @@ import {
   difficultyLabel,
   difficultyValue,
   hitSlopFor,
+  priceLabel,
   size,
   type DifficultyBand,
 } from '../../theme';
-import type { Category, Location, SkillLevel } from '../../types/database';
+import type { Category, Location, SkillLevel, VenueFee } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { LinkFields } from '../links/LinkFields';
 import { SportPicker } from '../sports/SportPicker';
@@ -121,6 +123,12 @@ export function CreateSessionScreen() {
   const [capped, setCapped] = useState(false);
   const [capacity, setCapacity] = useState('12');
   const [price, setPrice] = useState('');
+  // 0054: per person, or a total split; and the entry fee at the venue.
+  const [priceMode, setPriceMode] = useState<'per_person' | 'split'>('per_person');
+  const [splitTotal, setSplitTotal] = useState('');
+  const [splitDivisor, setSplitDivisor] = useState('');
+  const [feeKind, setFeeKind] = useState<VenueFee>('none');
+  const [feeAmount, setFeeAmount] = useState('');
   const [unlisted, setUnlisted] = useState(false);
   const [attributes, setAttributes] = useState<Record<string, unknown>>({});
   const [links, setLinks] = useState<string[]>([]);
@@ -197,6 +205,17 @@ export function CreateSessionScreen() {
   if (repeats && !allowWhole && !allowSingle) {
     missing.push('elige al menos una forma de unirse a la serie');
   }
+  const splitTotalMinor = toMinor(splitTotal);
+  const splitDivisorValue = Number(splitDivisor);
+  if (priceMode === 'split') {
+    if (splitTotalMinor <= 0) missing.push('escribe el total que se divide');
+    if (!Number.isInteger(splitDivisorValue) || splitDivisorValue < 2 || splitDivisorValue > 1000) {
+      missing.push('di entre cuántas personas se divide, de 2 en adelante');
+    }
+  }
+  if (feeKind === 'amount' && toMinor(feeAmount) <= 0) {
+    missing.push('escribe cuánto cuesta la entrada al lugar');
+  }
   const linkProblem = repeats ? null : linksProblem(links);
   if (linkProblem !== null) missing.push('revisa los enlaces');
 
@@ -208,8 +227,14 @@ export function CreateSessionScreen() {
     setIssues([]);
     setResult(null);
 
-    // Colones are entered whole; the column stores minor units.
-    const priceMinor = price.trim() === '' ? 0 : Math.round(Number(price) * 100);
+    // Colones are entered whole; the column stores minor units. For a split
+    // the database computes the share; the client sends the same number.
+    const priceMinor =
+      priceMode === 'split'
+        ? splitShare(splitTotalMinor, splitDivisorValue)
+        : price.trim() === ''
+          ? 0
+          : Math.round(Number(price) * 100);
 
     const base = {
       categoryId: category.id,
@@ -220,6 +245,12 @@ export function CreateSessionScreen() {
       difficulty: band ? difficultyValue[band] : null,
       maxParticipants: capacityValue,
       priceMinor: Number.isFinite(priceMinor) ? priceMinor : 0,
+      split:
+        priceMode === 'split' ? { totalMinor: splitTotalMinor, divisor: splitDivisorValue } : null,
+      venueFee: {
+        kind: feeKind,
+        minor: feeKind === 'amount' ? toMinor(feeAmount) : null,
+      },
       currency: venue.currency,
       attributes,
     };
@@ -665,18 +696,134 @@ export function CreateSessionScreen() {
             <Text style={s.label}>Precio</Text>
             <Text style={s.optional}>opcional</Text>
           </View>
-          <TextInput
-            accessibilityLabel="Precio, opcional"
-            accessibilityHint={`En ${venue?.currency ?? 'CRC'}, unidades enteras. Vacío es gratis.`}
-            inputMode="numeric"
-            onChangeText={setPrice}
-            placeholder="Gratis"
-            placeholderTextColor={color.text.tertiary}
-            style={s.input}
-            value={price}
-          />
+          <View accessibilityRole="radiogroup" accessibilityLabel="Cómo se cobra" style={s.chipRow}>
+            {(
+              [
+                ['per_person', 'Por persona'],
+                ['split', 'Se divide un total'],
+              ] as const
+            ).map(([key, label]) => {
+              const on = priceMode === key;
+              return (
+                <Pressable
+                  accessibilityRole="radio"
+                  aria-checked={on}
+                  hitSlop={CHIP_HIT_SLOP}
+                  key={key}
+                  onPress={() => {
+                    setPriceMode(key);
+                    if (key === 'split' && splitDivisor === '' && capped) setSplitDivisor(capacity);
+                  }}
+                  style={[s.chip, on && s.chipOn]}
+                >
+                  <Text style={[s.chipText, on && s.chipTextOn]}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {priceMode === 'per_person' ? (
+            <>
+              <TextInput
+                accessibilityLabel="Precio por persona, opcional"
+                accessibilityHint={`En ${venue?.currency ?? 'CRC'}, unidades enteras. Vacío es gratis.`}
+                inputMode="numeric"
+                onChangeText={setPrice}
+                placeholder="Gratis"
+                placeholderTextColor={color.text.tertiary}
+                style={s.input}
+                value={price}
+              />
+              <Text style={s.hint}>
+                En {venue?.currency ?? 'CRC'}, unidades enteras. Vacío es gratis.
+                {repeats ? ' Es el precio de cada fecha.' : ''}
+              </Text>
+            </>
+          ) : (
+            <>
+              <View style={s.row}>
+                <View style={s.rowItem}>
+                  <Text style={s.label}>Total</Text>
+                  <TextInput
+                    accessibilityLabel="Total que se divide"
+                    accessibilityHint={`En ${venue?.currency ?? 'CRC'}, por ejemplo lo que cuesta la cancha.`}
+                    inputMode="numeric"
+                    onChangeText={setSplitTotal}
+                    placeholder="12000"
+                    placeholderTextColor={color.text.tertiary}
+                    style={s.input}
+                    value={splitTotal}
+                  />
+                </View>
+                <View style={s.rowItem}>
+                  <Text style={s.label}>Entre</Text>
+                  <TextInput
+                    accessibilityLabel="Entre cuántas personas"
+                    accessibilityHint="De 2 en adelante."
+                    inputMode="numeric"
+                    onChangeText={setSplitDivisor}
+                    placeholder="10"
+                    placeholderTextColor={color.text.tertiary}
+                    style={s.input}
+                    value={splitDivisor}
+                  />
+                </View>
+              </View>
+              <Text style={s.hint}>
+                {splitTotalMinor > 0 && splitDivisorValue >= 2
+                  ? `Sale a ${priceLabel(splitShare(splitTotalMinor, splitDivisorValue), venue?.currency ?? 'CRC')} por persona, redondeado hacia arriba.`
+                  : 'Por ejemplo, la cancha entre quienes juegan.'}
+                {repeats ? ' Es el precio de cada fecha.' : ''}
+              </Text>
+            </>
+          )}
+        </View>
+
+        <View style={s.field}>
+          <Text style={s.label}>Entrada al lugar</Text>
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Entrada al lugar"
+            style={s.chipRow}
+          >
+            {(
+              [
+                ['none', 'No hay'],
+                ['amount', 'Tiene costo'],
+                ['unknown', 'No sé'],
+              ] as const
+            ).map(([key, label]) => {
+              const on = feeKind === key;
+              return (
+                <Pressable
+                  accessibilityRole="radio"
+                  aria-checked={on}
+                  hitSlop={CHIP_HIT_SLOP}
+                  key={key}
+                  onPress={() => {
+                    setFeeKind(key);
+                  }}
+                  style={[s.chip, on && s.chipOn]}
+                >
+                  <Text style={[s.chipText, on && s.chipTextOn]}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {feeKind === 'amount' && (
+            <TextInput
+              accessibilityLabel="Costo de la entrada al lugar"
+              accessibilityHint={`En ${venue?.currency ?? 'CRC'}, por persona.`}
+              inputMode="numeric"
+              onChangeText={setFeeAmount}
+              placeholder="1000"
+              placeholderTextColor={color.text.tertiary}
+              style={s.input}
+              value={feeAmount}
+            />
+          )}
           <Text style={s.hint}>
-            En {venue?.currency ?? 'CRC'}, unidades enteras. Vacío es gratis.
+            Se paga en la puerta del parque o la piscina, no a ti. «No sé» también se muestra, para
+            que nadie llegue sin plata.
           </Text>
         </View>
       </View>
