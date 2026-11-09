@@ -4,7 +4,10 @@ import {
   candidateLine,
   explainInviteError,
   fetchInviteCandidates,
+  fetchSeriesPeople,
+  invitable,
   invitedNotice,
+  personLine,
   inviteToSeries,
 } from './seriesInvites';
 
@@ -59,5 +62,56 @@ describe('the words', () => {
     expect(explainInviteError(new Error('series is not active'))).toBe(
       'Esta serie ya está cancelada.',
     );
+  });
+});
+
+describe('«Quiénes van» (0056)', () => {
+  const base = {
+    userId: 'u1',
+    name: 'Ana',
+    whole: true,
+    arrived: 5,
+    pastDates: 6,
+    next: 'joined' as const,
+    invited: false,
+  };
+
+  it('says how they joined, how often they came, and the next date', () => {
+    expect(personLine(base)).toBe('Toda la serie · llegó 5 de 6 · va a la próxima');
+    expect(personLine({ ...base, whole: false, arrived: 1, next: null })).toBe(
+      'Fecha por fecha · llegó 1 de 6 · no va a la próxima',
+    );
+    expect(personLine({ ...base, pastDates: 0, next: 'waitlisted' })).toBe(
+      'Toda la serie · en espera',
+    );
+  });
+
+  it('invites only who goes date by date and was not invited', () => {
+    const people = [
+      base,
+      { ...base, userId: 'u2', whole: false },
+      { ...base, userId: 'u3', whole: false, invited: true },
+    ];
+    expect(invitable(people).map((p) => p.userId)).toEqual(['u2']);
+  });
+
+  it('reads the rows', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          user_id: 'u1',
+          display_name: 'Ana',
+          whole: false,
+          arrived: 1,
+          past_dates: 2,
+          next_status: 'joined',
+          invited: false,
+        },
+      ],
+      error: null,
+    });
+    const rows = await fetchSeriesPeople({ rpc } as never, 's1');
+    expect(rpc).toHaveBeenCalledWith('series_people', { p_series_id: 's1' });
+    expect(rows[0]).toMatchObject({ name: 'Ana', pastDates: 2, next: 'joined' });
   });
 });
