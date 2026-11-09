@@ -25,6 +25,7 @@ import type {
   NearbyActivity,
   ParticipationStatus,
   SkillLevel,
+  VenueFee,
 } from '../types/database';
 import { toApiError } from './errors';
 
@@ -433,9 +434,28 @@ export interface NewSessionBase {
   difficulty: number | null;
   /** null means uncapped, which is the common case. */
   maxParticipants: number | null;
+  /** Per person; for a split the database computes it (0054). */
   priceMinor: number;
   currency: CurrencyCode;
+  /** A total split between people, in minor units, and between how many (0054). */
+  split?: { totalMinor: number; divisor: number } | null;
+  /** Paid at the venue, not to the organizer (0054). */
+  venueFee?: { kind: VenueFee; minor: number | null };
   attributes: Record<string, unknown>;
+}
+
+/** The pricing columns of an insert, from the form's input. */
+function pricingColumns(input: NewSessionBase) {
+  const split = input.split ?? null;
+  const fee = input.venueFee ?? { kind: 'none' as const, minor: null };
+  return {
+    price_minor: input.priceMinor,
+    price_unit: split ? 'split' : 'per_person',
+    split_total_minor: split ? split.totalMinor : null,
+    split_divisor: split ? split.divisor : null,
+    venue_fee: fee.kind,
+    venue_fee_minor: fee.kind === 'amount' ? fee.minor : null,
+  };
 }
 
 export interface NewActivityInput extends NewSessionBase {
@@ -483,7 +503,7 @@ export async function createActivity(
       max_participants: input.maxParticipants,
       skill: input.skill,
       difficulty: input.difficulty,
-      price_minor: input.priceMinor,
+      ...pricingColumns(input),
       currency: input.currency,
       attributes,
       visibility: input.visibility,
@@ -542,7 +562,7 @@ export async function createSeries(
       skill: input.skill,
       difficulty: input.difficulty,
       max_participants: input.maxParticipants,
-      price_minor: input.priceMinor,
+      ...pricingColumns(input),
       currency: input.currency,
       attributes,
     })

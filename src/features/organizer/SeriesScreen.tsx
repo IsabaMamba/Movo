@@ -77,8 +77,9 @@ import {
   SIGNUP_OPTIONS,
   type SignupKey,
 } from '../../lib/seriesSignup';
+import { pricingLine } from '../../lib/pricing';
 import { supabase } from '../../lib/supabase';
-import { color, hitSlopFor, priceLabel, size } from '../../theme';
+import { color, hitSlopFor, size } from '../../theme';
 import type { Location } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
 import { createStyles as s } from '../create/styles';
@@ -198,7 +199,7 @@ export function SeriesScreen() {
         {[
           series.location.name,
           `${series.duration_minutes} min`,
-          priceLabel(series.price_minor, series.currency),
+          pricingLine(series, { perDate: true }),
           series.max_participants === null ? null : `cupo ${series.max_participants}`,
         ]
           .filter((part): part is string => part !== null)
