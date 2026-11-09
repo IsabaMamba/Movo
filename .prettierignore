@@ -9,3 +9,6 @@ supabase/tests/
 # Design artifacts are exported deliverables, not source. Reformatting them would produce a
 # large meaningless diff on every export and can disturb whitespace-sensitive markup.
 docs/design/*.html
+
+# Email HTML is written for mail clients, line by line; Prettier's reflow is not.
+supabase/templates/*.html
