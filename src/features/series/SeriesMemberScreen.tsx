@@ -45,6 +45,7 @@ import {
   type MemberSeries,
   type MemberSeriesDate,
 } from '../../lib/seriesMember';
+import { BOTH, fetchSeriesSignup, type SeriesSignup } from '../../lib/seriesSignup';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, priceLabel, size } from '../../theme';
 import { StatusPage } from '../web/StatusPage';
@@ -74,10 +75,17 @@ export function SeriesMemberScreen() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rule, setRule] = useState<SeriesSignup>(BOTH);
 
   const load = useCallback(async () => {
     if (!id) return;
-    setSeries(await fetchMemberSeries(supabase, id, userId));
+    const [row, signup] = await Promise.all([
+      fetchMemberSeries(supabase, id, userId),
+      // The server enforces the rule either way; unread, the screen offers both.
+      fetchSeriesSignup(supabase, id).catch((): SeriesSignup => BOTH),
+    ]);
+    setSeries(row);
+    setRule(signup);
   }, [id, userId]);
 
   useEffect(() => {
@@ -344,39 +352,49 @@ export function SeriesMemberScreen() {
           </>
         ) : (
           <Text style={s.note}>
-            Cada fecha tiene su propia lista. Puedes unirte a la serie entera o solo a una fecha.
+            {rule.allowWhole && rule.allowSingle
+              ? 'Cada fecha tiene su propia lista. Puedes unirte a la serie entera o solo a una fecha.'
+              : rule.allowWhole
+                ? 'Esta serie se toma completa: al unirte, vas a todas las fechas. Si un día no puedes, avisas desde aquí.'
+                : 'Esta serie es por fechas sueltas: únete a cada fecha que te sirva.'}
           </Text>
         )}
       </ScrollView>
 
       {!inside && open.length > 0 && sheet === null && (
         <View style={s.footer}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              if (userId === null) {
-                router.push({ pathname: '/sign-in', params: { next: `/serie/${series.id}` } });
-                return;
-              }
-              setError(null);
-              setSheet({ kind: 'join' });
-            }}
-            style={s.primary}
-          >
-            <Text style={s.primaryText}>
-              {userId === null ? 'Inicia sesión para unirte' : 'Unirme a la serie'}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              const next = open[0];
-              if (next) router.push({ pathname: '/sesion/[id]', params: { id: next.id } });
-            }}
-            style={s.secondary}
-          >
-            <Text style={s.secondaryText}>Una fecha</Text>
-          </Pressable>
+          {rule.allowWhole && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                if (userId === null) {
+                  router.push({ pathname: '/sign-in', params: { next: `/serie/${series.id}` } });
+                  return;
+                }
+                setError(null);
+                setSheet({ kind: 'join' });
+              }}
+              style={s.primary}
+            >
+              <Text style={s.primaryText}>
+                {userId === null ? 'Inicia sesión para unirte' : 'Unirme a la serie'}
+              </Text>
+            </Pressable>
+          )}
+          {rule.allowSingle && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                const next = open[0];
+                if (next) router.push({ pathname: '/sesion/[id]', params: { id: next.id } });
+              }}
+              style={rule.allowWhole ? s.secondary : s.primary}
+            >
+              <Text style={rule.allowWhole ? s.secondaryText : s.primaryText}>
+                {rule.allowWhole ? 'Una fecha' : 'Ver la próxima fecha'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
 

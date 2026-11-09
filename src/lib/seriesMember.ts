@@ -298,6 +298,12 @@ export async function leaveSeries(
 export function explainMemberError(cause: unknown): string {
   const message = cause instanceof Error ? cause.message : '';
   if (message.includes('no upcoming dates')) return 'Esta serie ya no tiene fechas por delante.';
+  if (message.includes('series takes single dates only')) {
+    return 'Esta serie es por fechas sueltas: únete a cada fecha que te sirva.';
+  }
+  if (message.includes('series takes whole sign-ups only')) {
+    return 'Esta serie se toma completa: únete a toda la serie.';
+  }
   if (message.includes('organizer is already attending')) return 'Tú organizas esta serie.';
   if (message.includes('community members only')) {
     return 'Esta serie es solo para el grupo. Únete al grupo primero.';

@@ -112,6 +112,10 @@ export interface ActivitySeries {
   currency: CurrencyCode;
   attributes: ActivityAttributes;
   is_active: boolean;
+  /** join_series() is allowed (0053). */
+  allow_whole_signup: boolean;
+  /** A date can be joined on its own (0053). */
+  allow_single_dates: boolean;
 }
 
 export interface Activity {

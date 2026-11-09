@@ -176,6 +176,9 @@ export function explainSeriesError(cause: unknown): string {
     return `El cupo no puede quedar por debajo de ${floor[1]}, la fecha más llena que viene.`;
   }
   if (message.includes('series is cancelled')) return 'Esta serie ya está cancelada.';
+  if (message.includes('at least one way to join')) {
+    return 'La serie necesita al menos una forma de unirse.';
+  }
   if (message.includes('different currency')) {
     return 'Ese lugar cobra en otra moneda. Cancela la serie y publica una nueva.';
   }

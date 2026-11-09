@@ -113,6 +113,9 @@ export function CreateSessionScreen() {
   const [time, setTime] = useState('18:00');
   const [duration, setDuration] = useState('60');
   const [repeats, setRepeats] = useState(false);
+  // Consola v3 · 3, «Cómo se unen» (0053): both on, as every series before.
+  const [allowWhole, setAllowWhole] = useState(true);
+  const [allowSingle, setAllowSingle] = useState(true);
   const [skill, setSkill] = useState<SkillLevel>('any');
   const [band, setBand] = useState<DifficultyBand | null>(null);
   const [capped, setCapped] = useState(false);
@@ -191,6 +194,9 @@ export function CreateSessionScreen() {
   if (capped && (!Number.isFinite(capacityValue) || (capacityValue ?? 0) < 2)) {
     missing.push('el cupo tiene que ser de 2 personas o más');
   }
+  if (repeats && !allowWhole && !allowSingle) {
+    missing.push('elige al menos una forma de unirse a la serie');
+  }
   const linkProblem = repeats ? null : linksProblem(links);
   if (linkProblem !== null) missing.push('revisa los enlaces');
 
@@ -222,7 +228,13 @@ export function CreateSessionScreen() {
       ? createSeries(
           supabase,
           session.user.id,
-          { ...base, weekday: startsAt.getDay(), localStartTime: time },
+          {
+            ...base,
+            weekday: startsAt.getDay(),
+            localStartTime: time,
+            allowWholeSignup: allowWhole,
+            allowSingleDates: allowSingle,
+          },
           category.attribute_schema,
         ).then(({ seriesId, generated }) => ({
           ok: true,
@@ -475,7 +487,7 @@ export function CreateSessionScreen() {
         </View>
         {date !== '' && !startsValid && (
           <Text accessibilityRole="alert" style={s.error}>
-            Usá el formato 2026-09-08 y 18:00.
+            Usa el formato 2026-09-08 y 18:00.
           </Text>
         )}
         {startsInPast && (
@@ -500,6 +512,37 @@ export function CreateSessionScreen() {
             {weekdayPlural(startsAt.getDay())} a las {time}. Puedes cancelar una sin cancelar el
             resto.
           </Text>
+        )}
+        {repeats && (
+          <View style={s.field}>
+            <Text style={s.label}>Cómo se unen</Text>
+            <View style={s.switchRow}>
+              <View style={s.rowItem}>
+                <Text style={s.switchLabel}>A toda la serie</Text>
+                <Text style={s.hint}>Quedan en todas las fechas de una vez.</Text>
+              </View>
+              <Switch
+                accessibilityLabel="Se pueden unir a toda la serie"
+                onValueChange={setAllowWhole}
+                trackColor={{ false: color.border.default, true: color.accent.deep }}
+                thumbColor={allowWhole ? color.accent.cool : color.text.tertiary}
+                value={allowWhole}
+              />
+            </View>
+            <View style={s.switchRow}>
+              <View style={s.rowItem}>
+                <Text style={s.switchLabel}>A una fecha suelta</Text>
+                <Text style={s.hint}>Para probar antes de comprometerse.</Text>
+              </View>
+              <Switch
+                accessibilityLabel="Se pueden unir a una fecha suelta"
+                onValueChange={setAllowSingle}
+                trackColor={{ false: color.border.default, true: color.accent.deep }}
+                thumbColor={allowSingle ? color.accent.cool : color.text.tertiary}
+                value={allowSingle}
+              />
+            </View>
+          </View>
         )}
       </View>
 

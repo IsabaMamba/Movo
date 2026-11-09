@@ -502,6 +502,9 @@ export interface NewSeriesInput extends NewSessionBase {
   /** 'HH:MM' in the series timezone. */
   localStartTime: string;
   timezone?: string;
+  /** How people join it (0053). Both on when left out; never both off. */
+  allowWholeSignup?: boolean;
+  allowSingleDates?: boolean;
 }
 
 /**
@@ -534,6 +537,8 @@ export async function createSeries(
       local_start_time: input.localStartTime,
       duration_minutes: input.durationMinutes,
       timezone: input.timezone ?? DEFAULT_TIMEZONE,
+      allow_whole_signup: input.allowWholeSignup ?? true,
+      allow_single_dates: input.allowSingleDates ?? true,
       skill: input.skill,
       difficulty: input.difficulty,
       max_participants: input.maxParticipants,

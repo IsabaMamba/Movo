@@ -71,6 +71,9 @@ export function invitedNotice(n: number): string {
 export function explainInviteError(cause: unknown): string {
   const message = cause instanceof Error ? cause.message : '';
   if (message.includes('series is not active')) return 'Esta serie ya está cancelada.';
+  if (message.includes('series takes single dates only')) {
+    return 'Esta serie es por fechas sueltas, así que no se invita a toda la serie.';
+  }
   if (message.includes('Solo quien organiza')) return 'Solo quien organiza la serie puede invitar.';
   return message || 'No se pudo enviar la invitación.';
 }
