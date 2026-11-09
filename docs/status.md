@@ -92,6 +92,7 @@ column is maintained by hand.
 | `0052_series_invitations`       | `series_invitations` (series, person) and `series_invite_candidates()` / `invite_to_series()`: whoever organizes invites people who were on a date to the whole series, once each; notice `series_invitation`                                             | yes     |
 | `0053_series_signup`            | `activity_series.allow_whole_signup` / `allow_single_dates` (at least one on); `series_signup()` for anybody, `set_series_signup()` for the organizer; a trigger refuses a single date the series does not take                                           | yes     |
 | `0054_pricing`                  | `price_unit` (per person or split), `split_total_minor`, `split_divisor`, `venue_fee` (none, amount, unknown) and `venue_fee_minor` on sessions and series; `apply_pricing()` computes a split and copies a series to its dates                           | no      |
+| `0055_session_links`            | `session_links` (one code per person and session) and `session_link()`; `session_link_preview()` for anon: the state (open, full, cancelled, past, group, missing) and public facts, never who is going; misses counted per IP                            | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,

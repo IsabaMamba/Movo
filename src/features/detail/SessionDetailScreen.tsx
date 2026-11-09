@@ -51,6 +51,7 @@ import { fetchActivityLinks, type ActivityLink } from '../../lib/links';
 import { pointOf } from '../../lib/venues';
 import { blockedPersonGoing } from '../../lib/blocks';
 import { pricingParts, withPricingDefaults } from '../../lib/pricing';
+import { fetchSessionLink, sessionLinkUrl, siteOrigin } from '../../lib/sessionLinks';
 import { BOTH, fetchSeriesSignup, seriesBoxLine, type SeriesSignup } from '../../lib/seriesSignup';
 import { supabase } from '../../lib/supabase';
 import {
@@ -177,6 +178,8 @@ export function SessionDetailScreen() {
   const [links, setLinks] = useState<ActivityLink[]>([]);
   const [blockedGoing, setBlockedGoing] = useState(false);
   const [signup, setSignup] = useState<SeriesSignup>(BOTH);
+  // 0055: the caller's link, fetched ahead so the share sheet opens on the tap.
+  const [link, setLink] = useState<string | null>(null);
 
   const userId = session?.user.id;
 
@@ -217,6 +220,13 @@ export function SessionDetailScreen() {
       setRoster(r);
       setMine(m);
       setBlockedGoing(blocked);
+      if (detail.status !== 'draft') {
+        setLink(
+          await fetchSessionLink(supabase, detail.id)
+            .then((code) => sessionLinkUrl(code, siteOrigin()))
+            .catch(() => null),
+        );
+      }
     }
   }, [id, userId]);
 
@@ -375,7 +385,7 @@ export function SessionDetailScreen() {
   const goingPeople = roster.filter((p) => p.status === 'joined' || p.status === 'attended');
 
   const share = () => {
-    const text = inviteText(activity.title, activity.starts_at, new Date());
+    const text = inviteText(activity.title, activity.starts_at, new Date(), link);
     if (Platform.OS === 'web') {
       const nav = globalThis.navigator as Navigator | undefined;
       if (nav?.share) void nav.share({ text }).catch(() => undefined);
