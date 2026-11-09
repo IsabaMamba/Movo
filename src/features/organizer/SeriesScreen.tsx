@@ -24,6 +24,9 @@
  * are not on all of them, and invites each once — a notice that opens the
  * series page, where joining it whole is one tap. Sharing the series outside
  * Movo is the «Compartir» button, as before.
+ *
+ * «Cómo se unen» (0053): the whole series, single dates, or both. It saves
+ * on the tap; people already on dates keep them.
  */
 
 import { Link, Redirect, useLocalSearchParams } from 'expo-router';
@@ -67,6 +70,13 @@ import {
   inviteToSeries,
   type InviteCandidate,
 } from '../../lib/seriesInvites';
+import {
+  setSeriesSignup,
+  signupFromKey,
+  signupKey,
+  SIGNUP_OPTIONS,
+  type SignupKey,
+} from '../../lib/seriesSignup';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, priceLabel, size } from '../../theme';
 import type { Location } from '../../types/database';
@@ -300,6 +310,28 @@ export function SeriesScreen() {
   const next = series.upcoming[0] ?? null;
 
   const pending = candidates.filter((c) => !c.invited);
+  const currentSignup = signupKey({
+    allowWhole: series.allow_whole_signup,
+    allowSingle: series.allow_single_dates,
+  });
+
+  const changeSignup = (key: SignupKey) => {
+    if (key === currentSignup) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    setSeriesSignup(supabase, series.id, signupFromKey(key))
+      .then(async () => {
+        await load();
+        setNotice('Listo. Quienes ya van a alguna fecha la conservan.');
+      })
+      .catch((cause: unknown) => {
+        setError(explainSeriesError(cause));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
 
   const inviteSome = (ids: readonly string[]) => {
     setBusy(true);
@@ -473,7 +505,34 @@ export function SeriesScreen() {
         </Text>
       </View>
 
-      {candidates.length > 0 && (
+      <View style={v.card}>
+        <View style={v.cardHead}>
+          <Text style={v.overline}>CÓMO SE UNEN</Text>
+        </View>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Cómo se unen">
+          {SIGNUP_OPTIONS.map((option) => {
+            const on = option.key === currentSignup;
+            return (
+              <Pressable
+                accessibilityLabel={`${option.title}. ${option.sub}`}
+                accessibilityRole="radio"
+                aria-checked={on}
+                disabled={busy}
+                key={option.key}
+                onPress={() => {
+                  changeSignup(option.key);
+                }}
+                style={[s.venue, on && s.venueOn]}
+              >
+                <Text style={s.venueName}>{option.title}</Text>
+                <Text style={s.venueMeta}>{option.sub}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      {series.allow_whole_signup && candidates.length > 0 && (
         <View style={v.card}>
           <View style={v.cardHead}>
             <Text style={v.overline}>INVÍTALAS A TODA LA SERIE</Text>

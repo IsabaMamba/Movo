@@ -50,6 +50,7 @@ import { directionsUrl, inviteText } from '../../lib/agenda';
 import { fetchActivityLinks, type ActivityLink } from '../../lib/links';
 import { pointOf } from '../../lib/venues';
 import { blockedPersonGoing } from '../../lib/blocks';
+import { BOTH, fetchSeriesSignup, seriesBoxLine, type SeriesSignup } from '../../lib/seriesSignup';
 import { supabase } from '../../lib/supabase';
 import {
   color,
@@ -175,6 +176,7 @@ export function SessionDetailScreen() {
   const [otherDates, setOtherDates] = useState<SeriesOccurrence[]>([]);
   const [links, setLinks] = useState<ActivityLink[]>([]);
   const [blockedGoing, setBlockedGoing] = useState(false);
+  const [signup, setSignup] = useState<SeriesSignup>(BOTH);
 
   const userId = session?.user.id;
 
@@ -191,6 +193,13 @@ export function SessionDetailScreen() {
       ? await fetchSeriesOccurrences(supabase, detail.series_id).catch((): SeriesOccurrence[] => [])
       : [];
     setOtherDates(dates.filter((date) => date.id !== detail.id));
+    // 0053: whole series, single dates, or both. Unread, both — the server
+    // still refuses a single date the series does not take.
+    setSignup(
+      detail.series_id
+        ? await fetchSeriesSignup(supabase, detail.series_id).catch((): SeriesSignup => BOTH)
+        : BOTH,
+    );
 
     // Readable wherever the session is (0032). A failure hides the links
     // rather than the session.
@@ -256,6 +265,7 @@ export function SessionDetailScreen() {
   );
   const going = mine?.status === 'joined' || mine?.status === 'attended';
   const waiting = mine?.status === 'waitlisted';
+  const wholeOnly = activity.series_id !== null && !signup.allowSingle;
   const full =
     activity.max_participants !== null && activity.joined_count >= activity.max_participants;
   // Only people on the roster and the organizer can still read a cancelled
@@ -270,6 +280,14 @@ export function SessionDetailScreen() {
     }
     setBusy(true);
     setError(null);
+
+    // A series taken whole only (0053) is joined from its page, where the
+    // sheet says which dates are full before anything is tapped.
+    if (wholeOnly && !going && !waiting) {
+      setBusy(false);
+      router.push({ pathname: '/serie/[id]', params: { id: activity.series_id ?? '' } });
+      return;
+    }
 
     const run =
       going || waiting ? leaveActivity(supabase, activity.id) : joinActivity(supabase, activity.id);
@@ -314,9 +332,11 @@ export function SessionDetailScreen() {
         ? 'Ya no voy'
         : waiting
           ? 'Salir de la lista'
-          : full
-            ? 'Entrar a la lista de espera'
-            : 'Unirme';
+          : wholeOnly
+            ? 'Unirme a toda la serie'
+            : full
+              ? 'Entrar a la lista de espera'
+              : 'Unirme';
 
   /**
    * The label names the button; the hint names what it costs. Leaving frees a
@@ -324,13 +344,16 @@ export function SessionDetailScreen() {
    * position rather than a spot — neither consequence is in the label, and the
    * confirmation for both only arrives after the tap.
    */
-  const actionHint = going
-    ? 'Dejas la sesión y tu lugar queda libre para otra persona.'
-    : waiting
-      ? 'Sales de la lista de espera y pierdes tu puesto.'
-      : full
-        ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
-        : undefined;
+  const actionHint =
+    wholeOnly && !going && !waiting
+      ? 'Esta serie se toma completa. Abre la serie para unirte a todas las fechas.'
+      : going
+        ? 'Dejas la sesión y tu lugar queda libre para otra persona.'
+        : waiting
+          ? 'Sales de la lista de espera y pierdes tu puesto.'
+          : full
+            ? 'La sesión está llena. Entras a la lista de espera y ocupas el lugar automáticamente si alguien cancela.'
+            : undefined;
 
   const point = pointOf(activity.location.geog);
   const minutes = Math.round(
@@ -442,9 +465,8 @@ export function SessionDetailScreen() {
             <Icon color={color.accent.cool} name="repeat" size={18} />
             <Text style={s.seriesText}>
               Se repite cada semana
-              {otherDates.length > 0 ? ` · ${otherDates.length + 1} fechas` : ''}. Cada fecha tiene
-              su propia lista: unirte a esta no te une a las demás.{' '}
-              <Text style={s.seriesLink}>Ver la serie</Text>
+              {otherDates.length > 0 ? ` · ${otherDates.length + 1} fechas` : ''}.{' '}
+              {seriesBoxLine(signup)} <Text style={s.seriesLink}>Ver la serie</Text>
             </Text>
             <Icon color={color.text.tertiary} name="chevronRight" size={16} />
           </Pressable>
