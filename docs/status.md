@@ -92,7 +92,7 @@ column is maintained by hand.
 | `0052_series_invitations`       | `series_invitations` (series, person) and `series_invite_candidates()` / `invite_to_series()`: whoever organizes invites people who were on a date to the whole series, once each; notice `series_invitation`                                             | yes     |
 | `0053_series_signup`            | `activity_series.allow_whole_signup` / `allow_single_dates` (at least one on); `series_signup()` for anybody, `set_series_signup()` for the organizer; a trigger refuses a single date the series does not take                                           | yes     |
 | `0054_pricing`                  | `price_unit` (per person or split), `split_total_minor`, `split_divisor`, `venue_fee` (none, amount, unknown) and `venue_fee_minor` on sessions and series; `apply_pricing()` computes a split and copies a series to its dates                           | yes     |
-| `0055_session_links`            | `session_links` (one code per person and session) and `session_link()`; `session_link_preview()` for anon: the state (open, full, cancelled, past, group, missing) and public facts, never who is going; misses counted per IP                            | no      |
+| `0055_session_links`            | `session_links` (one code per person and session) and `session_link()`; `session_link_preview()` for anon: the state (open, full, cancelled, past, group, missing) and public facts, never who is going; misses counted per IP                            | yes     |
 | `0056_series_people`            | `series_people()` for the organizer: everybody who was on a date of a series, whole or date by date, arrivals of the past dates, the next date, invited or not                                                                                            | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
@@ -193,7 +193,10 @@ November: `series_signup()` is executable by `anon`, `set_series_signup()` only 
 `authenticated`, no client can run `enforce_series_signup()`, the trigger exists, and every
 existing series kept both ways on. `0054` was applied the same day: both pricing triggers exist, no
 client can run `apply_pricing()` or `split_share()`, and every existing session reads as per
-person with no entry fee. `0022` was applied on 28
+person with no entry fee. `0055` was applied the same day: `session_links` and
+`session_link_misses` have RLS on and no client grants, `session_link()` is executable by
+`authenticated` only, and `session_link_preview()` answers `anon` with `missing` for an unknown
+code. `0022` was applied on 28
 September: `cron.job` holds `warn-solo-sessions`, active, every 15 minutes; no client can run
 `warn_solo_sessions()` or set `solo_warned_at`; its first run at 18:00 UTC `succeeded`. No live
 session was due a warning at that moment, so **nobody has received one yet** — the first real
