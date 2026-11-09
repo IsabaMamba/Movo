@@ -133,8 +133,14 @@ declare
   v_next    jsonb;
   v_missing constant jsonb := jsonb_build_object('state', 'missing');
 begin
+  -- The edge's own headers first: the first x-forwarded-for entry is
+  -- whatever the client chose to send, so it is only the last resort.
   if v_headers is not null then
-    v_ip := btrim(split_part(coalesce(v_headers::json ->> 'x-forwarded-for', ''), ',', 1));
+    v_ip := coalesce(
+      nullif(btrim(v_headers::json ->> 'cf-connecting-ip'), ''),
+      nullif(btrim(v_headers::json ->> 'x-real-ip'), ''),
+      btrim(split_part(coalesce(v_headers::json ->> 'x-forwarded-for', ''), ',', 1))
+    );
   end if;
 
   if v_ip <> '' and (

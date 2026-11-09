@@ -220,7 +220,11 @@ export function SessionDetailScreen() {
       setRoster(r);
       setMine(m);
       setBlockedGoing(blocked);
-      if (detail.status !== 'draft') {
+      // Only for somebody who goes or organizes: a code is a row, and a
+      // stranger reading a public session should not leave one behind.
+      const sharer =
+        detail.organizer_id === userId || m?.status === 'joined' || m?.status === 'waitlisted';
+      if (detail.status !== 'draft' && sharer) {
         setLink(
           await fetchSessionLink(supabase, detail.id)
             .then((code) => sessionLinkUrl(code, siteOrigin()))
