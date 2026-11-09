@@ -1,0 +1,113 @@
+import { StyleSheet } from 'react-native';
+
+import { color, radius, size, space, stroke, type } from '../../theme';
+
+/** Enlace v1: one column, phone first, centred on a computer. */
+export const linkPageStyles = StyleSheet.create({
+  screen: { backgroundColor: color.bg.base, flex: 1 },
+  content: {
+    gap: space.xl,
+    marginHorizontal: 'auto',
+    maxWidth: 560,
+    padding: space.xl,
+    paddingBottom: space.huge,
+    width: '100%',
+  },
+  top: { alignItems: 'center', flexDirection: 'row', minHeight: size.minTarget },
+  logo: { ...type.heading, color: color.text.primary, fontWeight: '700', letterSpacing: -0.5 },
+
+  open: { gap: space.md },
+  invited: { ...type.bodySmall, color: color.text.secondary },
+  invitedName: { color: color.text.primary, fontWeight: '700' },
+  sport: { ...type.caption, color: color.text.secondary },
+  title: { ...type.display, color: color.text.primary, fontSize: 30, lineHeight: 36 },
+  rows: {
+    borderColor: color.border.default,
+    borderRadius: radius.lg,
+    borderWidth: stroke.hair,
+    gap: space.md,
+    padding: space.lg,
+  },
+  row: { alignItems: 'flex-start', flexDirection: 'row', gap: space.md },
+  rowText: { flex: 1 },
+  rowTitle: { ...type.bodySmall, color: color.text.primary, fontWeight: '600' },
+  rowSub: { ...type.caption, color: color.text.tertiary },
+  organizer: {
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.lg,
+    gap: space.xs,
+    padding: space.lg,
+  },
+  organizerName: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  organizerText: { ...type.bodySmall, color: color.text.secondary },
+
+  primary: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: color.accent.primary,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    minHeight: size.control,
+    paddingHorizontal: space.xl,
+  },
+  primaryText: { ...type.action, color: color.text.inverse, textAlign: 'center' },
+  off: { opacity: 0.5 },
+  hint: { ...type.caption, color: color.text.tertiary, textAlign: 'center' },
+  error: { ...type.bodySmall, color: color.semantic.dangerOnRaised },
+
+  steps: {
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.lg,
+    gap: space.md,
+    marginTop: space.md,
+    padding: space.lg,
+  },
+  overline: { ...type.label, color: color.text.tertiary, letterSpacing: 1 },
+  step: { alignItems: 'flex-start', flexDirection: 'row', gap: space.md },
+  stepNumber: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  stepNumberText: { ...type.caption, color: color.text.secondary },
+  stepText: { ...type.bodySmall, color: color.text.secondary, flex: 1 },
+  stepStrong: { color: color.text.primary, fontWeight: '700' },
+
+  state: { alignItems: 'center', gap: space.md, paddingTop: space.xl },
+  stateIcon: {
+    alignItems: 'center',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
+  stateTitle: { ...type.title, color: color.text.primary, textAlign: 'center' },
+  stateBody: { ...type.body, color: color.text.secondary, textAlign: 'center' },
+  mini: {
+    alignSelf: 'stretch',
+    backgroundColor: color.bg.surface,
+    borderRadius: radius.lg,
+    gap: 2,
+    padding: space.lg,
+  },
+  miniFaded: { opacity: 0.6 },
+  miniTitle: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  miniMeta: { ...type.caption, color: color.text.tertiary },
+
+  about: {
+    borderTopColor: color.border.default,
+    borderTopWidth: stroke.hair,
+    gap: space.xs,
+    marginTop: space.xl,
+    paddingTop: space.xl,
+  },
+  aboutTitle: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  aboutText: { ...type.caption, color: color.text.secondary },
+  aboutLink: { ...type.bodySmall, color: color.accent.cool, fontWeight: '600' },
+});
