@@ -84,7 +84,8 @@ export const discoverStyles = StyleSheet.create({
   segmentItem: {
     alignItems: 'center',
     borderRadius: radius.full,
-    height: 30,
+    // minHeight, not height: the label grows with system text (Accesibilidad v1).
+    minHeight: 30,
     justifyContent: 'center',
     minWidth: 38,
     paddingHorizontal: space.sm,
