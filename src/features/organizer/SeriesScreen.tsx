@@ -63,12 +63,13 @@ import {
   type SeriesPastDate,
 } from '../../lib/series';
 import {
-  candidateLine,
   explainInviteError,
-  fetchInviteCandidates,
+  fetchSeriesPeople,
+  invitable,
   invitedNotice,
   inviteToSeries,
-  type InviteCandidate,
+  personLine,
+  type SeriesPerson,
 } from '../../lib/seriesInvites';
 import {
   setSeriesSignup,
@@ -96,7 +97,7 @@ export function SeriesScreen() {
   const [series, setSeries] = useState<OrganizerSeries | null | undefined>(undefined);
   const [venues, setVenues] = useState<Location[]>([]);
   const [past, setPast] = useState<SeriesPastDate[]>([]);
-  const [candidates, setCandidates] = useState<InviteCandidate[]>([]);
+  const [people, setPeople] = useState<SeriesPerson[]>([]);
   const [editing, setEditing] = useState(false);
 
   const [title, setTitle] = useState('');
@@ -128,19 +129,19 @@ export function SeriesScreen() {
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [row, locs, history, people] = await Promise.all([
+    const [row, locs, history, who] = await Promise.all([
       fetchOrganizerSeries(supabase, id),
       fetchPublicVenues(supabase),
       // The stats are a view on the series, not the series: a failed read
       // leaves them empty rather than the screen.
       fetchSeriesHistory(supabase, id).catch((): SeriesPastDate[] => []),
       // The same for the invitation list: without it the button is just gone.
-      fetchInviteCandidates(supabase, id).catch((): InviteCandidate[] => []),
+      fetchSeriesPeople(supabase, id).catch((): SeriesPerson[] => []),
     ]);
     setSeries(row);
     setVenues(locs);
     setPast(history);
-    setCandidates(people);
+    setPeople(who);
     if (row) fill(row);
   }, [id, fill]);
 
@@ -310,7 +311,7 @@ export function SeriesScreen() {
   const barTop = Math.max(1, series.max_participants ?? 0, ...past.map((d) => d.expected));
   const next = series.upcoming[0] ?? null;
 
-  const pending = candidates.filter((c) => !c.invited);
+  const pending = series.allow_whole_signup ? invitable(people) : [];
   const currentSignup = signupKey({
     allowWhole: series.allow_whole_signup,
     allowSingle: series.allow_single_dates,
@@ -340,7 +341,7 @@ export function SeriesScreen() {
     setNotice(null);
     inviteToSeries(supabase, series.id, ids)
       .then(async (n) => {
-        setCandidates(await fetchInviteCandidates(supabase, series.id));
+        setPeople(await fetchSeriesPeople(supabase, series.id));
         setNotice(invitedNotice(n));
       })
       .catch((cause: unknown) => {
@@ -533,25 +534,27 @@ export function SeriesScreen() {
         </View>
       </View>
 
-      {series.allow_whole_signup && candidates.length > 0 && (
+      {people.length > 0 && (
         <View style={v.card}>
           <View style={v.cardHead}>
-            <Text style={v.overline}>INVÍTALAS A TODA LA SERIE</Text>
-            <Text style={v.cardHint}>una vez cada una</Text>
+            <Text style={v.overline}>QUIÉNES VAN · {people.length}</Text>
+            <Text style={v.cardHint}>sin teléfonos ni correos</Text>
           </View>
-          <Text style={s.hint}>
-            Estuvieron en alguna fecha pero no van a todas. Les llega un aviso para unirse a todas
-            las fechas de una vez.
-          </Text>
-          {candidates.map((c) => (
+          {pending.length > 0 && (
+            <Text style={s.hint}>
+              Quien va fecha por fecha puede recibir una invitación a toda la serie, una sola vez.
+            </Text>
+          )}
+          {people.map((c) => (
             <View key={c.userId} style={v.inviteRow}>
               <View style={v.linkText}>
                 <Text style={v.linkTitle}>{c.name}</Text>
-                <Text style={v.linkSub}>{candidateLine(c)}</Text>
+                <Text style={v.linkSub}>
+                  {personLine(c)}
+                  {c.invited && !c.whole ? ' · invitación enviada' : ''}
+                </Text>
               </View>
-              {c.invited ? (
-                <Icon color={color.semantic.success} name="check" size={18} />
-              ) : (
+              {c.whole || c.invited || !series.allow_whole_signup ? null : (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Invitar a ${c.name} a toda la serie`}
@@ -562,7 +565,7 @@ export function SeriesScreen() {
                   }}
                   style={s.chip}
                 >
-                  <Text style={s.chipText}>Invitar</Text>
+                  <Text style={s.chipText}>Invitar a la serie</Text>
                 </Pressable>
               )}
             </View>
