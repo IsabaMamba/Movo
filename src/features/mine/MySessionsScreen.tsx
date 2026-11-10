@@ -23,6 +23,12 @@ import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { fetchCategories, fetchMyParticipations, type MyParticipation } from '../../lib/activities';
 import { dayHeading, localDay, weekStrip, weekTitle } from '../../lib/agenda';
 import { nextArrival } from '../../lib/checkIn';
+import {
+  fetchMonthlyAttendance,
+  monthLine,
+  RETENTION_NOTE,
+  type MonthCount,
+} from '../../lib/monthlyAttendance';
 import { supabase } from '../../lib/supabase';
 import { color } from '../../theme';
 import { sportColor } from '../../theme/sport';
@@ -117,11 +123,19 @@ export function MySessionsScreen() {
   const [tab, setTab] = useState<Tab>('proximas');
   const [day, setDay] = useState<string | null>(null);
 
+  const [months, setMonths] = useState<MonthCount[]>([]);
   const userId = session?.user.id;
 
   const load = useCallback(async () => {
     if (!userId) return;
-    setEntries(await fetchMyParticipations(supabase, userId));
+    const [mine, counts] = await Promise.all([
+      fetchMyParticipations(supabase, userId),
+      // 0058. Unread — or the migration not applied yet — Pasadas is the
+      // list alone, as before.
+      fetchMonthlyAttendance(supabase).catch((): MonthCount[] => []),
+    ]);
+    setEntries(mine);
+    setMonths(counts);
   }, [userId]);
 
   useFocusEffect(
@@ -177,6 +191,19 @@ export function MySessionsScreen() {
     (e) => e !== next && (day === null || localDay(e.activity.starts_at) === day),
   );
   const showNext = next !== null && (day === null || localDay(next.activity.starts_at) === day);
+
+  // What is left of the sessions older than six months (0058): a count per
+  // month, and the sentence that says the detail was not lost by accident.
+  const olderMonths = (
+    <View style={s.months}>
+      <Text style={s.pastNote}>{RETENTION_NOTE}</Text>
+      {months.map((m) => (
+        <Text key={m.month} style={s.emptyBody}>
+          {monthLine(m, now.getFullYear())}
+        </Text>
+      ))}
+    </View>
+  );
 
   const row = (entry: MyParticipation, past: boolean) => {
     const { activity } = entry;
@@ -343,8 +370,16 @@ export function MySessionsScreen() {
         )
       ) : pastAll.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.sectionTitle}>Todavía no hay sesiones pasadas</Text>
-          <Text style={s.emptyBody}>Aquí quedan las sesiones a las que fuiste, solo para ti.</Text>
+          {months.length === 0 ? (
+            <>
+              <Text style={s.sectionTitle}>Todavía no hay sesiones pasadas</Text>
+              <Text style={s.emptyBody}>
+                Aquí quedan las sesiones a las que fuiste, solo para ti.
+              </Text>
+            </>
+          ) : (
+            olderMonths
+          )}
         </View>
       ) : (
         <>
@@ -352,6 +387,7 @@ export function MySessionsScreen() {
             Solo tú ves esta lista. No se publica ni se usa para recomendarte nada.
           </Text>
           {groups(pastAll, true)}
+          {olderMonths}
           <Link href="/historial" style={s.back}>
             <Text style={s.linkText}>Mi historial de asistencia</Text>
           </Link>

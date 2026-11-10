@@ -15,6 +15,7 @@ import { Link, Redirect } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import { friendlyAuthError } from '../../lib/credentials';
 import { passwordOk, passwordProblem } from '../../lib/password';
 import { color } from '../../theme';
 import { useAuth } from './AuthProvider';
@@ -112,10 +113,15 @@ export function SignUpScreen() {
       })
       .catch((cause: unknown) => {
         const message = cause instanceof Error ? cause.message : '';
+        // friendlyAuthError: Supabase answers in English («Password should
+        // be…», «email rate limit exceeded»); the person reads Movo's words.
         setError(
           /already registered/i.test(message)
             ? 'Ya hay una cuenta con ese correo. Entra con él.'
-            : message || 'No se pudo crear la cuenta.',
+            : friendlyAuthError(message).replace(
+                'No se pudo guardar.',
+                'No se pudo crear la cuenta.',
+              ),
         );
       })
       .finally(() => {
