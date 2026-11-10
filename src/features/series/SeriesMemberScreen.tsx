@@ -12,6 +12,11 @@
  * you are on asks «¿No puedes ir?»: missing one date and leaving the series
  * are different things, and the default is the smaller one. The organizer
  * gets a notice either way; a reason is one of three words, or none.
+ *
+ * «¿Sigues en la serie?» (0057/0059; Series v2 · 10): when the organizer
+ * added dates and this person was on the whole series, the page asks first.
+ * Two answers of the same weight; no answer means the series ends for them
+ * on the old last date, and nobody is put on a new date without a yes.
  */
 
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -46,12 +51,19 @@ import {
   type MemberSeriesDate,
 } from '../../lib/seriesMember';
 import { BOTH, fetchSeriesSignup, type SeriesSignup } from '../../lib/seriesSignup';
+import {
+  answeredNotice,
+  answerSeriesRenewal,
+  fetchRenewalQuestion,
+  type RenewalQuestion,
+} from '../../lib/seriesRenewal';
 import { pricingLine } from '../../lib/pricing';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
 import { StatusPage } from '../web/StatusPage';
 import { useAuth } from '../auth/AuthProvider';
 import { Icon } from '../nav/Icon';
+import { RenewalQuestionCard } from './RenewalQuestionCard';
 import { seriesStyles as s } from './styles';
 
 const SKILL: Record<string, string> = {
@@ -77,16 +89,22 @@ export function SeriesMemberScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rule, setRule] = useState<SeriesSignup>(BOTH);
+  const [question, setQuestion] = useState<RenewalQuestion | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [row, signup] = await Promise.all([
+    const [row, signup, asked] = await Promise.all([
       fetchMemberSeries(supabase, id, userId),
       // The server enforces the rule either way; unread, the screen offers both.
       fetchSeriesSignup(supabase, id).catch((): SeriesSignup => BOTH),
+      // Unread, the question waits in the inbox; the page still works.
+      userId === null
+        ? Promise.resolve(null)
+        : fetchRenewalQuestion(supabase, id).catch((): RenewalQuestion | null => null),
     ]);
     setSeries(row);
     setRule(signup);
+    setQuestion(asked);
   }, [id, userId]);
 
   useEffect(() => {
@@ -292,6 +310,21 @@ export function SeriesMemberScreen() {
               <Text style={s.statLabel}>en espera</Text>
             </View>
           </View>
+        )}
+
+        {question !== null && (
+          <RenewalQuestionCard
+            arrived={stats.arrived}
+            busy={busy}
+            onAnswer={(join, endDay) => {
+              run(async () =>
+                answeredNotice(join, await answerSeriesRenewal(supabase, series.id, join), endDay),
+              );
+            }}
+            question={question}
+            seriesTitle={series.title}
+            wasOn={stats.wasOn}
+          />
         )}
 
         {notice !== null && (

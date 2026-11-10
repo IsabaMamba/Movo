@@ -27,6 +27,12 @@
  *
  * «Cómo se unen» (0053): the whole series, single dates, or both. It saves
  * on the tap; people already on dates keep them.
+ *
+ * «¿Agregas 8 fechas más?» (0057; Series v2 · 9) appears once the last date
+ * is a month away or less — the same moment the `series_renewal_offer`
+ * notice arrives. The dates are chips; tapping one takes it out (a holiday)
+ * and the run moves a week. Nothing renews by itself, and the people on the
+ * whole series are asked before they are on any new date.
  */
 
 import { Link, Redirect, useLocalSearchParams } from 'expo-router';
@@ -79,6 +85,17 @@ import {
   type SignupKey,
 } from '../../lib/seriesSignup';
 import { pricingLine } from '../../lib/pricing';
+import {
+  chipDay,
+  DEFAULT_RENEWAL,
+  explainRenewalError,
+  localDate,
+  renewalChips,
+  renewalDay,
+  renewSeries,
+  stepDaysFor,
+  toggleSkip,
+} from '../../lib/seriesRenewal';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
 import type { Location } from '../../types/database';
@@ -89,6 +106,8 @@ import { SERIES_BAR_MAX, seriesStyles as v } from './styles';
 
 const CHIP_HIT_SLOP = hitSlopFor(size.controlSm);
 const TIME_SHAPE = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** The renewal is offered this close to the last date (offer_series_renewals()). */
+const RENEW_WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
 
 export function SeriesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -114,6 +133,8 @@ export function SeriesScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [reason, setReason] = useState('');
+  const [skip, setSkip] = useState<string[]>([]);
+  const [renewHidden, setRenewHidden] = useState(false);
 
   const fill = useCallback((row: OrganizerSeries) => {
     // Prefilled from the row, so saving without touching anything is a no-op.
@@ -352,6 +373,54 @@ export function SeriesScreen() {
       });
   };
 
+  // The last date that is not cancelled, past or upcoming: what renew_series()
+  // counts from.
+  const lastIso = series.upcoming.at(-1)?.starts_at ?? past.at(-1)?.starts_at ?? null;
+  const renewDue =
+    !renewHidden && lastIso !== null && Date.parse(lastIso) - Date.now() <= RENEW_WINDOW_MS;
+  const lastDay = lastIso === null ? null : localDate(lastIso, series.timezone);
+  const chips =
+    lastDay === null
+      ? []
+      : renewalChips(
+          lastDay,
+          DEFAULT_RENEWAL,
+          skip,
+          stepDaysFor(series.frequency),
+          localDate(new Date().toISOString(), series.timezone),
+        );
+  const wholeCount = people.filter((p) => p.whole).length;
+
+  const renew = () => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    renewSeries(supabase, series.id, DEFAULT_RENEWAL, skip)
+      .then(async (r) => {
+        await load();
+        setSkip([]);
+        const until = r.dates.at(-1);
+        setNotice(
+          [
+            `Agregamos ${String(r.dates.length)} fechas${until ? `, hasta el ${renewalDay(until)}` : ''}.`,
+            r.asked === 0
+              ? null
+              : r.asked === 1
+                ? 'Le preguntamos a 1 persona si sigue.'
+                : `Les preguntamos a ${String(r.asked)} personas si siguen.`,
+          ]
+            .filter((part): part is string => part !== null)
+            .join(' '),
+        );
+      })
+      .catch((cause: unknown) => {
+        setError(explainRenewalError(cause));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
+
   const invite = () => {
     const text = `${series.title}: ${cadenceLabel(series.weekday, series.local_start_time).toLowerCase()} en ${series.location.name}. ¿Te animas? Búscala en Movo.`;
     if (Platform.OS === 'web') {
@@ -398,6 +467,80 @@ export function SeriesScreen() {
           </Text>
         </View>
       </View>
+
+      {renewDue && lastIso !== null && (
+        <View style={[v.card, v.renewCard]}>
+          <View style={v.renewEyebrow}>
+            <Icon color={color.accent.primary} name="repeat" size={14} />
+            <Text style={v.renewEyebrowText}>
+              {series.upcoming.length === 0
+                ? `La última fecha fue el ${seriesDay(lastIso).toLowerCase()}`
+                : `Le ${series.upcoming.length === 1 ? 'queda 1 fecha' : `quedan ${String(series.upcoming.length)} fechas`}, hasta el ${seriesDay(lastIso).toLowerCase()}`}
+            </Text>
+          </View>
+          <Text accessibilityRole="header" style={v.renewTitle}>
+            ¿Agregas {DEFAULT_RENEWAL} fechas más a la serie?
+          </Text>
+          <View style={v.renewChips}>
+            {chips.map((c) => (
+              <Pressable
+                accessibilityHint={
+                  c.on ? 'Toca para quitar esta fecha' : 'Toca para volver a agregarla'
+                }
+                accessibilityLabel={renewalDay(c.date)}
+                accessibilityRole="checkbox"
+                aria-checked={c.on}
+                disabled={busy}
+                hitSlop={CHIP_HIT_SLOP}
+                key={c.date}
+                onPress={() => {
+                  setSkip((prev) => toggleSkip(prev, c.date));
+                }}
+                style={[v.renewChip, !c.on && v.renewChipOff]}
+              >
+                {c.on && <Icon color={color.accent.primary} name="check" size={12} />}
+                <Text style={[v.renewChipText, !c.on && v.renewChipTextOff]}>
+                  {chipDay(c.date)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={s.hint}>
+            Toca una fecha para quitarla, por ejemplo si cae en un feriado. Siempre son{' '}
+            {DEFAULT_RENEWAL}: la última se corre una semana.
+          </Text>
+          <View style={v.renewAsk}>
+            <Icon color={color.accent.cool} name="people" size={14} />
+            <Text style={v.renewAskText}>
+              {wholeCount === 0
+                ? 'Nadie va a toda la serie todavía: las fechas nuevas quedan abiertas para quien quiera.'
+                : `${wholeCount === 1 ? 'A la persona que va' : `A las ${String(wholeCount)} personas que van`} a toda la serie les preguntamos si siguen. Nadie queda en las fechas nuevas sin decir que sí.`}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={renew}
+            style={[s.publish, busy && s.publishDisabled]}
+          >
+            <Text style={s.publishText}>Agregar {DEFAULT_RENEWAL} fechas</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={() => {
+              setRenewHidden(true);
+            }}
+            style={v.action}
+          >
+            <Text style={v.actionText}>
+              {series.upcoming.length === 0
+                ? 'Ahora no'
+                : `No, termina el ${seriesShortDate(lastIso)}`}
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       {past.length > 0 && (
         <View style={v.card}>
