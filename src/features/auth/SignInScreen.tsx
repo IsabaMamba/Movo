@@ -2,11 +2,12 @@ import { Link, Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
+import { signInMessage } from '../../lib/authErrors';
 import { safeNext } from '../../lib/next';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
-import { OAuthButtons } from './OAuthButtons';
+import { hasOAuth, OAuthButtons } from './OAuthButtons';
 import { authStyles as s } from './styles';
 
 export function SignInScreen() {
@@ -29,7 +30,7 @@ export function SignInScreen() {
     setBusy(true);
     signIn(email.trim(), password)
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : 'No se pudo iniciar sesión.');
+        setError(signInMessage(cause));
       })
       .finally(() => {
         setBusy(false);
@@ -42,7 +43,7 @@ export function SignInScreen() {
       <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
 
       <OAuthButtons />
-      <Text style={s.hint}>O con tu correo:</Text>
+      {hasOAuth && <Text style={s.hint}>O con tu correo:</Text>}
 
       <Text style={s.label}>Correo</Text>
       <TextInput
@@ -93,6 +94,9 @@ export function SignInScreen() {
         <Text style={s.buttonText}>{busy ? 'Entrando…' : 'Entrar'}</Text>
       </Pressable>
 
+      <Link href="/recuperar" style={s.link}>
+        <Text style={s.linkText}>¿Olvidaste tu contraseña?</Text>
+      </Link>
       <Link href="/sign-up" style={s.link}>
         <Text style={s.linkText}>¿No tienes cuenta? Regístrate</Text>
       </Link>

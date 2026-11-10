@@ -13,21 +13,22 @@
  * Nothing works until both providers are switched on by hand: in Supabase
  * (Authentication › Providers, with the client ids and secrets) and on the
  * Apple and Google developer consoles, with these redirect URLs allowed.
- * See docs/auth-providers.md.
+ * See docs/auth-providers.md. Until then the buttons are not shown at all:
+ * see lib/oauthProviders.ts.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 
+import { enabledProviders, type OAuthProvider } from './oauthProviders';
+
 export { readCallback, type CallbackResult, type CallbackTokens } from './oauthCallback';
 
-export type OAuthProvider = 'apple' | 'google';
+export { enabledProviders, OAUTH_PROVIDERS, type OAuthProvider } from './oauthProviders';
 
-export const OAUTH_PROVIDERS: readonly { provider: OAuthProvider; label: string }[] = [
-  { provider: 'apple', label: 'Continuar con Apple' },
-  { provider: 'google', label: 'Continuar con Google' },
-];
+/** See lib/oauthProviders.ts: empty until a provider is switched on. */
+export const ENABLED_PROVIDERS = enabledProviders(process.env.EXPO_PUBLIC_OAUTH_PROVIDERS);
 
 /** Where the provider sends the person back. */
 export function redirectUrl(): string {

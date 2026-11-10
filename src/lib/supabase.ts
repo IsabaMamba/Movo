@@ -10,6 +10,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
+import { isRecoveryUrl, recoveryLinkFailed } from './recovery';
+
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -23,6 +25,24 @@ if (!url || !anonKey) {
 }
 
 const isWeb = Platform.OS === 'web';
+
+/**
+ * Whether this page was opened from a «cambia tu contraseña» link.
+ *
+ * Read here, before `createClient`: with `detectSessionInUrl` the client
+ * takes the tokens out of the URL as soon as it exists, and after that a
+ * recovery looks exactly like any other session. See lib/recovery.ts.
+ */
+export const arrivedFromRecovery: boolean =
+  isWeb &&
+  typeof window !== 'undefined' &&
+  isRecoveryUrl(window.location.hash, window.location.search);
+
+/** The same, for a link that came back refused: old, or already used. */
+export const recoveryLinkExpired: boolean =
+  isWeb &&
+  typeof window !== 'undefined' &&
+  recoveryLinkFailed(window.location.hash, window.location.search);
 
 /**
  * The project ref this bundle is pointed at, for confirmations to quote.

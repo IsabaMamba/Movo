@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { AuthProvider } from '../features/auth/AuthProvider';
+import { RecoveryRedirect } from '../features/auth/RecoveryRedirect';
 import { SuspensionGate } from '../features/auth/SuspensionGate';
 import { SignupGate } from '../features/signup/SignupGate';
 import { StatusPage } from '../features/web/StatusPage';
@@ -78,6 +79,7 @@ export default function RootLayout() {
       {robots}
       {/* Without an explicit content background the navigator flashes white
           between screens, which on a dark ground reads as a broken render. */}
+      <RecoveryRedirect />
       <SuspensionGate>
         <SignupGate>
           <Stack

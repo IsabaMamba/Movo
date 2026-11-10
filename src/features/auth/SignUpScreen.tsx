@@ -18,7 +18,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 
 import { passwordOk, passwordProblem } from '../../lib/password';
 import { color } from '../../theme';
 import { useAuth } from './AuthProvider';
-import { OAuthButtons } from './OAuthButtons';
+import { hasOAuth, OAuthButtons } from './OAuthButtons';
 import { authStyles as s } from './styles';
 
 type Phase = 'welcome' | 'email' | 'sent';
@@ -73,14 +73,18 @@ export function SignUpScreen() {
         </Text>
 
         <OAuthButtons />
+        {/* The outlined button sits below Apple and Google; with neither
+            switched on it is the only action, so it is the filled one. */}
         <Pressable
           accessibilityRole="button"
           onPress={() => {
             setPhase('email');
           }}
-          style={[s.button, s.buttonGhost]}
+          style={hasOAuth ? [s.button, s.buttonGhost] : s.button}
         >
-          <Text style={[s.buttonText, s.buttonGhostText]}>Continuar con correo</Text>
+          <Text style={hasOAuth ? [s.buttonText, s.buttonGhostText] : s.buttonText}>
+            Continuar con correo
+          </Text>
         </Pressable>
 
         <Link href="/sign-in" style={s.link}>
