@@ -52,6 +52,20 @@ export function seriesShort(iso: string, upcoming: number): string {
   return `Cada ${day} · ${upcoming} ${upcoming === 1 ? 'fecha' : 'fechas'}`;
 }
 
+/**
+ * What to try when the list is empty. Only what can still be tried: at the
+ * widest radius «amplía el radio» has nowhere to go, and without a sport
+ * chosen there is no filter to take off.
+ */
+export function emptyHint(radiusKm: number, maxKm: number, filtered: boolean): string {
+  const wider = radiusKm < maxKm;
+  const waiting = 'Estamos sumando sesiones de grupos que ya entrenan en la GAM.';
+  if (wider && filtered) return `Prueba ampliar el radio o quitar el filtro de deporte. ${waiting}`;
+  if (wider) return `Prueba ampliar el radio. ${waiting}`;
+  if (filtered) return `Prueba quitar el filtro de deporte. ${waiting}`;
+  return waiting;
+}
+
 /** «9 sesiones a menos de 15 km». */
 export function nearbyCount(count: number, radiusKm: number): { count: string; rest: string } {
   return {

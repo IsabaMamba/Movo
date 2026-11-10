@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { dateColumn, formatDistance, nearbyCount, seriesShort } from './format';
+import { dateColumn, emptyHint, formatDistance, nearbyCount, seriesShort } from './format';
 
 /** The card's date column is read before anything else on it; it must be right. */
 describe('dateColumn', () => {
@@ -42,5 +42,20 @@ describe('formatDistance', () => {
     expect(formatDistance(420)).toBe('400 m');
     expect(formatDistance(6800)).toBe('6.8 km');
     expect(formatDistance(23_400)).toBe('23 km');
+  });
+});
+
+describe('emptyHint', () => {
+  it('offers only what can still be tried', () => {
+    expect(emptyHint(15, 50, true)).toMatch(/ampliar el radio o quitar el filtro/);
+    expect(emptyHint(15, 50, false)).toMatch(/^Prueba ampliar el radio\./);
+    expect(emptyHint(50, 50, true)).toMatch(/^Prueba quitar el filtro de deporte\./);
+  });
+
+  it('does not suggest a wider radius at the widest one', () => {
+    expect(emptyHint(50, 50, true)).not.toMatch(/ampliar/);
+    expect(emptyHint(50, 50, false)).toBe(
+      'Estamos sumando sesiones de grupos que ya entrenan en la GAM.',
+    );
   });
 });

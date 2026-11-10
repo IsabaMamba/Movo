@@ -32,7 +32,6 @@ import {
 } from 'react-native';
 
 import {
-  enumLabel,
   fetchActivityDetail,
   fetchMyParticipation,
   fetchRoster,
@@ -65,7 +64,9 @@ import {
   occupancyLabel,
   UNCAPPED_REFERENCE,
 } from '../../theme';
-import type { ActivityParticipant, JsonSchemaProperty } from '../../types/database';
+import type { ActivityParticipant } from '../../types/database';
+import { attributeTags } from '../../lib/attributes';
+import { isNotFound } from '../../lib/errors';
 import { useAuth } from '../auth/AuthProvider';
 import { StatusPage } from '../web/StatusPage';
 import { SessionLinks } from '../links/SessionLinks';
@@ -129,32 +130,6 @@ function initials(name: string): string {
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join('');
-}
-
-/**
- * Attributes as sentences rather than a key/value dump. Booleans only show when
- * true — "Nadie se queda atrás: no" is noise, its absence says the same thing.
- */
-function attributeTags(
-  properties: Record<string, JsonSchemaProperty>,
-  attributes: Record<string, unknown>,
-): string[] {
-  const tags: string[] = [];
-  for (const [key, value] of Object.entries(attributes)) {
-    const property = properties[key];
-    const label = property?.title ?? key;
-    if (value === true) tags.push(label);
-    else if (value === false || value === null || value === undefined) continue;
-    else if (Array.isArray(value)) {
-      if (value.length > 0) {
-        tags.push(`${label}: ${value.map((v) => enumLabel(property, String(v))).join(', ')}`);
-      }
-    } else
-      tags.push(
-        `${label}: ${typeof value === 'string' ? enumLabel(property, value) : String(value)}`,
-      );
-  }
-  return tags;
 }
 
 type Roster = Awaited<ReturnType<typeof fetchRoster>>;
@@ -239,7 +214,14 @@ export function SessionDetailScreen() {
     load().catch((cause: unknown) => {
       if (cancelled) return;
       setActivity(null);
-      setError(cause instanceof Error ? cause.message : 'No se pudo cargar la sesión.');
+      // A mistyped address is the 404, not «Algo falló» (lib/errors.ts).
+      setError(
+        isNotFound(cause)
+          ? null
+          : cause instanceof Error
+            ? cause.message
+            : 'No se pudo cargar la sesión.',
+      );
     });
     return () => {
       cancelled = true;

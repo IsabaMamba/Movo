@@ -60,6 +60,7 @@ import {
 import { pricingLine } from '../../lib/pricing';
 import { supabase } from '../../lib/supabase';
 import { color, hitSlopFor, size } from '../../theme';
+import { isNotFound } from '../../lib/errors';
 import { StatusPage } from '../web/StatusPage';
 import { useAuth } from '../auth/AuthProvider';
 import { Icon } from '../nav/Icon';
@@ -90,6 +91,9 @@ export function SeriesMemberScreen() {
   const [error, setError] = useState<string | null>(null);
   const [rule, setRule] = useState<SeriesSignup>(BOTH);
   const [question, setQuestion] = useState<RenewalQuestion | null>(null);
+  // A series in its ninth week opened with eight rows of «Ya pasó» above the
+  // one date somebody can still join. They fold into one row.
+  const [showPast, setShowPast] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -109,8 +113,9 @@ export function SeriesMemberScreen() {
 
   useEffect(() => {
     if (loading) return;
-    load().catch(() => {
-      setFailed(true);
+    load().catch((cause: unknown) => {
+      // A mistyped address is the 404, not «Algo falló» (lib/errors.ts).
+      setFailed(!isNotFound(cause));
       setSeries(null);
     });
   }, [load, loading]);
@@ -190,6 +195,8 @@ export function SeriesMemberScreen() {
     ? memberDayLong(series.dates[0].starts_at).split(' ')[0]
     : 'semana';
   const myUpcoming = upcoming.filter((d) => d.mine === 'joined' || d.mine === 'waitlisted');
+
+  const pastCount = series.dates.filter((d) => d.past).length;
 
   const openLeave = (date: MemberSeriesDate | null) => {
     setOnlyOne(date !== null);
@@ -345,27 +352,42 @@ export function SeriesMemberScreen() {
               {open.length === 1 ? 'queda 1' : `quedan ${String(open.length)}`}
             </Text>
           </View>
-          {series.dates.map((d) => {
-            const mineNow = !d.past && (d.mine === 'joined' || d.mine === 'waitlisted');
-            return (
-              <Pressable
-                accessibilityHint={
-                  mineNow ? 'Pregunta si no puedes ir a esta fecha' : 'Abre esta fecha'
-                }
-                accessibilityRole="button"
-                disabled={d.past}
-                key={d.id}
-                onPress={() => {
-                  if (mineNow) openLeave(d);
-                  else router.push({ pathname: '/sesion/[id]', params: { id: d.id } });
-                }}
-                style={s.row}
-              >
-                <Text style={[s.day, d.past && s.dayPast]}>{memberDay(d.starts_at)}</Text>
-                {rowRight(d)}
-              </Pressable>
-            );
-          })}
+          {pastCount > 1 && (
+            <Pressable
+              accessibilityRole="button"
+              aria-expanded={showPast}
+              onPress={() => {
+                setShowPast((shown) => !shown);
+              }}
+              style={s.row}
+            >
+              <Text style={[s.day, s.dayPast]}>Ya pasaron {String(pastCount)} fechas</Text>
+              <Text style={s.note}>{showPast ? 'Ocultar' : 'Ver'}</Text>
+            </Pressable>
+          )}
+          {series.dates
+            .filter((d) => !d.past || showPast || pastCount <= 1)
+            .map((d) => {
+              const mineNow = !d.past && (d.mine === 'joined' || d.mine === 'waitlisted');
+              return (
+                <Pressable
+                  accessibilityHint={
+                    mineNow ? 'Pregunta si no puedes ir a esta fecha' : 'Abre esta fecha'
+                  }
+                  accessibilityRole="button"
+                  disabled={d.past}
+                  key={d.id}
+                  onPress={() => {
+                    if (mineNow) openLeave(d);
+                    else router.push({ pathname: '/sesion/[id]', params: { id: d.id } });
+                  }}
+                  style={s.row}
+                >
+                  <Text style={[s.day, d.past && s.dayPast]}>{memberDay(d.starts_at)}</Text>
+                  {rowRight(d)}
+                </Pressable>
+              );
+            })}
         </View>
 
         {inside ? (
