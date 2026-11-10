@@ -150,6 +150,7 @@ export const mineStyles = StyleSheet.create({
   },
   emptyButtonText: { ...type.action, color: color.text.inverse },
   pastNote: { ...type.caption, color: color.text.tertiary },
+  months: { gap: space.xs },
 
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
 });

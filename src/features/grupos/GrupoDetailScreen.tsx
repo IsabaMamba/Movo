@@ -96,12 +96,24 @@ export function GrupoDetailScreen() {
     if (!found) return;
 
     // Members-only by policy: a non-member legitimately gets nothing back.
+    // Without a session the answer is known before asking: the members, the
+    // chat and the handover all refuse (401), four requests per visit that
+    // could only fail. They are not sent.
+    const signedIn = userId !== undefined;
     const [roll, upcoming] = await Promise.all([
-      fetchCommunityMembers(supabase, found.id).catch((): CommunityMemberEntry[] => []),
+      signedIn
+        ? fetchCommunityMembers(supabase, found.id).catch((): CommunityMemberEntry[] => [])
+        : Promise.resolve<CommunityMemberEntry[]>([]),
       fetchGroupUpcoming(supabase, found.id).catch((): GroupSession[] => []),
     ]);
     setMembers(roll);
     setSessions(upcoming);
+    if (!signedIn) {
+      setChat(null);
+      setPinned([]);
+      setHandover(null);
+      return;
+    }
 
     // Only members read the chat (0040); for anybody else both fail, quietly.
     const [mine, page] = await Promise.all([
@@ -111,7 +123,8 @@ export function GrupoDetailScreen() {
     setChat(mine.find((c) => 'communityId' in c.scope && c.scope.communityId === found.id) ?? null);
     setPinned(page?.pinned ?? []);
     setHandover(await fetchHandover(supabase, found.id).catch(() => null));
-  }, [slug]);
+    // userId: signing in or out on this page reads the group again.
+  }, [slug, userId]);
 
   useEffect(() => {
     let cancelled = false;

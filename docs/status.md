@@ -1,9 +1,50 @@
-# Status — 28 September 2026
+# Status — 10 November 2026
 
 An honest read of what exists, what has run for real, and what comes next. Update this file when
 the answer changes; a status document that lags is worse than none.
 
 **Alejandro — start at [Roadmap](#roadmap). Everything above it is context.**
+
+## Where it stands on 10 November
+
+The title of this file said 28 September for six weeks while thirty migrations and a hundred pull
+requests went by. This section is the short version; the table under
+[Migrations](#migrations) is the record.
+
+- **Code:** `main` has everything through #189. `npm run verify` passes.
+- **Database:** `0001`–`0056` are applied. **`0057`–`0060` are merged and not applied**: series
+  renewal, the six-month rule for Pasadas, the renewal question, and Registro v3. Until `0060` is
+  applied the new sign-up stops after the account is created, so apply it before the web is
+  published. `0058` deletes nothing yet: the oldest session is from 9 September.
+- **Seen in a browser, signed out (10 November):** Descubrir, a session, a series, a group, the
+  landing page, the rules, help, an invitation link, sign-in, sign-up, password recovery up to
+  the email, and the 404.
+- **Never seen signed in:** everything else. Crear with pricing and «Cómo se unen», the series
+  console and «Quiénes van», renewing a series, the Registro v3 steps, Pasadas with monthly
+  counts, chat, the profile screens. The SQL suite covers the rules; nobody has watched the
+  screens use them.
+
+### To do by hand, in order
+
+1. Apply `0057`–`0060` (`npx supabase db push`), then mark them in the table below.
+2. Supabase › Authentication › URL Configuration: add `/recuperar` and `/registro` to the
+   redirect URLs ([auth-providers.md](auth-providers.md)).
+3. Paste the email templates of `supabase/templates/` into the dashboard.
+4. Apple and Google: the steps in [auth-providers.md](auth-providers.md), then set
+   `EXPO_PUBLIC_OAUTH_PROVIDERS`. Until then the buttons are not shown.
+5. One pass through the signed-in screens with a real account.
+
+### Known gaps
+
+- `/terminos` and `/privacidad` do not exist: the legal text is not written. Nothing links to
+  them yet.
+- The rules page is still the 28 September version; Normas v4 (4 November handoff) is not built.
+- The landing page says «el mapa muestra cuántas personas van»; the map only shows signed in.
+- `export_my_data()` does not include the monthly counts of `0058`.
+- The live project holds test data: the group «Mejengueros» and the series «5K al parque de
+  Tibas», whose distance says 10 km.
+- No screen has an automated test (see `vitest.config.ts`). Several are over 800 lines:
+  `SeriesScreen`, `CreateSessionScreen`, `SessionDetailScreen`.
 
 ## What changed since 17 September
 
