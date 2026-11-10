@@ -6,6 +6,7 @@ import { safeNext } from '../../lib/next';
 import { color } from '../../theme';
 
 import { useAuth } from './AuthProvider';
+import { OAuthButtons } from './OAuthButtons';
 import { authStyles as s } from './styles';
 
 export function SignInScreen() {
@@ -39,6 +40,9 @@ export function SignInScreen() {
     <View style={s.screen}>
       <Text style={s.title}>Iniciar sesión</Text>
       <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
+
+      <OAuthButtons />
+      <Text style={s.hint}>O con tu correo:</Text>
 
       <Text style={s.label}>Correo</Text>
       <TextInput

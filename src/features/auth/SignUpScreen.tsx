@@ -1,77 +1,116 @@
+/**
+ * Crear cuenta (Registro v3 · 1–3).
+ *
+ *   1. Bienvenida: Apple, Google or email.
+ *   2. Con correo: the email and a password of 8 or more.
+ *   3. Revisa tu correo.
+ *
+ * Everything else — name, date of birth, gender, sports, zone, the rules —
+ * comes after the account exists, in /registro, because Apple and Google
+ * create the account before Movo can ask anything (0060). An account under
+ * 18 is deleted there, before anything about the person is kept.
+ */
+
 import { Link, Redirect } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-// The bounds mirror the profiles check constraint, so the fallback name in
-// handle_new_user() never triggers. Mi cuenta uses the same pair.
-import { NAME_MAX, NAME_MIN } from '../../lib/account';
-import { MIN_AGE, parseBirthdate } from '../../lib/age';
-import { GENDER_OPTIONS, GENDER_PURPOSE, type Gender } from '../../lib/gender';
 import { passwordOk, passwordProblem } from '../../lib/password';
 import { color } from '../../theme';
-
 import { useAuth } from './AuthProvider';
+import { OAuthButtons } from './OAuthButtons';
 import { authStyles as s } from './styles';
+
+type Phase = 'welcome' | 'email' | 'sent';
 
 export function SignUpScreen() {
   const { session, loading, signUp } = useAuth();
-  const [displayName, setDisplayName] = useState('');
+  const [phase, setPhase] = useState<Phase>('welcome');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [day, setDay] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState('');
-  const [gender, setGender] = useState<Gender | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirmationSent, setConfirmationSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (loading) return <ActivityIndicator style={s.screen} />;
-  if (session) return <Redirect href="/" />;
+  if (session) return <Redirect href="/registro" />;
 
-  if (confirmationSent) {
+  if (phase === 'sent') {
     return (
       <View style={s.screen}>
         <Text style={s.title}>Revisa tu correo</Text>
         {/* Nothing else marks the transition: the form is replaced in place, so
             this text is the whole outcome of pressing the button. */}
         <Text accessibilityRole="alert" style={s.notice}>
-          Te enviamos un enlace de confirmación a {email.trim()}. Ábrelo para activar tu cuenta y
-          después inicia sesión.
+          Mandamos un enlace a {email.trim()}. Ábrelo en este teléfono y sigues donde quedaste.
         </Text>
+        <Text style={s.hint}>¿No llegó? Revisa en correo no deseado.</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setPhase('email');
+          }}
+          style={s.link}
+        >
+          <Text style={s.linkText}>Cambiar el correo</Text>
+        </Pressable>
         <Link href="/sign-in" style={s.link}>
-          <Text style={s.linkText}>Volver a iniciar sesión</Text>
+          <Text style={s.linkText}>Volver a entrar</Text>
         </Link>
       </View>
     );
   }
 
-  const trimmedName = displayName.trim();
-  const nameValid = trimmedName.length >= NAME_MIN && trimmedName.length <= NAME_MAX;
-  const birth = parseBirthdate(day, month, year);
-  const birthTouched = day.length > 0 || month.length > 0 || year.length > 0;
-  const canSubmit =
-    nameValid && birth.ok && gender !== null && email.length > 0 && passwordOk(password) && !busy;
+  if (phase === 'welcome') {
+    return (
+      <ScrollView contentContainerStyle={s.scrollContent} style={s.scroll}>
+        <Text style={s.label}>COSTA RICA · MAYORES DE 18</Text>
+        <Text accessibilityRole="header" style={s.title}>
+          Encuentra con quién moverte
+        </Text>
+        <Text style={s.subtitle}>
+          Correr, jugar, pedalear, remar o entrenar cerca de ti, con gente real y en lugares
+          públicos.
+        </Text>
+
+        <OAuthButtons />
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setPhase('email');
+          }}
+          style={[s.button, s.buttonGhost]}
+        >
+          <Text style={[s.buttonText, s.buttonGhostText]}>Continuar con correo</Text>
+        </Pressable>
+
+        <Link href="/sign-in" style={s.link}>
+          <Text style={s.linkText}>¿Ya tienes cuenta? Entrar</Text>
+        </Link>
+        {/* Terms and privacy join this line when /terminos and /privacidad
+            exist (Legal v1); a link to a page that is not there is worse. */}
+        <Text style={s.hint}>Antes de entrar te mostramos las normas de la comunidad.</Text>
+      </ScrollView>
+    );
+  }
+
+  const canSubmit = email.trim().length > 0 && passwordOk(password) && !busy;
   const passwordHint = passwordProblem(password);
 
   const submit = () => {
-    if (!canSubmit || !birth.ok || gender === null) return;
+    if (!canSubmit) return;
     setError(null);
     setBusy(true);
-    signUp(email.trim(), password, trimmedName, birth.iso, gender)
+    signUp(email.trim(), password)
       .then((outcome) => {
-        // With email confirmation on, signUp returns no session. Redirecting
-        // to the app here would land on a screen that cannot read anything.
-        if (outcome === 'confirmation-required') setConfirmationSent(true);
+        // With email confirmation on, signUp returns no session. With it off,
+        // the session arrives and the redirect above takes over.
+        if (outcome === 'confirmation-required') setPhase('sent');
       })
       .catch((cause: unknown) => {
         const message = cause instanceof Error ? cause.message : '';
-        // The database's refusal (0031) reaches the client as Supabase Auth's
-        // generic wording. The form checks the same rule first, so this is a
-        // date the form let through and the database did not — say which field.
         setError(
-          message.includes('Database error saving new user')
-            ? 'No se pudo crear la cuenta. Revisa tu fecha de nacimiento.'
+          /already registered/i.test(message)
+            ? 'Ya hay una cuenta con ese correo. Entra con él.'
             : message || 'No se pudo crear la cuenta.',
         );
       })
@@ -81,98 +120,21 @@ export function SignUpScreen() {
   };
 
   return (
-    // Scrolls: with the date of birth and the gender question the form no
-    // longer fits a phone, and a centred View cuts off its top and bottom.
     <ScrollView contentContainerStyle={s.scrollContent} style={s.scroll}>
-      <Text style={s.title}>Crear cuenta</Text>
-      <Text style={s.subtitle}>Movo — actividades cerca de ti</Text>
-
-      <Text style={s.label}>Nombre</Text>
-      <TextInput
-        accessibilityLabel="Nombre"
-        /* The length bounds are enforced by silently disabling the button, so
-           they have to be said somewhere a screen reader reaches. */
-        accessibilityHint={`Entre ${NAME_MIN} y ${NAME_MAX} caracteres.`}
-        autoComplete="name"
-        maxLength={NAME_MAX}
-        onChangeText={setDisplayName}
-        placeholder="Cómo te van a ver"
-        placeholderTextColor={color.text.tertiary}
-        style={s.input}
-        value={displayName}
-      />
-
-      <Text style={s.label}>Fecha de nacimiento</Text>
-      {/* Three plain fields rather than a date picker: a picker opens on
-          today and asks for decades of scrolling, and on web it is a
-          different control in every browser. */}
-      <View style={s.dateRow}>
-        <TextInput
-          accessibilityLabel="Día de nacimiento"
-          autoComplete="birthdate-day"
-          inputMode="numeric"
-          maxLength={2}
-          onChangeText={setDay}
-          placeholder="Día"
-          placeholderTextColor={color.text.tertiary}
-          style={[s.input, s.dateDay]}
-          value={day}
-        />
-        <TextInput
-          accessibilityLabel="Mes de nacimiento, en número"
-          autoComplete="birthdate-month"
-          inputMode="numeric"
-          maxLength={2}
-          onChangeText={setMonth}
-          placeholder="Mes"
-          placeholderTextColor={color.text.tertiary}
-          style={[s.input, s.dateDay]}
-          value={month}
-        />
-        <TextInput
-          accessibilityLabel="Año de nacimiento"
-          autoComplete="birthdate-year"
-          inputMode="numeric"
-          maxLength={4}
-          onChangeText={setYear}
-          placeholder="Año"
-          placeholderTextColor={color.text.tertiary}
-          style={[s.input, s.dateYear]}
-          value={year}
-        />
-      </View>
-      <Text accessibilityLiveRegion="polite" style={birthTouched && !birth.ok ? s.error : s.hint}>
-        {birthTouched && !birth.ok
-          ? birth.problem
-          : `Movo es para personas de ${MIN_AGE} años o más. Solo tú la ves y no se puede cambiar después.`}
+      <Pressable
+        accessibilityLabel="Volver"
+        accessibilityRole="button"
+        onPress={() => {
+          setPhase('welcome');
+        }}
+        style={s.link}
+      >
+        <Text style={s.linkText}>Volver</Text>
+      </Pressable>
+      <Text accessibilityRole="header" style={s.title}>
+        Tu correo y una contraseña
       </Text>
-
-      <Text style={s.label}>Tu género</Text>
-      <Text style={s.hint}>{GENDER_PURPOSE}</Text>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Tu género" style={s.genderGroup}>
-        {GENDER_OPTIONS.map((option) => {
-          const on = gender === option.value;
-          return (
-            <Pressable
-              accessibilityRole="radio"
-              accessibilityLabel={option.hint ? `${option.label}. ${option.hint}` : option.label}
-              aria-checked={on}
-              key={option.value}
-              onPress={() => {
-                setGender(option.value);
-              }}
-              style={[s.genderOption, on && s.genderOptionOn]}
-            >
-              <View style={[s.radio, on && s.radioOn]} />
-              <View style={{ flex: 1 }}>
-                <Text style={s.genderLabel}>{option.label}</Text>
-                {option.hint ? <Text style={s.hint}>{option.hint}</Text> : null}
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Text style={s.hint}>Lo puedes cambiar después en Perfil.</Text>
+      <Text style={s.subtitle}>Te mandamos un enlace para confirmar que el correo es tuyo.</Text>
 
       <Text style={s.label}>Correo</Text>
       <TextInput
@@ -189,10 +151,8 @@ export function SignUpScreen() {
 
       <Text style={s.label}>Contraseña</Text>
       <TextInput
-        accessibilityLabel="Contraseña"
-        /* The minimum only exists in the placeholder, which is gone as soon as
-           there is a character in the field. */
         accessibilityHint="Mínimo 8 caracteres."
+        accessibilityLabel="Contraseña"
         autoCapitalize="none"
         autoComplete="new-password"
         onChangeText={setPassword}
@@ -208,9 +168,10 @@ export function SignUpScreen() {
           {passwordHint}
         </Text>
       ) : null}
+      <Text style={s.hint}>
+        Nadie más ve tu correo: ni quien organiza ni las otras personas de una sesión.
+      </Text>
 
-      {/* The only feedback a failed signup has. It appears below the field the
-          user just left, so without a role it lands silently. */}
       {error ? (
         <Text accessibilityRole="alert" style={s.error}>
           {error}
@@ -218,11 +179,8 @@ export function SignUpScreen() {
       ) : null}
 
       <Pressable
-        /* The label tracks the visible text: "Creando…" is how the button
-           reports that the request is in flight, and a fixed label would hide
-           the only sign that anything happened. */
-        accessibilityRole="button"
         accessibilityLabel={busy ? 'Creando…' : 'Crear cuenta'}
+        accessibilityRole="button"
         aria-disabled={!canSubmit}
         disabled={!canSubmit}
         onPress={submit}
@@ -230,16 +188,6 @@ export function SignUpScreen() {
       >
         <Text style={s.buttonText}>{busy ? 'Creando…' : 'Crear cuenta'}</Text>
       </Pressable>
-
-      {/* Before the account exists, not after: the rules are what the person
-          agrees to meet strangers under. */}
-      <Link href="/normas" style={s.link}>
-        <Text style={s.linkText}>Al crear tu cuenta aceptas las normas de la comunidad</Text>
-      </Link>
-
-      <Link href="/sign-in" style={s.link}>
-        <Text style={s.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
-      </Link>
     </ScrollView>
   );
 }

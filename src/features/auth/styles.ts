@@ -50,6 +50,14 @@ export const authStyles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.4 },
   buttonText: { ...type.action, color: color.text.inverse },
+  /** «Continuar con correo»: outlined, below Apple and Google. */
+  buttonGhost: {
+    backgroundColor: 'transparent',
+    borderColor: color.border.strong,
+    borderRadius: radius.full,
+    borderWidth: stroke.hair,
+  },
+  buttonGhostText: { color: color.text.primary },
   link: { minHeight: size.minTarget, justifyContent: 'center' },
   linkText: { ...type.bodySmall, color: color.accent.cool, textDecorationLine: 'underline' },
   dateRow: { flexDirection: 'row', gap: space.sm },

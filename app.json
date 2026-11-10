@@ -14,7 +14,11 @@
     "android": {
       "package": "cr.movo.app",
       "edgeToEdgeEnabled": true,
-      "blockedPermissions": ["android.permission.ACCESS_FINE_LOCATION"]
+      "blockedPermissions": ["android.permission.ACCESS_FINE_LOCATION"],
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -28,7 +32,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Movo usa tu ubicación aproximada, solo cuando tocas «Cerca de mí», para mostrarte sesiones cerca. No la guarda."
+          "locationWhenInUsePermission": "Movo usa tu ubicación aproximada para sugerirte actividades cerca. Solo guarda tu distrito."
         }
       ]
     ],

@@ -3,10 +3,11 @@
  *
  * `docs/security.md`: no column anywhere holds where a user is now, because
  * the only reliable way not to leak a position is not to have one. Device
- * location does not change that. It is asked for only when the person taps
- * «Cerca de mí», it is rounded to about a kilometre before it leaves the
- * device, it is sent as the origin of one search and stored nowhere — not in
- * a table, not in browser storage.
+ * location does not change that. It is asked for at sign-up (Registro v3,
+ * «¿Dónde te mueves?») and when the person taps «Cerca de mí»; it is rounded
+ * to about a kilometre before it leaves the device, and either becomes the
+ * origin of one search or is turned into a distrito code (0060). The point
+ * itself is stored nowhere — not in a table, not in browser storage.
  *
  * A kilometre is enough to sort sessions by distance, which is all the search
  * does with it, and too coarse to put anybody on a particular street.
@@ -22,10 +23,10 @@ export interface Point {
 /**
  * Which text the person saw when they let Movo read their location (0030).
  * It is two texts: the permission string in app.json, which the phone shows,
- * and the line Descubrir shows after («Tu ubicación no se guarda»). Bump this
+ * and the lines Registro and Descubrir show («Guardamos solo tu distrito»). Bump this
  * when either changes in substance.
  */
-export const LOCATION_NOTICE_VERSION = '2026-10-08';
+export const LOCATION_NOTICE_VERSION = '2026-11-10';
 
 /** Centre of the Greater Metropolitan Area: the origin whenever there is no other. */
 export const GAM_CENTRE: Point = { lat: 9.9281, lng: -84.0907 };

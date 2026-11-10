@@ -13,6 +13,7 @@ import { View } from 'react-native';
 
 import { AuthProvider } from '../features/auth/AuthProvider';
 import { SuspensionGate } from '../features/auth/SuspensionGate';
+import { SignupGate } from '../features/signup/SignupGate';
 import { StatusPage } from '../features/web/StatusPage';
 import { errorCode } from '../lib/errorCode';
 import { isIndexable, NOINDEX } from '../lib/robots';
@@ -78,12 +79,14 @@ export default function RootLayout() {
       {/* Without an explicit content background the navigator flashes white
           between screens, which on a dark ground reads as a broken render. */}
       <SuspensionGate>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: color.bg.base },
-          }}
-        />
+        <SignupGate>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: color.bg.base },
+            }}
+          />
+        </SignupGate>
       </SuspensionGate>
       <StatusBar style="light" />
     </AuthProvider>
