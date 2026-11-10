@@ -40,6 +40,7 @@ import {
   requestCoarseOrigin,
   type Point,
 } from '../../lib/location';
+import { fetchSignupStatus } from '../../lib/signup';
 import { supabase } from '../../lib/supabase';
 import type { Category, CategoryId, NearbyActivity, SkillLevel } from '../../types/database';
 import { useAuth } from '../auth/AuthProvider';
@@ -98,7 +99,8 @@ function seriesLine(startsAt: string, upcoming: number): string {
   return `Todos los ${plural} · ${upcoming} ${upcoming === 1 ? 'fecha' : 'fechas'}`;
 }
 
-const RADIUS_OPTIONS = [5_000, 15_000, 50_000] as const;
+/** The same four as Registro v3 · 10 («¿Hasta dónde buscamos?»). */
+const RADIUS_OPTIONS = [5_000, 15_000, 25_000, 50_000] as const;
 
 const sportDot = (id: string) => sportColor(id, color.accent.cool);
 
@@ -120,6 +122,21 @@ export function DiscoverScreen() {
   const [selected, setSelected] = useState<CategoryId | typeof MINE | null>(null);
   const [mine, setMine] = useState<string[]>([]);
   const [radiusM, setRadiusM] = useState<number>(15_000);
+  // Signed in, Descubrir starts at the distance chosen at sign-up (0060).
+  // Unread, it stays at 15 km; changing it here is for this visit only.
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    fetchSignupStatus(supabase)
+      .then((status) => {
+        if (!cancelled && status) setRadiusM(status.radiusKm * 1000);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
   const [activities, setActivities] = useState<NearbyActivity[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);

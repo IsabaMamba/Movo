@@ -200,8 +200,9 @@ export function PermissionsScreen() {
               Ubicación
             </Text>
             <Text style={s.hint}>
-              Solo se usa cuando tocas «Cerca de mí» en Descubrir, redondeada a un kilómetro, y no
-              se guarda.{' '}
+              Aproximada, redondeada a un kilómetro y solo mientras usas Movo: al registrarte la
+              usamos para saber tu distrito, y en Descubrir para «Cerca de mí». Guardamos solo el
+              distrito, nunca el punto.{' '}
               {state.current.location
                 ? `La permitiste el ${consentDateLabel(state.current.location.recorded_at)}.`
                 : 'No tenemos registro de que la hayas permitido.'}{' '}

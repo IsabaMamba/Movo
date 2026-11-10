@@ -9,10 +9,8 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import type { Gender } from '../../lib/gender';
 import { disablePush } from '../../lib/push';
 import { supabase } from '../../lib/supabase';
-import { RULES_VERSION } from '../rules/rules';
 
 /** signUp resolves without a session when the project requires confirmation. */
 export type SignUpOutcome = 'signed-in' | 'confirmation-required';
@@ -22,13 +20,11 @@ interface AuthValue {
   /** True until the stored session has been read; routing must wait for it. */
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (
-    email: string,
-    password: string,
-    displayName: string,
-    birthdate: string,
-    gender: Gender,
-  ) => Promise<SignUpOutcome>;
+  /**
+   * Registro v3: only the email and the password. Name, date of birth,
+   * gender, sports, zone and the rules come after, in /registro (0060).
+   */
+  signUp: (email: string, password: string) => Promise<SignUpOutcome>;
   signOut: () => Promise<void>;
 }
 
@@ -73,19 +69,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       },
-      signUp: async (email, password, displayName, birthdate, gender) => {
-        // handle_new_user() reads display_name out of raw_user_meta_data and
-        // falls back to 'Nuevo usuario' if it fails the profiles constraint.
-        // It also records which version of /normas the form showed (0030):
-        // done in the database because, with email confirmation on, there is
-        // no session here to record it with. And it checks the date of birth
-        // again (0031): the form refuses under 18, the database makes sure.
+      signUp: async (email, password) => {
+        // Nothing rides on the metadata any more: Apple and Google send none,
+        // so every account goes through the same steps in /registro, with a
+        // session. handle_new_user() (0035) still accepts the old fields.
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            // 0035: stored in profile_private, readable only by its owner.
-            data: { display_name: displayName, rules_version: RULES_VERSION, birthdate, gender },
+            emailRedirectTo:
+              typeof window !== 'undefined' && window.location?.origin
+                ? `${window.location.origin}/registro`
+                : undefined,
           },
         });
         if (error) throw error;
