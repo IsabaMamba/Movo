@@ -20,6 +20,7 @@ component disagrees with the field kit, the field kit is right until an ADR says
 | `handoff-2026-11-02.md`     | 2 Nov: current boards, women-only model, verification, backend in order                | Phone |
 | `handoff-2026-11-03.md`     | 3 Nov: sign-up v2, 19 sports, create + detail, chat, help, legal, staff tools          | Phone |
 | `handoff-2026-11-04.md`     | 4 Nov: audit fixes, chat entry points + moderation, Perfil v3, web pages, a11y, emails | Phone |
+| `handoff-2026-11-10.md`     | 10 Nov: series invite card, renewing, prices, zone sheet, loading and errors           | Phone |
 | `mapa.md`                   | The street map: MapLibre + our own Protomaps extract on Supabase, steps                | —     |
 
 ## Reference
