@@ -595,4 +595,44 @@ describe('dailyDigestText (0050)', () => {
       '2 personas salieron.',
     );
   });
+
+  describe('renewing a series', () => {
+    it('asks the organizer, and opens their series screen', () => {
+      const item = toInboxItem(
+        row({
+          type: 'series_renewal_offer',
+          payload: {
+            series_id: 's9',
+            title: '5K al parque de Tibás',
+            remaining: 4,
+            last_start: '2026-12-08T12:00:00Z',
+          },
+        }),
+      );
+      expect(item.text).toBe(
+        'A 5K al parque de Tibás le quedan 4 fechas, hasta el martes 8 de diciembre. ¿Agregas 8 más?',
+      );
+      expect(item.seriesId).toBe('s9');
+      expect(item.opensOrganizerSeries).toBe(true);
+    });
+
+    it('asks the people on the whole series, and opens the series page', () => {
+      const item = toInboxItem(
+        row({
+          type: 'series_renewal',
+          payload: {
+            series_id: 's9',
+            title: '5K al parque de Tibás',
+            name: 'Andrea',
+            added: 8,
+            last_start: '2026-12-08T12:00:00Z',
+          },
+        }),
+      );
+      expect(item.text).toBe(
+        'Andrea agregó 8 fechas a 5K al parque de Tibás. ¿Sigues? Si no respondes, terminas el martes 8 de diciembre.',
+      );
+      expect(item.opensOrganizerSeries).toBeUndefined();
+    });
+  });
 });
