@@ -166,7 +166,11 @@ export function InboxScreen() {
           : { pathname: '/sesion/[id]', params: { id: item.activityId } },
       );
     } else if (item.seriesId !== undefined) {
-      router.push({ pathname: '/serie/[id]', params: { id: item.seriesId } });
+      router.push(
+        item.opensOrganizerSeries
+          ? { pathname: '/organizar/serie/[id]', params: { id: item.seriesId } }
+          : { pathname: '/serie/[id]', params: { id: item.seriesId } },
+      );
     }
     markRead(item.id);
   };

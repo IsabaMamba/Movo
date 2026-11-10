@@ -119,6 +119,8 @@ export interface InboxItem {
   communityId?: string;
   /** Open the series page (0052), where the person can join it whole. */
   seriesId?: string;
+  /** With `seriesId`: open the organizer's series screen instead (0057). */
+  opensOrganizerSeries?: true;
 }
 
 /**
@@ -397,6 +399,41 @@ export function toInboxItem(row: Notification): InboxItem {
       return {
         ...base,
         text: `${name} te invita a toda la serie ${title}${when}. Únete a todas las fechas de una vez.`,
+        activityId: null,
+        ...(seriesId === null ? {} : { seriesId }),
+      };
+    }
+
+    // Written by offer_series_renewals() (0057) to the organizer, a month
+    // before the last date. Opens the series screen, where renewing is.
+    case 'series_renewal_offer': {
+      const seriesId = text(payload, 'series_id');
+      const lastStart = text(payload, 'last_start');
+      const remaining = payload.remaining;
+      const left =
+        typeof remaining === 'number'
+          ? `le ${remaining === 1 ? 'queda 1 fecha' : `quedan ${String(remaining)} fechas`}`
+          : 'le quedan pocas fechas';
+      const until = lastStart === null ? '' : `, hasta el ${noticeDay(lastStart)}`;
+      return {
+        ...base,
+        text: `A ${title} ${left}${until}. ¿Agregas 8 más?`,
+        activityId: null,
+        ...(seriesId === null ? {} : { seriesId, opensOrganizerSeries: true as const }),
+      };
+    }
+
+    // Written by renew_series() (0057) to everybody on the whole series.
+    case 'series_renewal': {
+      const seriesId = text(payload, 'series_id');
+      const name = text(payload, 'name') ?? 'Quien organiza';
+      const added = typeof payload.added === 'number' ? payload.added : 8;
+      const lastStart = text(payload, 'last_start');
+      const until =
+        lastStart === null ? '' : ` Si no respondes, terminas el ${noticeDay(lastStart)}.`;
+      return {
+        ...base,
+        text: `${name} agregó ${String(added)} fechas a ${title}. ¿Sigues?${until}`,
         activityId: null,
         ...(seriesId === null ? {} : { seriesId }),
       };
