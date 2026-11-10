@@ -1,7 +1,7 @@
 /**
  * What a session costs, said the way people say it (0054).
  *
- * «₡1,200 por persona · ₡12,000 entre 10 · entrada al lugar ₡500». The
+ * «₡1.200 por persona · ₡12.000 entre 10 · entrada al lugar ₡500». The
  * per-person amount is `price_minor` either way; for a split the database
  * computed it from the total, rounded up to a whole unit, so the line never
  * disagrees with itself. The entry fee is paid at the venue, not to the
@@ -46,7 +46,7 @@ export function pricingParts(
   return { main, details };
 }
 
-/** «₡1,200 por persona · ₡12,000 entre 10 · entrada al lugar ₡500». */
+/** «₡1.200 por persona · ₡12.000 entre 10 · entrada al lugar ₡500». */
 export function pricingLine(p: Pricing, opts: { perDate?: boolean } = {}): string {
   const { main, details } = pricingParts(p, opts);
   return [main, ...details].join(' · ');
@@ -58,9 +58,13 @@ export function splitShare(totalMinor: number, divisor: number): number {
   return Math.ceil(totalMinor / divisor / 100) * 100;
 }
 
-/** Whole units typed in a field, to minor units; empty or nonsense is 0. */
+/**
+ * Whole units typed in a field, to minor units; empty or nonsense is 0.
+ * Colones have no decimals here, so a point and a comma are both read as a
+ * thousands separator: «12.000», the way prices are now shown, is ₡12.000.
+ */
 export function toMinor(typed: string): number {
-  const trimmed = typed.trim().replace(/[,\s]/g, '');
+  const trimmed = typed.trim().replace(/[.,\s]/g, '');
   if (trimmed === '') return 0;
   const n = Number(trimmed);
   return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
