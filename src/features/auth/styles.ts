@@ -9,6 +9,9 @@ import { color, radius, size, space, stroke, type } from '../../theme';
  */
 export const authStyles = StyleSheet.create({
   screen: {
+    // Centred like the sign-up column: without this the form hugs the left
+    // edge of a wide window.
+    alignSelf: 'center',
     backgroundColor: color.bg.base,
     flex: 1,
     gap: space.md,

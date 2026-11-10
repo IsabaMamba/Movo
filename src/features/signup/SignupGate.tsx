@@ -37,6 +37,9 @@ const OPEN_PATHS = new Set([
   '/ayuda',
   '/sign-in',
   '/sign-up',
+  // Somebody choosing a new password has a session but may not have finished
+  // the steps; the steps come right after.
+  '/recuperar',
 ]);
 
 interface SignupGateValue {

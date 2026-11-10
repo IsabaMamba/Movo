@@ -3,7 +3,10 @@
 Registro v3 offers «Continuar con Apple» and «Continuar con Google». The code is in
 `src/lib/oauth.ts`, `src/features/auth/OAuthButtons.tsx` and `src/app/auth-callback.tsx`.
 None of it works until someone with access to the consoles does the steps below. Until then
-the buttons say «Esta opción todavía no está lista. Usa tu correo por ahora.»
+the buttons are not shown: each one appears only when its provider is named in
+`EXPO_PUBLIC_OAUTH_PROVIDERS` (`apple`, `google` or `apple,google`). Set it as the last step,
+after trying the provider once. On the web a button for a provider that is off cannot explain
+itself, because the browser has already left for a Supabase error page.
 
 Never paste a client secret, a `.p8` key or the service-role key into the repo, an issue, CI
 logs or a screenshot. They go into the Supabase dashboard only.
@@ -18,6 +21,10 @@ logs or a screenshot. They go into the Supabase dashboard only.
 
 In Supabase › Authentication › URL Configuration, add the last two to **Redirect URLs**
 (and `http://localhost:8081/registro` for local web).
+
+«¿Olvidaste tu contraseña?» needs one more in the same list: `https://<movo-domain>/recuperar`
+(and `http://localhost:8081/recuperar`). Without it the link in the recovery email lands on the
+site's home page, signed in, with nowhere to choose the new password.
 
 ## Google
 

@@ -4,17 +4,22 @@
  * signing up are the same tap.
  *
  * Apple first and in black, Google in white, as both ask in their
- * guidelines. Neither works until the providers are switched on by hand (see
- * lib/oauth.ts); until then Supabase answers that the provider is not
- * enabled, and the button says so in plain words.
+ * guidelines. Only the providers named in EXPO_PUBLIC_OAUTH_PROVIDERS are
+ * shown (see lib/oauth.ts): on the web a provider that is off cannot answer
+ * in plain words, because the browser has already left for Supabase's error
+ * page. With none switched on this renders nothing, and `hasOAuth` lets the
+ * screens drop the «o con tu correo» line that would point at nothing.
  */
 
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { OAUTH_PROVIDERS, signInWithProvider, type OAuthProvider } from '../../lib/oauth';
+import { ENABLED_PROVIDERS, signInWithProvider, type OAuthProvider } from '../../lib/oauth';
 import { supabase } from '../../lib/supabase';
 import { color, radius, size, space, stroke, type } from '../../theme';
+
+/** Whether any provider is switched on, for the copy around the buttons. */
+export const hasOAuth = ENABLED_PROVIDERS.length > 0;
 
 export function OAuthButtons() {
   const [busy, setBusy] = useState<OAuthProvider | null>(null);
@@ -37,9 +42,11 @@ export function OAuthButtons() {
       });
   };
 
+  if (!hasOAuth) return null;
+
   return (
     <View style={{ gap: space.sm }}>
-      {OAUTH_PROVIDERS.map(({ provider, label }) => {
+      {ENABLED_PROVIDERS.map(({ provider, label }) => {
         const apple = provider === 'apple';
         return (
           <Pressable
