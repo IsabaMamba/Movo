@@ -16,6 +16,12 @@
  *   P0002  the row does not exist
  *   22023  the row exists and the operation is not valid for its current state
  *
+ * One code is Postgres's own rather than ours: 22P02, «invalid input syntax».
+ * It is what a mistyped address produces — /sesion/abc asks for the row whose
+ * uuid is «abc» — and to the person it means the same as P0002: there is
+ * nothing at this address. Read as `unknown` it showed «Algo falló de nuestro
+ * lado», taking the blame for a typo.
+ *
  * The third is the interesting one. `invalid_state` is not a bug and not a
  * permissions problem: it is the database refusing something that was legal a
  * moment ago and is not now — a session that already started, a report somebody
@@ -49,10 +55,16 @@ export function toApiError(error: PostgresErrorLike): ApiError {
     case '42501':
       return new ApiError('forbidden', error.message, error.code);
     case 'P0002':
+    case '22P02':
       return new ApiError('not_found', error.message, error.code);
     case '22023':
       return new ApiError('invalid_state', error.message, error.code);
     default:
       return new ApiError('unknown', error.message, error.code);
   }
+}
+
+/** Whether a failure means «there is nothing at this address», for the 404. */
+export function isNotFound(cause: unknown): boolean {
+  return cause instanceof ApiError && cause.kind === 'not_found';
 }

@@ -17,6 +17,7 @@ import { SuspensionGate } from '../features/auth/SuspensionGate';
 import { SignupGate } from '../features/signup/SignupGate';
 import { StatusPage } from '../features/web/StatusPage';
 import { errorCode } from '../lib/errorCode';
+import { pageTitle } from '../lib/pageTitle';
 import { isIndexable, NOINDEX } from '../lib/robots';
 import { color } from '../theme';
 
@@ -58,9 +59,11 @@ export default function RootLayout() {
   // to say so (src/lib/robots.ts). Rendered on both branches below: the
   // static web build pre-renders before the fonts load, and the tag has to be
   // in that HTML. Head does nothing on native.
-  const robots = isIndexable(pathname) ? null : (
+  // The tab title is decided the same way, for the same reason (lib/pageTitle.ts).
+  const robots = (
     <Head>
-      <meta name="robots" content={NOINDEX} />
+      <title>{pageTitle(pathname)}</title>
+      {isIndexable(pathname) ? null : <meta name="robots" content={NOINDEX} />}
     </Head>
   );
 

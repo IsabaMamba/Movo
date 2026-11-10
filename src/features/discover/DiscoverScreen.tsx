@@ -57,7 +57,7 @@ import {
 import { sportColor } from '../../theme/sport';
 import { BellLink } from '../nav/BellLink';
 import { Icon } from '../nav/Icon';
-import { dateColumn, formatDistance, nearbyCount, seriesShort } from './format';
+import { dateColumn, emptyHint, formatDistance, nearbyCount, seriesShort } from './format';
 import { HeatBand } from './HeatBand';
 import { ZoneSheet } from './ZoneSheet';
 import { discoverStyles as s } from './styles';
@@ -147,6 +147,11 @@ export function DiscoverScreen() {
   const [originNote, setOriginNote] = useState<string | null>(null);
   const [originMenu, setOriginMenu] = useState(false);
   const [zone, setZone] = useState<{ code: string; name: string } | null>(null);
+  // The «desde dónde» menu closes when the person moves on to the radius or
+  // a sport; left open it sat over the list they had just asked for.
+  useEffect(() => {
+    setOriginMenu(false);
+  }, [radiusM, selected]);
   const [zoneFilter, setZoneFilter] = useState<{ name: string; ids: Set<string> } | null>(null);
 
   // A zone's sessions were counted for one filter; another filter is another
@@ -535,8 +540,11 @@ export function DiscoverScreen() {
             <View style={s.centred}>
               <Text style={s.emptyTitle}>Todavía no hay sesiones aquí</Text>
               <Text style={s.emptyBody}>
-                Prueba ampliar el radio o quitar el filtro de deporte. Estamos sumando sesiones de
-                grupos que ya entrenan en la GAM.
+                {emptyHint(
+                  radiusM / 1000,
+                  Math.max(...RADIUS_OPTIONS) / 1000,
+                  selected !== null || zoneFilter !== null,
+                )}
               </Text>
               <Link href="/crear">
                 <Text style={s.linkText}>Organiza la primera</Text>
