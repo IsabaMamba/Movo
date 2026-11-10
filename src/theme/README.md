@@ -36,7 +36,8 @@ switch between Calma and Heatwave is accent intensity, not background.
    pad the target with `hitSlopFor(visualSize)`.
 8. **Money is formatted, never concatenated.** `priceLabel()` handles the currency's
    decimal convention (CRC, PYG, CLP and COP display zero decimals) and forces
-   `narrowSymbol`, because `es-419` otherwise renders `CRC 2,500` instead of `₡2,500`.
+   `narrowSymbol`, because `es-419` otherwise renders `CRC 2,500` instead of `₡2,500`. Colones then group
+   thousands with a point, `₡2.500`, whatever the device locale: a comma reads as a decimal in Costa Rica.
    Prices are stored in minor units (`price_minor`), so a component never divides by 100
    itself.
 9. **Locale is `es-419`**, not `es-CR`. Movo is built to expand; the copy is neutral Latin

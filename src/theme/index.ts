@@ -71,10 +71,26 @@ export function priceLabel(minorUnits: number, currency = 'CRC'): string {
   const noDecimals = ZERO_DECIMAL_DISPLAY.has(currency);
   const amount = minorUnits / 100;
 
+  // Whole amounts group thousands with a point, «₡1.200», whatever the
+  // device's locale. es-419 writes «₡1,200», and in Costa Rica a comma is the
+  // decimal mark: «₡1,2» is how people would read it (Precios v1, 10 Nov).
+  if (noDecimals) {
+    const symbol =
+      new Intl.NumberFormat('es-419', {
+        style: 'currency',
+        currency,
+        currencyDisplay: 'narrowSymbol',
+      })
+        .formatToParts(0)
+        .find((part) => part.type === 'currency')?.value ?? currency;
+    const digits = String(Math.round(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${symbol}${digits}`;
+  }
+
   return new Intl.NumberFormat('es-419', {
     style: 'currency',
     currency,
-    // Without narrowSymbol, es-419 renders "CRC 2,500" instead of "₡2,500".
+    // Without narrowSymbol, es-419 renders "USD 15.00" instead of "$15.00".
     currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: noDecimals ? 0 : 2,
     maximumFractionDigits: noDecimals ? 0 : 2,
