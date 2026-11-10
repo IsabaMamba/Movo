@@ -10,7 +10,7 @@ describe('pricingLine', () => {
   });
 
   it('says per person', () => {
-    expect(pricingLine({ ...base, price_minor: 200000 })).toBe('₡2,000 por persona');
+    expect(pricingLine({ ...base, price_minor: 200000 })).toBe('₡2.000 por persona');
   });
 
   it('says the split the way the handoff draws it', () => {
@@ -22,7 +22,7 @@ describe('pricingLine', () => {
         split_total_minor: 1200000,
         split_divisor: 10,
       }),
-    ).toBe('₡1,200 por persona · ₡12,000 entre 10');
+    ).toBe('₡1.200 por persona · ₡12.000 entre 10');
   });
 
   it('adds the entry fee, or says it is not confirmed', () => {
@@ -36,7 +36,7 @@ describe('pricingLine', () => {
 
   it('says per date in a series', () => {
     expect(pricingLine({ ...base, price_minor: 120000 }, { perDate: true })).toBe(
-      '₡1,200 por persona, cada fecha',
+      '₡1.200 por persona, cada fecha',
     );
   });
 });
@@ -53,6 +53,8 @@ describe('toMinor', () => {
   it('reads whole units, with or without separators', () => {
     expect(toMinor('12000')).toBe(1200000);
     expect(toMinor('12,000')).toBe(1200000);
+    expect(toMinor('12.000')).toBe(1200000);
+    expect(toMinor('₡ 1.200'.replace('₡', ''))).toBe(120000);
     expect(toMinor('')).toBe(0);
     expect(toMinor('abc')).toBe(0);
     expect(toMinor('-5')).toBe(0);
