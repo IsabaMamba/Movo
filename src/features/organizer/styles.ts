@@ -292,4 +292,36 @@ export const seriesStyles = StyleSheet.create({
   },
   actionOn: { backgroundColor: color.bg.raised },
   actionText: { ...type.action, color: color.text.primary },
+
+  /** «¿Agregas 8 fechas más?» (Series v2 · 9): warm, the one ask on the screen. */
+  renewCard: { borderColor: color.accent.primary },
+  renewEyebrow: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
+  renewEyebrowText: { ...type.caption, color: color.text.secondary },
+  renewTitle: { ...type.heading, color: color.text.primary },
+  renewChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  renewChip: {
+    alignItems: 'center',
+    borderColor: color.accent.primary,
+    borderRadius: radius.full,
+    borderWidth: stroke.thick,
+    flexDirection: 'row',
+    gap: space.xs,
+    justifyContent: 'center',
+    minHeight: size.minTarget,
+    paddingHorizontal: space.md,
+  },
+  /** A date tapped away: still there, struck through, so it can come back. */
+  renewChipOff: {
+    borderColor: color.border.default,
+    borderStyle: 'dashed',
+    borderWidth: stroke.hair,
+  },
+  renewChipText: { ...type.bodySmall, color: color.text.primary, fontWeight: '700' },
+  renewChipTextOff: {
+    color: color.text.tertiary,
+    fontWeight: '400',
+    textDecorationLine: 'line-through',
+  },
+  renewAsk: { flexDirection: 'row', gap: space.sm },
+  renewAskText: { ...type.caption, color: color.text.secondary, flex: 1 },
 });

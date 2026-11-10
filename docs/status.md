@@ -96,6 +96,7 @@ column is maintained by hand.
 | `0056_series_people`            | `series_people()` for the organizer: everybody who was on a date of a series, whole or date by date, arrivals of the past dates, the next date, invited or not                                                                                            | yes     |
 | `0057_series_renewal`           | `renew_series()` adds 1–12 dates (skipping holidays); `answer_series_renewal()`; `offer_series_renewals()` nightly; `series_renewals` and answers                                                                                                         | no      |
 | `0058_pasadas_retention`        | `purge_pasadas()` nightly: rosters of sessions over six months old become per-month counts in `attendance_monthly`; `my_monthly_attendance()`                                                                                                             | no      |
+| `0059_series_renewal_question`  | `my_series_renewal()`: the «¿Sigues en la serie?» waiting for the caller, with the dates left out; read only                                                                                                                                              | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
