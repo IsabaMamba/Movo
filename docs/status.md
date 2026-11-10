@@ -94,6 +94,7 @@ column is maintained by hand.
 | `0054_pricing`                  | `price_unit` (per person or split), `split_total_minor`, `split_divisor`, `venue_fee` (none, amount, unknown) and `venue_fee_minor` on sessions and series; `apply_pricing()` computes a split and copies a series to its dates                           | yes     |
 | `0055_session_links`            | `session_links` (one code per person and session) and `session_link()`; `session_link_preview()` for anon: the state (open, full, cancelled, past, group, missing) and public facts, never who is going; misses counted per IP                            | yes     |
 | `0056_series_people`            | `series_people()` for the organizer: everybody who was on a date of a series, whole or date by date, arrivals of the past dates, the next date, invited or not                                                                                            | yes     |
+| `0057_series_renewal`           | `renew_series()` adds 1–12 dates (skipping holidays); `answer_series_renewal()`; `offer_series_renewals()` nightly; `series_renewals` and answers                                                                                                         | no      |
 
 `0011`–`0013` were applied to the live project on 16 September, after #44, #45 and #46 merged.
 `0014` and `0015` were applied on 19 September. Verified as `anon` afterwards: `zone_heat`,
