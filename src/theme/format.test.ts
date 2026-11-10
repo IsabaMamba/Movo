@@ -53,6 +53,13 @@ describe('priceLabel', () => {
       expect(hasCents(label)).toBe(true);
     });
 
+    it('groups colones with a point, the way Costa Rica writes them', () => {
+      expect(priceLabel(120000, 'CRC')).toBe('₡1.200');
+      expect(priceLabel(1200000, 'CRC')).toBe('₡12.000');
+      expect(priceLabel(123456700, 'CRC')).toBe('₡1.234.567');
+      expect(priceLabel(50000, 'CRC')).toBe('₡500');
+    });
+
     it('does not round a small colón amount away to nothing', () => {
       // A ₡1 session is absurd, but a formatter that floors would turn every
       // sub-unit amount into "₡0", which reads as free and is a lie.
