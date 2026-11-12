@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test)",
+      "Bash(npm run test *)",
+      "Bash(npm run verify)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:fix)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run format)",
+      "Bash(npm run format:check)",
+      "Bash(npm run check:voice)",
+      "Bash(npm run check:migrations)",
+      "Bash(npx vitest run *)",
+      "Bash(node .agents/bin/run.mjs *)",
+      "Bash(node .agents/bin/guard-selftest.mjs)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit|Bash|Read|Grep|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "readDeny": [".env", ".env.*"],
+  "readAllow": [".env.example"],
+  "agents": {
+    "qa": {
+      "write": [
+        ".agents/runs/{run}/report.md",
+        ".agents/runs/{run}/retest.md",
+        ".agents/findings/F-*.md",
+        ".agents/qa/accounts.md",
+        ".agents/qa/coverage.md"
+      ],
+      "browser": {
+        "server": "playwright",
+        "origins": ["http://localhost:8081", "http://127.0.0.1:8081", "http://127.0.0.1:54324"],
+        "denyTools": ["browser_run_code_unsafe", "browser_file_upload", "browser_drop"]
+      }
+    },
+    "developer": {
+      "write": ["src/**", ".agents/runs/{run}/dev-notes.md"],
+      "bash": {
+        "gitAllow": ["status", "diff", "log", "show", "ls-files", "blame", "grep", "rev-parse"],
+        "deny": [
+          {
+            "pattern": "\\bgh\\b",
+            "reason": "GitHub is the orchestrator's job; pushing and PRs are the human's call"
+          },
+          {
+            "pattern": "\\b(npm|pnpm|yarn)\\s+(i|install|add|ci|uninstall|remove|rm|update|publish|link)\\b",
+            "reason": "dependencies are out of scope; say so in dev-notes.md if one is needed"
+          },
+          {
+            "pattern": "\\b(psql|curl|wget|supabase|docker)\\b",
+            "reason": "no database, container or network access from a fix; say so in dev-notes.md if the fix needs one"
+          },
+          {
+            "pattern": "\\bnpm\\s+run\\s+(-s\\s+)?db:",
+            "reason": "the database scripts are not part of a fix"
+          },
+          {
+            "pattern": "\\.env",
+            "reason": "environment files are off limits"
+          },
+          {
+            "pattern": "\\.(agents|claude)[\\\\/]",
+            "reason": "run artifacts and agent config are read with the Read tool, never touched from the shell"
+          }
+        ]
+      }
+    },
+    "reviewer": {
+      "write": [".agents/runs/{run}/review.md"]
+    }
+  }
+}

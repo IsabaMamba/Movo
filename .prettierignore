@@ -6,6 +6,13 @@ package-lock.json
 supabase/migrations/
 supabase/tests/
 
+# Agent run artifacts are written per run and never committed. Checking them would let a
+# report fail the format gate it is reporting on.
+.agents/runs/
+.agents/findings/
+.agents/qa/
+.playwright-mcp/
+
 # Design artifacts are exported deliverables, not source. Reformatting them would produce a
 # large meaningless diff on every export and can disturb whitespace-sensitive markup.
 docs/design/*.html

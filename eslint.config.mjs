@@ -25,6 +25,20 @@ export default tseslint.config(
     },
   },
   {
+    // The agent pipeline's hook and scripts (.agents/README.md), run by Node directly.
+    files: ['.claude/hooks/**/*.mjs', '.agents/bin/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        AbortSignal: 'readonly',
+      },
+    },
+  },
+  {
     // The service worker runs in the browser's worker scope, not the bundle.
     files: ['public/sw.js'],
     languageOptions: {

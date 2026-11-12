@@ -27,6 +27,13 @@ android/
 supabase/.temp/
 supabase/.branches/
 
+# agent pipeline: per-run artifacts, QA findings and QA's local test accounts.
+# Auditable on disk, never history: the repository is public.
+.agents/runs/
+.agents/findings/
+.agents/qa/
+.playwright-mcp/
+
 # build output
 build/
 *.tsbuildinfo
