@@ -1,0 +1,42 @@
+{
+  "sourceRoot": "src/",
+  "testPattern": "\\.test\\.tsx?$",
+  "maxCycles": 3,
+  "maxFindingsPerSweep": 15,
+  "severities": ["blocker", "major", "minor", "polish"],
+  "local": {
+    "app": "http://localhost:8081",
+    "supabase": "http://127.0.0.1:54321",
+    "mail": "http://127.0.0.1:54324",
+    "envFile": ".env.local"
+  },
+  "gates": [
+    {
+      "name": "format",
+      "command": "npm run -s format:check"
+    },
+    {
+      "name": "lint",
+      "command": "npm run -s lint"
+    },
+    {
+      "name": "types",
+      "command": "npm run -s typecheck"
+    },
+    {
+      "name": "voice",
+      "command": "npm run -s check:voice"
+    },
+    {
+      "name": "migrations",
+      "command": "npm run -s check:migrations"
+    },
+    {
+      "name": "tests",
+      "command": "npm run -s test"
+    }
+  ],
+  "unversionedControlFiles": [".env", ".env.local", ".claude/settings.local.json", ".git/config"],
+  "unversionedControlDirs": [".git/hooks"],
+  "suppressionPattern": "eslint-disable|@ts-ignore|@ts-nocheck|@ts-expect-error"
+}
